@@ -1,0 +1,20 @@
+
+admin urls
+
+migration script for 2.0
+
+web service API documentation
+
+docs for the scripts for google storage
+
+docs for uploading code to appengine
+
+details on hourly job to hit app engine to keep it running
+
+
+
+
+
+
+
+
