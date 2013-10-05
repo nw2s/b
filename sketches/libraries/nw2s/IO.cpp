@@ -15,7 +15,9 @@ void ArduinoIO::dacOutputInitialize(AnalogOut out)
 	}
 	else if ((out == DUE_DAC0) || (out == DUE_DAC1))
 	{
+#ifdef _SAM3XA_
 		analogWriteResolution(12);		
+#endif
 	}
 }
 

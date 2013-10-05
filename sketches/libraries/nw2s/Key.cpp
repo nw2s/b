@@ -4,7 +4,6 @@
 #include <stdexcept>
 
 #ifdef __AVR__
-//This isn't the real conditional here.. but I don't know what it should be
 #include <pnew.cpp>
 #endif
 
