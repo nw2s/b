@@ -2,7 +2,11 @@
 #include <iterator>
 #include <vector>
 #include <stdexcept>
+
+#ifdef __AVR__
+//This isn't the real conditional here.. but I don't know what it should be
 #include <pnew.cpp>
+#endif
 
 #include <Arduino.h>
 
@@ -153,7 +157,7 @@ void Key::initScaleNotes(int notesperoctave, int noteindexes[], int randomweight
 			/* Skip the negative locations */
 			if (cvlocation > -1)
 			{										
-				ScaleNote note = { NOTE_CV[cvlocation], cvlocation << 2, 0, randomweights[noteindex], octaveindex, noteindex + 1 };
+				ScaleNote note = { NOTE_CV[cvlocation], cvlocation << 2, cvlocation << 6, randomweights[noteindex], octaveindex, noteindex + 1 };
 			
 				this->notes.push_back(note);
 				this->randomweight += note.randomweight;

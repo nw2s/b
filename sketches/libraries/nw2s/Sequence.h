@@ -23,13 +23,11 @@ namespace nw2s
 	class TimeBasedDevice;
 }
 
-//TODO: Add a trigger output to these
 //TODO: Add a generalized input map for transpose, tempo, trigger length
-//TODO: Add tweening parameters
 //TODO: Modulatable parameters EM.reg(new CVmodsource(input1, notesequence1.pitchmodulator))
-//TODO: clocks into sync input!
 //TODO: fix random timings to beat
 //TODO: speed params on slews
+//TODO: RandomTimeSeq based on scale
 
 class nw2s::NoteSequence : public nw2s::TimeBasedDevice
 {

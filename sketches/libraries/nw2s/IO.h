@@ -6,14 +6,6 @@
 #include "Slew.h"
 #include <Arduino.h>
 
-// #ifndef PORTB
-// #define PORTB 0
-// #endif
-// 
-// #ifndef PORTD
-// #define PORTD 0
-// #endif
-
 namespace nw2s
 {
 	enum AnalogIn
@@ -40,11 +32,13 @@ namespace nw2s
 	enum AnalogOut
 	{
 		ARDCORE_DAC = -1,
-		
+		DUE_DAC0 = -3,
+		DUE_DAC1 = -4,
+		B_DAC0 = -5,
 		ANALOG_OUT_NONE = -2,
 	};
 	
-	const int TRIGGER_TIME = 25;        // 25 ms trigger timing
+	const int TRIGGER_TIME = 25;
 
 
 	class ArduinoIO;
