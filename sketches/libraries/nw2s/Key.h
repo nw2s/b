@@ -54,19 +54,18 @@ namespace nw2s
 		B = 11,
 	};
 
-	extern const int NOTE_CV_SIZE;
-	extern const int NOTE_CV[61];
-
 	struct ScaleNote 
 	{
-		int cv;
+		int index;
 		int cv8;
 		int cv12;
-		int randomweight;
+		int cvin;
 		int octave;
 		int degree;
 	};
 
+	extern const int NOTE_CV_SIZE;
+	extern const ScaleNote SCALE_NOTES[61];
 	extern const ScaleNote NOTE_NOT_FOUND;
 
 	typedef std::vector<ScaleNote> ScaleNotes; 
@@ -91,9 +90,7 @@ class nw2s::Key
 		ScaleType scaletype;			
 		NoteName rootnote;			 
 		ScaleNotes notes;
-		int randomweight;
 		
-
 		void initScaleMeta(ScaleType scaletype, NoteName rootnote);
 		void initScaleNotes(int notesperoctave, int noteindexes[], int randomweights[]);		
 };

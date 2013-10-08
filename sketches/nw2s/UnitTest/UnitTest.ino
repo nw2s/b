@@ -18,13 +18,13 @@
 
 */
 
-
 #include <Key.h>
 #include <EventManager.h>
 #include <Clock.h>
 #include <Slew.h>
 #include <Sequence.h>
 #include <IO.h>
+#include <SPI.h>
 
 
 using namespace nw2s;

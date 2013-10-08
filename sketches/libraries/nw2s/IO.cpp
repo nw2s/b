@@ -19,6 +19,7 @@
 */
 
 #include "IO.h"
+#include "mcp4822.h"
 
 using namespace nw2s;
 
