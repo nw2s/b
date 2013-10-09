@@ -1,0 +1,84 @@
+
+
+
+2.048V
+
+4096
+
+0.5mV per bit
+
+2.5 gain
+
+0.00125mV per bit
+
+
+
+
+
+6 pot
+6 analog in
+
+16 analog out
+8 clock/trigger out
+
+
+
+Digital 22 - 53
+
+22 - GATE0
+23 - GATE1
+24 - GATE2
+25 - GATE3
+26 - GATE4
+27 - GATE5
+28 - GATE6
+29 - GATE7
+30 - CSDAC00
+30 - CSDAC01
+31 - LDAC00
+31 - LDAC01
+32 - CSDAC02
+32 - CSDAC03
+33 - LDAC02
+33 - LDAC03
+34 - CSDAC04
+34 - CSDAC05
+35 - LDAC04
+35 - LDAC05
+36 - CSDAC06
+36 - CSDAC07
+37 - LDAC06
+37 - LDAC07
+38 - CSDAC08
+38 - CSDAC09
+39 - LDAC08
+39 - LDAC09
+40 - CSDAC10
+40 - CSDAC11
+41 - LDAC10
+41 - LDAC11
+42 - CSDAC12
+42 - CSDAC13
+43 - LDAC12
+43 - LDAC13
+44 - CSDAC14
+44 - CSDAC15
+45 - LDAC14
+45 - LDAC15
+46
+47
+48
+49
+50
+51
+52 - IN_D0
+53 - IN_D1
+
+
+
+
+
+
+
+
+
