@@ -3,18 +3,18 @@
 	nw2s::b - A microcontroller-based modular synth control framework
 	Copyright (C) 2013 Scott Wilson (thomas.scott.wilson@gmail.com)
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
@@ -23,9 +23,21 @@
 
 using namespace nw2s;
 
-void ArduinoIO::dacOutputInitialize(AnalogOut out)
+AnalogOut* AnalogOut::create(PinAnalogOut out)
 {
-	if (out == ARDCORE_DAC)
+	return new AnalogOut(out);
+}
+
+
+AnalogOut::AnalogOut(PinAnalogOut pin)
+{
+
+	this->pin = pin;
+	
+#ifdef __AVR__
+
+	/* Arcdcore runs on an AVR platform */
+	if (pin == ARDCORE_DAC)
 	{
   		for (int i=0; i<8; i++) 
 		{
@@ -33,20 +45,34 @@ void ArduinoIO::dacOutputInitialize(AnalogOut out)
     		digitalWrite(ARDCORE_DAC_PIN_OFFSET + i, LOW);
 		}
 	}
-	else if ((out == DUE_DAC0) || (out == DUE_DAC1))
-	{
-#ifdef _SAM3XA_
-		analogWriteResolution(12);		
+
 #endif
+	
+#ifdef _SAM3XA_
+
+	/* nw2s::b runs on a SAM platform */
+	if ((pin >= DUE_SPI_4822_0) && (pin <= DUE_SPI_4822_15))
+	{
+		/* Calculate the CS and latch pins from the out pin */
+		int cspin = (pin - DUE_SPI_4822_PREFIX) - (DUE_SPI_4822_PREFIX % 2);
+		int ldacpin = cspin + 1;
+		this->spidac_index = DUE_SPI_4822_PREFIX % 2;
+		
+		Serial.print("\nUsing cspin = " + String(cspin));
+		Serial.print("\nUsing ldacpin = " + String(ldacpin));
+		
+		spidac = MCP4822(cspin,ldacpin);
 	}
+
+#endif
 }
 
-void ArduinoIO::dacOutputNote(AnalogOut out, ScaleNote note)
+void AnalogOut::outputNoteCV(ScaleNote note)
 {
 
 #ifdef __AVR__
 
-	if (out == ARDCORE_DAC)
+	if (pin == ARDCORE_DAC)
 	{
 		byte v = note.cv8;
 	
@@ -60,13 +86,10 @@ void ArduinoIO::dacOutputNote(AnalogOut out, ScaleNote note)
 
 #ifdef _SAM3XA_
 
-	if (out == DUE_DAC0)
+	if ((pin >= DUE_SPI_4822_0) && (pin <= DUE_SPI_4822_15))
 	{
-		analogWrite(DAC0, note.cv12);
-	}
-	else if (out == DUE_DAC1)
-	{
-		analogWrite(DAC1, note.cv12);
+
+
 	}
 
 #endif 
@@ -74,12 +97,12 @@ void ArduinoIO::dacOutputNote(AnalogOut out, ScaleNote note)
 
 }
 
-void ArduinoIO::dacOutputSlewedNote(AnalogOut out, ScaleNote note, Slew* slew, int t)
+void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew, int t)
 {
 	
 #ifdef __AVR__
 	
-	if (out == ARDCORE_DAC)
+	if (pin == ARDCORE_DAC)
 	{
 		byte v = slew->calculate_value(note.cv8, t);
 	
@@ -97,14 +120,14 @@ void ArduinoIO::dacOutputSlewedNote(AnalogOut out, ScaleNote note, Slew* slew, i
 
 	if (t % 10 == 0) Serial.print("\n- " + String(v));
 
-	if (out == DUE_DAC0)
-	{
-		analogWrite(DAC0, v);
-	}
-	else if (out == DUE_DAC1)
-	{
-		analogWrite(DAC1, v);
-	}
+	// if (out == DUE_DAC0)
+	// {
+	// 	analogWrite(DAC0, v);
+	// }
+	// else if (out == DUE_DAC1)
+	// {
+	// 	analogWrite(DAC1, v);
+	// }
 		
 #endif 
 

@@ -3,18 +3,18 @@
 	nw2s::b - A microcontroller-based modular synth control framework
 	Copyright (C) 2013 Scott Wilson (thomas.scott.wilson@gmail.com)
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
@@ -23,21 +23,25 @@
 
 #include "Key.h"
 #include "Slew.h"
+#include "mcp4822.h"
 #include <Arduino.h>
 
 namespace nw2s
 {
-	enum AnalogIn
-	{
-		ARDCORE_IN_A0 = 0,
-		ARDCORE_IN_A1 = 1,
-		ARDCORE_IN_A2 = 2,
-		ARDCORE_IN_A3 = 3,
-		ARDCORE_IN_A4 = 4,
-		ARDCORE_IN_A5 = 5,
-	};
 	
-	enum DigitalOut
+#ifdef __AVR__
+
+	enum PinAnalogIn
+	{
+		ARDCORE_IN_A0 = A0,
+		ARDCORE_IN_A1 = A1,
+		ARDCORE_IN_A2 = A2,
+		ARDCORE_IN_A3 = A3,
+		ARDCORE_IN_A4 = A4,
+		ARDCORE_IN_A5 = A5,
+	};
+
+	enum PinDigitalOut
 	{
 		ARDCORE_CLOCK_IN = 2,
 		ARDCORE_OUT_D0 = 3,
@@ -48,43 +52,93 @@ namespace nw2s
 		DIGITAL_OUT_NONE = -1,
 	};
 
-	enum AnalogOut
+	
+
+	enum PinAnalogOut
 	{
 		ARDCORE_DAC = -1,
-		DUE_DAC0 = -3,
-		DUE_DAC1 = -4,
-		B_DAC0 = -5,
+		ANALOG_OUT_NONE = -2,		
+	};
+
+#endif
+
+#ifdef _SAM3XA_
+
+	enum PinDigitalOut
+	{
+		DUE_OUT_D0 = 52,
+		DUE_OUT_D1 = 53,
+		
+		DIGITAL_OUT_NONE = -1,
+	};
+
+	enum PinAnalogIn
+	{
+		DUE_IN_A00 = A0,
+		DUE_IN_A01 = A1,
+		DUE_IN_A02 = A2,
+		DUE_IN_A03 = A3,
+		DUE_IN_A04 = A4,
+		DUE_IN_A05 = A5,
+		DUE_IN_A06 = A6,
+		DUE_IN_A07 = A7,
+		DUE_IN_A08 = A8,
+		DUE_IN_A09 = A9,
+		DUE_IN_A10 = A10,
+		DUE_IN_A11 = A11,
+	};
+
+	enum PinAnalogOut
+	{
 		ANALOG_OUT_NONE = -2,
 		
-		DUE_SPI_4822_0 = 1000,
-		DUE_SPI_4822_1 = 1001,
-		DUE_SPI_4822_2 = 1002,
-		DUE_SPI_4822_3 = 1003,
-		DUE_SPI_4822_4 = 1004,
-		DUE_SPI_4822_5 = 1005,
-		DUE_SPI_4822_6 = 1006,
-		DUE_SPI_4822_7 = 1007,
-		DUE_SPI_4822_8 = 1008,
-		DUE_SPI_4822_9 = 1009,
-		DUE_SPI_4822_10 = 1010,
-		DUE_SPI_4822_11 = 1011,
-		DUE_SPI_4822_12 = 1012,
-		DUE_SPI_4822_13 = 1013,
-		DUE_SPI_4822_14 = 1014,
-		DUE_SPI_4822_15 = 1015,
+		DUE_SPI_4822_PREFIX = 1000,
+		DUE_SPI_4822_0 = 1030,
+		DUE_SPI_4822_1 = 1031,
+		DUE_SPI_4822_2 = 1032,
+		DUE_SPI_4822_3 = 1033,
+		DUE_SPI_4822_4 = 1034,
+		DUE_SPI_4822_5 = 1035,
+		DUE_SPI_4822_6 = 1036,
+		DUE_SPI_4822_7 = 1037,
+		DUE_SPI_4822_8 = 1038,
+		DUE_SPI_4822_9 = 1039,
+		DUE_SPI_4822_10 = 1040,
+		DUE_SPI_4822_11 = 1041,
+		DUE_SPI_4822_12 = 1042,
+		DUE_SPI_4822_13 = 1043,
+		DUE_SPI_4822_14 = 1044,
+		DUE_SPI_4822_15 = 1045,
 	};
-	
+
+
+#endif
+
 	const int TRIGGER_TIME = 25;
 
-	class ArduinoIO;
+	class AnalogOut;
+	
 }
 
-class nw2s::ArduinoIO
+class nw2s::AnalogOut
 {
 	public:
-		static void dacOutputInitialize(AnalogOut out);
-		static void dacOutputNote(AnalogOut out, ScaleNote note);
-		static void dacOutputSlewedNote(AnalogOut out, ScaleNote note, Slew* slew, int t);
+		static nw2s::AnalogOut* create(PinAnalogOut pin);
+		void outputNoteCV(ScaleNote note);
+		void outputSlewedNoteCV(ScaleNote note, Slew* slew, int t);
+		
+	private:
+		PinAnalogOut pin;
+		AnalogOut(PinAnalogOut out);
+
+#ifdef _SAM3XA_
+		MCP4822 spidac;
+		int spidac_index;
+#endif
+
+
+
+
 };
 
 #endif

@@ -3,18 +3,18 @@
 	nw2s::b - A microcontroller-based modular synth control framework
 	Copyright (C) 2013 Scott Wilson (thomas.scott.wilson@gmail.com)
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
@@ -30,27 +30,27 @@
 using namespace std;
 using namespace nw2s;
 
-NoteSequence* NoteSequence::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int tempo, AnalogOut output, DigitalOut gate_out, int gate_duration, bool randomize_seq, Slew* slew)
+NoteSequence* NoteSequence::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int tempo, PinAnalogOut output, PinDigitalOut gate_out, int gate_duration, bool randomize_seq, Slew* slew)
 {
 	return new NoteSequence(notes, key, scale, tempo, output, gate_out, gate_duration, randomize_seq, slew);
 }
 
-RandomNoteSequence* RandomNoteSequence::create(NoteName key, ScaleType scale, int tempo, AnalogOut output, DigitalOut gate_out, int gate_duration, Slew* slew)
+RandomNoteSequence* RandomNoteSequence::create(NoteName key, ScaleType scale, int tempo, PinAnalogOut output, PinDigitalOut gate_out, int gate_duration, Slew* slew)
 {
 	return new RandomNoteSequence(key, scale, tempo, output, gate_out, gate_duration, slew);
 }
 
-RandomTimeSequence* RandomTimeSequence::create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, AnalogOut output, DigitalOut gate_out, int gate_duration, bool randomize_seq, Slew* slew)
+RandomTimeSequence* RandomTimeSequence::create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output, PinDigitalOut gate_out, int gate_duration, bool randomize_seq, Slew* slew)
 {
 	return new RandomTimeSequence(notes, key, scale, mintempo, maxtempo, output, gate_out, gate_duration, randomize_seq, slew);
 }
 
-RandomTimeSequence* RandomTimeSequence::create(NoteName key, ScaleType scale, int mintempo, int maxtempo, AnalogOut output, DigitalOut gate_out, int gate_duration, Slew* slew)
+RandomTimeSequence* RandomTimeSequence::create(NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output, PinDigitalOut gate_out, int gate_duration, Slew* slew)
 {
 	return new RandomTimeSequence(key, scale, mintempo, maxtempo, output, gate_out, gate_duration, slew);
 }
 
-NoteSequence::NoteSequence(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int tempo, AnalogOut output, DigitalOut gate_out, int gate_duration, bool randomize_seq, Slew* slew)
+NoteSequence::NoteSequence(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int tempo, PinAnalogOut pin, PinDigitalOut gate_out, int gate_duration, bool randomize_seq, Slew* slew)
 {
 	this->key = new Key(scale, key);
 	this->output = output;
@@ -69,8 +69,8 @@ NoteSequence::NoteSequence(vector<SequenceNote>* notes, NoteName key, ScaleType 
 	/* Output the first note of the sequence */
 	int startdegree = (*this->notes)[noteindex].degree;
 	int startoctave = (*this->notes)[noteindex].octave;
-	ArduinoIO::dacOutputInitialize(output);
-	ArduinoIO::dacOutputNote(output, this->key->getNote(startoctave, startdegree));
+	this->output = AnalogOut::create(pin);
+	this->output->outputNoteCV(this->key->getNote(startoctave, startdegree));
 
 	/* Make sure the clock pin is high since we started the sequence */
 	gate_state = HIGH;
@@ -93,12 +93,12 @@ void NoteSequence::timer(unsigned long t)
 		this->current_degree = (*this->notes)[noteindex].degree;
 		this->current_octave = (*this->notes)[noteindex].octave;		
 
-		if (this->slew == NULL) ArduinoIO::dacOutputNote(output, this->key->getNote(this->current_octave, this->current_degree));
+		if (this->slew == NULL) this->output->outputNoteCV(this->key->getNote(this->current_octave, this->current_degree));
 	}
 
 	if (this->slew != NULL)
 	{
-		ArduinoIO::dacOutputSlewedNote(output, this->key->getNote(this->current_octave, this->current_degree), this->slew, period_t);
+		this->output->outputSlewedNoteCV(this->key->getNote(this->current_octave, this->current_degree), this->slew, period_t);
 	}
 	
 	if ((this->gate_state == LOW) && (t % this->period < gate_duration))
@@ -113,7 +113,7 @@ void NoteSequence::timer(unsigned long t)
 	}	
 }
 
-RandomNoteSequence::RandomNoteSequence(NoteName key, ScaleType scale, int tempo, AnalogOut output, DigitalOut gate_out, int gate_duration, Slew* slew)
+RandomNoteSequence::RandomNoteSequence(NoteName key, ScaleType scale, int tempo, PinAnalogOut pin, PinDigitalOut gate_out, int gate_duration, Slew* slew)
 {
 	this->key = new Key(scale, key);
 	this->output = output;
@@ -123,13 +123,13 @@ RandomNoteSequence::RandomNoteSequence(NoteName key, ScaleType scale, int tempo,
 		
 	/* Start the CV at a random note in the sequence */
 	this->current_note = this->key->getRandomNote();
-	ArduinoIO::dacOutputInitialize(output);
-	ArduinoIO::dacOutputNote(output, this->current_note);
+	this->output = AnalogOut::create(pin);
+	this->output->outputNoteCV(this->current_note);
 
 	/* Make sure the clock pin is high since we started the sequence */
 	this->output = output;
 	gate_state = HIGH;
-	digitalWrite(this->output, HIGH);
+	digitalWrite(this->gate_out, HIGH);
 
 	/* The fixed sequence operates on a regular period based on the tempo */
 	//TODO: Convert to integers
@@ -144,12 +144,12 @@ void RandomNoteSequence::timer(unsigned long t)
 	{
 		this->current_note = this->key->getRandomNote();
 		
-		if (this->slew == NULL) ArduinoIO::dacOutputNote(output, this->current_note);		
+		if (this->slew == NULL) this->output->outputNoteCV(this->current_note);		
 	}
 
 	if (this->slew != NULL)
 	{
-		ArduinoIO::dacOutputSlewedNote(output, this->current_note, this->slew, t % this->period);
+		this->output->outputSlewedNoteCV(this->current_note, this->slew, t % this->period);
 	}
 
 	if ((this->gate_state == LOW) && (t % this->period < gate_duration))
@@ -164,7 +164,7 @@ void RandomNoteSequence::timer(unsigned long t)
 	}	
 }
 
-RandomTimeSequence::RandomTimeSequence(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, AnalogOut output, DigitalOut gate_out, int gate_duration, bool randomize_seq, Slew* slew)
+RandomTimeSequence::RandomTimeSequence(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut pin, PinDigitalOut gate_out, int gate_duration, bool randomize_seq, Slew* slew)
 {
 	this->key = new Key(scale, key);
 	this->output = output;
@@ -185,8 +185,8 @@ RandomTimeSequence::RandomTimeSequence(vector<SequenceNote>* notes, NoteName key
 	/* Start at either the first or a random item in the sequence */
 	int startdegree = (*this->notes)[noteindex].degree;
 	int startoctave = (*this->notes)[noteindex].octave;
-	ArduinoIO::dacOutputInitialize(output);
-	ArduinoIO::dacOutputNote(output, this->key->getNote(startoctave, startdegree));
+	this->output = AnalogOut::create(pin);
+	this->output->outputNoteCV(this->key->getNote(startoctave, startdegree));
 
 	/* Make sure the clock pin is high since we started the sequence */
 	gate_state = HIGH;
@@ -211,7 +211,7 @@ void RandomTimeSequence::timer(unsigned long t)
 		
 		this->current_note = this->key->getNote(octave, degree);
 		
-		if (this->slew == NULL) ArduinoIO::dacOutputNote(output, this->current_note);
+		if (this->slew == NULL) this->output->outputNoteCV(this->current_note);
 		
 		/* Calculation of the current tempo is only done on clock tick */
 		this->last_t = t;	
@@ -220,7 +220,7 @@ void RandomTimeSequence::timer(unsigned long t)
 
 	if (this->slew != NULL)
 	{
-		ArduinoIO::dacOutputSlewedNote(output, this->current_note, this->slew, next_t - t);
+		this->output->outputSlewedNoteCV(this->current_note, this->slew, next_t - t);
 	}
 
 	if ((gate_state == LOW) && (t >= this->next_t))
