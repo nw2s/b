@@ -47,7 +47,7 @@ namespace nw2s
 //TODO: speed params on slews
 //TODO: RandomTimeSeq based on scale
 //TOOD: sample-based envelope generator
-//TODO: add DAC outs
+//TODO: CV sequence
 
 class nw2s::NoteSequence : public nw2s::TimeBasedDevice
 {

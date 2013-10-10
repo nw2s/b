@@ -47,7 +47,7 @@ void MCP4822::begin() {
     digitalWrite(cs,HIGH);
     digitalWrite(ldac,HIGH);
     // Set to default configuration
-    setGain2X_AB();
+    setGain1X_AB();
 }
 
 // ---------------------------------------------------------------------------

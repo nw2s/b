@@ -18,7 +18,10 @@
 
 */
 
+
+
 #include "IO.h"
+#include <SPI.h>
 #include "mcp4822.h"
 
 using namespace nw2s;
@@ -60,8 +63,17 @@ AnalogOut::AnalogOut(PinAnalogOut pin)
 		
 		Serial.print("\nUsing cspin = " + String(cspin));
 		Serial.print("\nUsing ldacpin = " + String(ldacpin));
+		Serial.print("\nUsing chip out = " + String(this->spidac_index));
 		
-		spidac = MCP4822(cspin,ldacpin);
+		this->spidac = MCP4822(cspin,ldacpin);
+		
+	    this->spidac.begin();
+	    SPI.setDataMode(SPI_MODE0);
+	    SPI.setBitOrder(MSBFIRST);
+	    SPI.setClockDivider(42);
+	    SPI.begin();
+		this->spidac.setGain1X_AB();			
+		
 	}
 
 #endif
@@ -88,8 +100,16 @@ void AnalogOut::outputNoteCV(ScaleNote note)
 
 	if ((pin >= DUE_SPI_4822_0) && (pin <= DUE_SPI_4822_15))
 	{
+		Serial.print("\n- " + String(note.cv12));
 
-
+		if (this->spidac_index == 0)
+		{
+			this->spidac.setValue_A(note.cv12);
+		}
+		else
+		{
+			this->spidac.setValue_B(note.cv12);
+		}
 	}
 
 #endif 
@@ -120,14 +140,17 @@ void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew, int t)
 
 	if (t % 10 == 0) Serial.print("\n- " + String(v));
 
-	// if (out == DUE_DAC0)
-	// {
-	// 	analogWrite(DAC0, v);
-	// }
-	// else if (out == DUE_DAC1)
-	// {
-	// 	analogWrite(DAC1, v);
-	// }
+	if ((pin >= DUE_SPI_4822_0) && (pin <= DUE_SPI_4822_15))
+	{		
+		if (this->spidac_index == 0)
+		{
+			this->spidac.setValue_A(v);
+		}
+		else
+		{
+			this->spidac.setValue_B(v);
+		}
+	}
 		
 #endif 
 
