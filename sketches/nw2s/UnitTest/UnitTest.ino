@@ -61,7 +61,7 @@ void setup()
 	//EventManager::registerdevice(NoteSequence::create(notes, A, MINOR, 20, ARDCORE_DAC, ARDCORE_OUT_PIN13, 100, false, DecaySlew::create(1000)));
 	//EventManager::registerdevice(NoteSequence::create(notes, A, MINOR, 20, ARDCORE_DAC, ARDCORE_OUT_PIN13, 100, false, LinearSlew::create(1000)));
 
-	EventManager::registerdevice(NoteSequence::create(notes3, C, MAJOR, 20, DUE_SPI_4822_0, DUE_OUT_D0, 200, false, NULL));
+	EventManager::registerdevice(NoteSequence::create(notes3, C, CHROMATIC, 20, DUE_SPI_4822_0, DUE_OUT_D0, 200, false, NULL));
 
 	/* Randomized note sequence running at 160BPM, output on Ardcore DAC */
 	//EventManager::registerdevice(NoteSequence::create(notes2, A, MINOR, 40, ARDCORE_DAC, ARDCORE_OUT_D0, 150, true, NULL));

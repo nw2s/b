@@ -95,9 +95,9 @@ const ScaleNote nw2s::SCALE_NOTES[nw2s::NOTE_CV_SIZE] = {
 	{ 53, 212, 3533, 896, 4, 6 },
 	{ 54, 216, 3600, 913, 4, 7 },
 	{ 55, 220, 3667, 930, 4, 8 },
-	{ 56, 224, 3533, 947, 4, 9 },
-	{ 57, 228, 3600, 964, 4, 10 },
-	{ 58, 232, 3667, 981, 4, 11 },
+	{ 56, 224, 3733, 947, 4, 9 },
+	{ 57, 228, 3800, 964, 4, 10 },
+	{ 58, 232, 3867, 981, 4, 11 },
 	{ 59, 236, 3933, 998, 4, 12 },
 	{ 60, 240, 4000, 1015, 5, 1 },
 };
@@ -156,7 +156,7 @@ void Key::initScaleMeta(ScaleType scaletype, NoteName rootnote)
 	{
 		case MAJOR:
 		{
-			int noteindexes[] = { 0, 2, 4, 5, 7, 9, 11 };
+			int noteindexes[] = { 0, 2, 4, 5, 7, 9, 10 };
 			initScaleNotes(7, noteindexes);
 			break;
 		}
@@ -170,7 +170,7 @@ void Key::initScaleMeta(ScaleType scaletype, NoteName rootnote)
 					
 		case CHROMATIC:
 		{
-			int noteindexes[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+			int noteindexes[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 			initScaleNotes(11, noteindexes);
 			break;
 		}
