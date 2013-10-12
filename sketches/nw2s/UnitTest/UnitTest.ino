@@ -31,6 +31,7 @@ using namespace nw2s;
 
 void setup() 
 {
+	//Serial.begin(9600);
 	Serial.begin(19200);
 	Serial.print("\n\nStarting...\n");
 
@@ -46,22 +47,24 @@ void setup()
 	//EventManager::registerdevice(VariableClock::create(25, 125, ARDCORE_IN_A2, ARDCORE_OUT_D1));
 		
 	/* Set up a sample sequence that we'll use in the demos */
-	const int sequence_length = 8;
-	SequenceNote notelist[sequence_length] = { {0,1}, {4,1}, {0,1}, {4,1}, {0,1}, {4,1}, {0,1}, {4,1} };
-	std::vector<SequenceNote>* notes = new vector<SequenceNote>(notelist, notelist + sequence_length);
-
-	SequenceNote notelist2[sequence_length] = { {1,1}, {1,3}, {1,5}, {1,1}, {1,3}, {1,5}, {1,1}, {1,5} };
-	std::vector<SequenceNote>* notes2 = new vector<SequenceNote>(notelist2, notelist2 + sequence_length);
+	// const int sequence_length = 8;
+	// SequenceNote notelist[sequence_length] = { {0,1}, {4,1}, {0,1}, {4,1}, {0,1}, {4,1}, {0,1}, {4,1} };
+	// std::vector<SequenceNote>* notes = new vector<SequenceNote>(notelist, notelist + sequence_length);
+	// 
+	// SequenceNote notelist2[sequence_length] = { {1,1}, {1,3}, {1,5}, {1,1}, {1,3}, {1,5}, {1,1}, {1,5} };
+	// std::vector<SequenceNote>* notes2 = new vector<SequenceNote>(notelist2, notelist2 + sequence_length);
 
 	SequenceNote notelist3[6] = { {0,1}, {1,1}, {2,1}, {3,1}, {4,1}, {5,1} };
 	std::vector<SequenceNote>* notes3 = new vector<SequenceNote>(notelist3, notelist3 + 6);
 
 	/* Fixed note sequence running at 20BPM 16th notes, output on Ardcore DAC, 100ms gate on Pin 13 */
-	//EventManager::registerdevice(NoteSequence::create(notes, A, MINOR, 20, ARDCORE_DAC, ARDCORE_OUT_PIN13, 100, false, NULL));
+	//NoteSequence::create(notes3, A, MINOR, 20, ARDCORE_DAC, ARDCORE_OUT_PIN13, 100, false, NULL);
+	//NoteSequence::create(notes3, C, MAJOR, 20, DUE_SPI_4822_0, DUE_OUT_D0, 100, false, NULL);
+	//EventManager::registerdevice(NoteSequence::create(notes3, C, MAJOR, 20, ARDCORE_DAC, ARDCORE_OUT_PIN13, 100, false, NULL));
 	//EventManager::registerdevice(NoteSequence::create(notes, A, MINOR, 20, ARDCORE_DAC, ARDCORE_OUT_PIN13, 100, false, DecaySlew::create(1000)));
-	//EventManager::registerdevice(NoteSequence::create(notes, A, MINOR, 20, ARDCORE_DAC, ARDCORE_OUT_PIN13, 100, false, LinearSlew::create(1000)));
+	//EventManager::registerdevice(NoteSequence::create(notes3, C, MAJOR, 20, ARDCORE_DAC, ARDCORE_OUT_PIN13, 100, false, LinearSlew::create(1000)));
 
-	EventManager::registerdevice(NoteSequence::create(notes3, C, CHROMATIC, 20, DUE_SPI_4822_0, DUE_OUT_D0, 200, false, NULL));
+	//EventManager::registerdevice(NoteSequence::create(notes3, C, MAJOR, 20, DUE_SPI_4822_0, DUE_OUT_D0, 200, false, NULL));
 
 	/* Randomized note sequence running at 160BPM, output on Ardcore DAC */
 	//EventManager::registerdevice(NoteSequence::create(notes2, A, MINOR, 40, ARDCORE_DAC, ARDCORE_OUT_D0, 150, true, NULL));
@@ -84,6 +87,11 @@ void setup()
 	//EventManager::registerdevice(RandomTimeSequence::create(notes2, A, MINOR, 75, 160, ARDCORE_DAC, ARDCORE_OUT_D0, 100, true, LinearSlew::create(1000)));
 	//EventManager::registerdevice(RandomTimeSequence::create(notes2, A, MINOR, 75, 160, DUE_SPI_4822_0, DUE_OUT_D0, 100, true, DecaySlew::create(1000)));
 
+	/* Move through a sequence based on a CV input */
+	//EventManager::registerdevice(CVNoteSequence::create(notes3, C, MAJOR, ARDCORE_DAC, ARDCORE_IN_A0, ARDCORE_OUT_D0, 200, NULL));
+	EventManager::registerdevice(CVNoteSequence::create(notes3, C, MAJOR, ARDCORE_DAC, ARDCORE_IN_A0, ARDCORE_OUT_D0, 200, LinearSlew::create(1000)));
+	//EventManager::registerdevice(CVNoteSequence::create(notes3, C, MAJOR, 20, DUE_SPI_4822_0, DUE_OUT_D0, 200, false, NULL));
+	
 
 
 	
@@ -93,8 +101,4 @@ void loop()
 {
 	EventManager::loop();
 	
-	// Key key1 = Key(MAJOR, C);		
-	// ScaleNote note1 = key1.getNote(0, 2);
-	// ScaleNote note2 = key1.getNote(-1, 2);
-	// ScaleNote note3 = key1.getRandomNote();
 }

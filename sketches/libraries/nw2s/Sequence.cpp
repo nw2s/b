@@ -50,6 +50,12 @@ RandomTimeSequence* RandomTimeSequence::create(NoteName key, ScaleType scale, in
 	return new RandomTimeSequence(key, scale, mintempo, maxtempo, output, gate_out, gate_duration, slew);
 }
 
+CVNoteSequence* CVNoteSequence::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input, PinDigitalOut gate_out, int gate_duration, Slew* slew)
+{
+	return new CVNoteSequence(notes, key, scale, output, input, gate_out, gate_duration, slew);
+}
+
+
 NoteSequence::NoteSequence(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int tempo, PinAnalogOut pin, PinDigitalOut gate_out, int gate_duration, bool randomize_seq, Slew* slew)
 {
 	this->key = new Key(scale, key);
@@ -63,20 +69,20 @@ NoteSequence::NoteSequence(vector<SequenceNote>* notes, NoteName key, ScaleType 
 	/* Copy the sequence to our own memory */
 	this->notes = new vector<SequenceNote>();
 	copy(notes->begin(), notes->end(), back_inserter(*this->notes));
-
+	
 	int noteindex = (randomize_seq) ? random(this->notes->size()) : 0;
-
+	
 	/* Output the first note of the sequence */
 	int startdegree = (*this->notes)[noteindex].degree;
 	int startoctave = (*this->notes)[noteindex].octave;
 	this->output = AnalogOut::create(pin);
 	this->output->outputNoteCV(this->key->getNote(startoctave, startdegree));
-
+	
 	/* Make sure the clock pin is high since we started the sequence */
 	gate_state = HIGH;
-    pinMode(this->gate_out, OUTPUT);
+	pinMode(this->gate_out, OUTPUT);
 	digitalWrite(this->gate_out, HIGH);
-
+	
 	/* The fixed sequence operates on a regular period based on the tempo */
 	int normalized_tempo = (tempo < 1) ? 1 : (tempo > 500) ? 500 : tempo;
 	float periodms = (1.0 / normalized_tempo) * 60000.0;
@@ -246,5 +252,108 @@ void RandomTimeSequence::calculate_next_t(unsigned long t)
 	
 	Serial.print("\n t - " + String(this->next_t));
 }
+
+CVNoteSequence::CVNoteSequence(vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut pin, PinAnalogIn input, PinDigitalOut gate_out, int gate_duration, Slew* slew)
+{
+	
+	Serial.print("\n creating cvnotesequence...");
+	
+	this->key = new Key(scale, key);
+	this->output = output;
+	this->sequence_index = 0;
+	this->gate_out = gate_out;
+	this->gate_duration = gate_duration;
+	this->slew = slew;
+	this->last_note_t = 0;
+	this->cv_in = input;
+		
+	/* Copy the sequence to our own memory */
+	this->notes = new vector<SequenceNote>();
+	copy(notes->begin(), notes->end(), back_inserter(*this->notes));
+
+	/* Read the input and calculate the position in the sequence */	
+	unsigned long noteindex = (((analogRead(cv_in) * 1000UL) / 1023UL) * this->notes->size()) / 1000UL;
+	this->sequence_index = noteindex;
+	//Serial.print("\nCV: " + String(analogRead(cv_in)));
+	Serial.print(" index: " + String(noteindex));
+
+	/* Output the first note of the sequence */
+	int startdegree = (*this->notes)[noteindex].degree;
+	int startoctave = (*this->notes)[noteindex].octave;
+	this->output = AnalogOut::create(pin);
+	this->output->outputNoteCV(this->key->getNote(startoctave, startdegree));
+	
+	/* Make sure the clock pin is high since we started the sequence */
+	gate_state = HIGH;
+	pinMode(this->gate_out, OUTPUT);
+	digitalWrite(this->gate_out, HIGH);
+	
+	Serial.print("\n done creating cvnotesequence...");
+	
+}
+
+void CVNoteSequence::timer(unsigned long t)
+{			
+	if ((this->slew == NULL) && (t % 50 == 0)) 
+	{
+		// Serial.print("\ntimer " + String(t));
+		// Serial.print("   " + String(analogRead(this->cv_in)));
+		
+		/* Save some cycles, only do this every 50ms */
+	
+		/* Read the input and calculate the position in the sequence */
+		unsigned long noteindex = (((analogRead(cv_in) * 1000UL) / 1023UL) * this->notes->size()) / 1000UL;
+	
+		/* If the note is still the same, just be done */
+		if (this->sequence_index == noteindex) return;
+		
+		this->sequence_index = noteindex;
+	
+		Serial.print("\nCV: " + String(analogRead(cv_in)));
+		Serial.print(" index: " + String(noteindex));
+	
+		this->sequence_index = noteindex;
+		int degree = (*this->notes)[noteindex].degree;
+		int octave = (*this->notes)[noteindex].octave;		
+			
+		this->output->outputNoteCV(this->key->getNote(octave, degree));
+	}
+	else if (this->slew != NULL)
+	{
+		/* Read the input and calculate the position in the sequence */
+		int noteindex = (((analogRead(cv_in) * 1000UL) / 1023UL) * this->notes->size()) / 1000UL;
+	
+		if (this->sequence_index != noteindex)
+		{
+			this->sequence_index = noteindex;
+			this->last_note_t = t;
+		}
+	
+		// Serial.print("\nCV: " + String(analogRead(cv_in)));
+		if (t % 100 == 0) Serial.print(" index: " + String(noteindex));
+	
+		this->sequence_index = noteindex;
+		int degree = (*this->notes)[noteindex].degree;
+		int octave = (*this->notes)[noteindex].octave;		
+	
+		this->output->outputSlewedNoteCV(this->key->getNote(octave, degree), this->slew, t - this->last_note_t);
+	}
+	
+	if ((this->gate_state == LOW) && (t - this->last_note_t < gate_duration))
+	{
+		this->gate_state = HIGH;
+		digitalWrite(this->gate_out, HIGH);
+	}
+	else if ((this->gate_state == HIGH) && (t - this->last_note_t > gate_duration))
+	{
+		this->gate_state = LOW;
+		digitalWrite(this->gate_out, LOW);
+	}	
+}
+
+
+
+
+
 
 

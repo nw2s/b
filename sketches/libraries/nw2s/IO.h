@@ -120,8 +120,6 @@ namespace nw2s
 
 #endif
 
-	const int TRIGGER_TIME = 25;
-
 	class AnalogOut;
 	
 }
@@ -141,9 +139,6 @@ class nw2s::AnalogOut
 		MCP4822 spidac;
 		int spidac_index;
 #endif
-
-
-
 
 };
 

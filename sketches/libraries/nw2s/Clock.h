@@ -30,6 +30,8 @@ namespace nw2s
 	class DividedClock;
 	
 	class TimeBasedDevice;
+	
+	const int TRIGGER_TIME = 20;
 }
 
 class nw2s::Clock : public nw2s::TimeBasedDevice

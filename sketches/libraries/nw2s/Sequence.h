@@ -35,6 +35,7 @@ namespace nw2s
 	class NoteSequence;
 	class RandomNoteSequence;
 	class RandomTimeSequence;
+	class CVNoteSequence;
 	class GaussianTimeSeuqnce;
 	class GaussianNoteSequence;
 	
@@ -48,6 +49,9 @@ namespace nw2s
 //TODO: RandomTimeSeq based on scale
 //TOOD: sample-based envelope generator
 //TODO: CV sequence
+//TODO: envelope generator
+//TODO: let the class expose how often it gets called?
+//TOOD: overflow slew
 
 class nw2s::NoteSequence : public nw2s::TimeBasedDevice
 {
@@ -116,12 +120,29 @@ class nw2s::RandomTimeSequence : public nw2s::TimeBasedDevice
 		
 		RandomTimeSequence(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output, PinDigitalOut gate_out, int gate_duration, bool randomize_seq, Slew* slew);
 		RandomTimeSequence(NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output, PinDigitalOut gate_out, int gate_duration, Slew* slew);
-		void calculate_next_t(unsigned long t);
-		
+		void calculate_next_t(unsigned long t);		
 };
 
-
-
+class nw2s::CVNoteSequence : public nw2s::TimeBasedDevice
+{
+	public:
+		static CVNoteSequence* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input, PinDigitalOut gate_out, int gate_duration, Slew* slew);
+		virtual void timer(unsigned long t);
+	
+	private:
+		int gate_duration;
+		volatile int sequence_index;
+		volatile int gate_state;
+		std::vector<SequenceNote>* notes;
+		Key* key;
+	 	AnalogOut* output;
+		PinDigitalOut gate_out;
+		PinAnalogIn cv_in;
+		Slew* slew;
+		unsigned long last_note_t;
+		
+		CVNoteSequence(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input, PinDigitalOut gate_out, int gate_duration, Slew* slew);
+};
 
 #endif
 

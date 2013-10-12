@@ -19,6 +19,7 @@
 */
 
 #include "Slew.h"
+#include "Arduino.h"
 
 using namespace nw2s;
 
@@ -39,7 +40,7 @@ DecaySlew::DecaySlew(int speed)
 	this->speed = speed;
 }
 
-int DecaySlew::calculate_value(int input, int t)
+CVTYPE DecaySlew::calculate_value(CVTYPE input, int t)
 {
 	//TODO: Can't retrigger?
 	//TODO: There seems to be a weird thing at the end when slewing up.
@@ -63,7 +64,7 @@ LinearSlew::LinearSlew(int speed)
 	this->speed = speed;
 }
 
-int LinearSlew::calculate_value(int input, int t)
+CVTYPE LinearSlew::calculate_value(CVTYPE input, int t)
 {	
 	if (!initialized)
 	{
@@ -75,12 +76,16 @@ int LinearSlew::calculate_value(int input, int t)
 	{
 		return input;
 	}
-	else if (lastvalue > input)
+	else if ((int)lastvalue > (int)input)
 	{
+		if (t % 10 == 0) Serial.print("\n- " + String(input + 0));
+		if (t % 10 == 0) Serial.print(" -  " + String(lastvalue + 0));
 		return --lastvalue;
 	}
 	else
 	{
+		if (t % 10 == 0) Serial.print("\n- " + String(input + 0));
+		if (t % 10 == 0) Serial.print(" -  " + String(lastvalue + 0));
 		return ++lastvalue;
 	}
 }

@@ -86,7 +86,7 @@ void AnalogOut::outputNoteCV(ScaleNote note)
 
 	if (pin == ARDCORE_DAC)
 	{
-		byte v = note.cv8;
+		byte v = note.cv;
 	
 		Serial.print("\n- " + String(v));
 				
@@ -100,15 +100,15 @@ void AnalogOut::outputNoteCV(ScaleNote note)
 
 	if ((pin >= DUE_SPI_4822_0) && (pin <= DUE_SPI_4822_15))
 	{
-		Serial.print("\n- " + String(note.cv12));
+		Serial.print("\n- " + String(note.cv));
 
 		if (this->spidac_index == 0)
 		{
-			this->spidac.setValue_A(note.cv12);
+			this->spidac.setValue_A(note.cv);
 		}
 		else
 		{
-			this->spidac.setValue_B(note.cv12);
+			this->spidac.setValue_B(note.cv);
 		}
 	}
 
@@ -124,9 +124,9 @@ void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew, int t)
 	
 	if (pin == ARDCORE_DAC)
 	{
-		byte v = slew->calculate_value(note.cv8, t);
+		byte v = slew->calculate_value(note.cv, t);
 	
-		if (t % 10 == 0) Serial.print("\n- " + String(v));
+		//if (t % 10 == 0) Serial.print("\n- " + String(v));
 	
 	  	PORTB = (PORTB & B11100000) | (v >> 3);
 		PORTD = (PORTD & B00011111) | ((v & B00000111) << 5);		
@@ -136,7 +136,7 @@ void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew, int t)
 
 #ifdef _SAM3XA_
 
-	int v = slew->calculate_value(note.cv12, t);
+	int v = slew->calculate_value(note.cv, t);
 
 	if (t % 10 == 0) Serial.print("\n- " + String(v));
 

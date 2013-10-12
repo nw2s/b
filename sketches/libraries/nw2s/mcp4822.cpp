@@ -7,11 +7,16 @@
 // Author: Will Dickson, IO Rodeo Inc.
 // This code is licensed via Apaache 2.0
 // ----------------------------------------------------------------------------
+
+
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
 #else
 #include "WProgram.h"
 #endif
+
+#ifdef _SAM3XA_
+
 #include <SPI.h>
 #include "mcp4822.h"
 
@@ -289,3 +294,5 @@ void MCP4822::off_AB() {
     off_A();
     off_B();
 }
+
+#endif
