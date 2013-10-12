@@ -116,7 +116,7 @@ void Key::initScaleNotes(int notesperoctave, int noteindexes[])
 	{
 		for (int noteindex = 0; noteindex < notesperoctave; noteindex++)
 		{
-			int cvlocation = noteindexes[noteindex] + this->rootnote + (octaveindex * 11);
+			int cvlocation = noteindexes[noteindex] + this->rootnote + (octaveindex * 12);
 			
 			/* Once we're past the bounds, we're done */
 			if (cvlocation >= nw2s::NOTE_CV_SIZE) break;
@@ -126,13 +126,13 @@ void Key::initScaleNotes(int notesperoctave, int noteindexes[])
 			{	
 				ScaleNote note = { SCALE_NOTES[cvlocation].index, SCALE_NOTES[cvlocation].cv, SCALE_NOTES[cvlocation].cvin, octaveindex, noteindex + 1 };
 
-				// Serial.print("\nPushing scale note:");
-				// Serial.print(" loc: " + String((int)cvlocation));
-				// Serial.print(" index: " + String((int)SCALE_NOTES[cvlocation].index));
-				// Serial.print(" cv: " + String((int)SCALE_NOTES[cvlocation].cv));
-				// Serial.print(" cvin: " + String((int)SCALE_NOTES[cvlocation].cvin));
-				// Serial.print(" octave: " + String((int)octaveindex));
-				// Serial.print(" degree: " + String((int)noteindex + 1));
+				Serial.print("\nPushing scale note:");
+				Serial.print(" loc: " + String((int)cvlocation));
+				Serial.print(" index: " + String((int)SCALE_NOTES[cvlocation].index));
+				Serial.print(" cv: " + String((int)SCALE_NOTES[cvlocation].cv));
+				Serial.print(" cvin: " + String((int)SCALE_NOTES[cvlocation].cvin));
+				Serial.print(" octave: " + String((int)octaveindex));
+				Serial.print(" degree: " + String((int)noteindex + 1));
 
 				this->notes.push_back(note);
 			}

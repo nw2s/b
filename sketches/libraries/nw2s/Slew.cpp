@@ -78,14 +78,10 @@ CVTYPE LinearSlew::calculate_value(CVTYPE input, int t)
 	}
 	else if ((int)lastvalue > (int)input)
 	{
-		if (t % 10 == 0) Serial.print("\n- " + String(input + 0));
-		if (t % 10 == 0) Serial.print(" -  " + String(lastvalue + 0));
 		return --lastvalue;
 	}
 	else
 	{
-		if (t % 10 == 0) Serial.print("\n- " + String(input + 0));
-		if (t % 10 == 0) Serial.print(" -  " + String(lastvalue + 0));
 		return ++lastvalue;
 	}
 }

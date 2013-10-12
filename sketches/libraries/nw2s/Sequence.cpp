@@ -309,9 +309,6 @@ void CVNoteSequence::timer(unsigned long t)
 		
 		this->sequence_index = noteindex;
 	
-		Serial.print("\nCV: " + String(analogRead(cv_in)));
-		Serial.print(" index: " + String(noteindex));
-	
 		this->sequence_index = noteindex;
 		int degree = (*this->notes)[noteindex].degree;
 		int octave = (*this->notes)[noteindex].octave;		
@@ -328,9 +325,6 @@ void CVNoteSequence::timer(unsigned long t)
 			this->sequence_index = noteindex;
 			this->last_note_t = t;
 		}
-	
-		// Serial.print("\nCV: " + String(analogRead(cv_in)));
-		if (t % 100 == 0) Serial.print(" index: " + String(noteindex));
 	
 		this->sequence_index = noteindex;
 		int degree = (*this->notes)[noteindex].degree;
