@@ -47,20 +47,20 @@ class nw2s::Envelope
 class nw2s::ADSR : public Envelope
 {
 	public:
-		static ADSR* create(unsigned char a, unsigned char d, unsigned char s, unsigned char r, bool repeat, PinAnalogOut pin);
+		static ADSR* create(unsigned int a, unsigned int d, unsigned int s, unsigned int r, bool repeat, PinAnalogOut pin);
 		virtual void timer(unsigned int t);
 		virtual void reset();
 		
 	private:
-		unsigned char a;
-		unsigned char d;
-		unsigned char s;
-		unsigned char r;
+		unsigned int a;
+		unsigned int d;
+		unsigned int s;
+		unsigned int r;
 		bool repeat;
-		AnalogOut output;
+		AnalogOut* output;
 		EnvelopeState state;
 		
-		ADSR(unsigned char a, unsigned char d, unsigned char s, unsigned char r, bool repeat, PinAnalogOut pin);
+		ADSR(unsigned int a, unsigned int d, unsigned int s, unsigned int r, bool repeat, PinAnalogOut pin);
 	};
 
 

@@ -22,12 +22,12 @@
 
 using namespace nw2s;
 
-ADSR* ADSR::create(unsigned char a, unsigned char d, unsigned char s, unsigned char r, bool repeat, PinAnalogOut pin)
+ADSR* ADSR::create(unsigned int a, unsigned int d, unsigned int s, unsigned int r, bool repeat, PinAnalogOut pin)
 {
 	return new ADSR(a, d, s, r, repeat, pin);
 }
 
-ADSR::ADSR(unsigned char a, unsigned char d, unsigned char s, unsigned char r, bool repeat, PinAnalogOut pin)
+ADSR::ADSR(unsigned int a, unsigned int d, unsigned int s, unsigned int r, bool repeat, PinAnalogOut pin)
 {
 	this->a = a;
 	this->d = d;
@@ -40,7 +40,7 @@ ADSR::ADSR(unsigned char a, unsigned char d, unsigned char s, unsigned char r, b
 	this->output->outputCV(0);
 }
 
-void ADSR::timer(int t)
+void ADSR::timer(unsigned int t)
 {
 	
 }
