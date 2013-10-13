@@ -23,6 +23,7 @@
 
 #include "IO.h"
 #include "Slew.h"
+#include "Gate.h"
 
 namespace nw2s
 {
@@ -32,6 +33,7 @@ namespace nw2s
 		int degree;
 	};
 	
+	class Sequence;
 	class NoteSequence;
 	class RandomNoteSequence;
 	class RandomTimeSequence;
@@ -50,56 +52,65 @@ namespace nw2s
 //TOOD: sample-based envelope generator
 //TODO: CV sequence
 //TODO: envelope generator
-//TODO: let the class expose how often it gets called?
 //TOOD: overflow slew
 
-class nw2s::NoteSequence : public nw2s::TimeBasedDevice
+
+class nw2s::Sequence : public nw2s::TimeBasedDevice
+{
+	public: 
+		void setgate(Gate* gate);
+		void setslew(Slew* slew);
+		virtual void timer(unsigned long t) = 0;
+	
+	protected:
+		Gate* gate;	
+		Slew* slew;
+
+};
+
+
+class nw2s::NoteSequence : public nw2s::Sequence
 {
 	public:
-		static NoteSequence* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int tempo, PinAnalogOut output, PinDigitalOut gate_out, int gate_duration, bool randomize_seq, Slew* slew);
+		static NoteSequence* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int tempo, PinAnalogOut output, bool randomize_seq);
 		virtual void timer(unsigned long t);
+		//void setSlew(Slew slew);
+		//void setEG(EnvelopeGenerator eg);
 	
 	private:
 		bool randomize_seq;
 		int current_degree;
 		int current_octave;
 		int period;
-		int gate_duration;
 		volatile int sequence_index;
-		volatile int gate_state;
 		std::vector<SequenceNote>* notes;
 		Key* key;
 	 	AnalogOut* output;
-		PinDigitalOut gate_out;
-		Slew* slew;
 		
-		NoteSequence(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int tempo, PinAnalogOut output, PinDigitalOut gate_out, int gate_duration, bool randomize_seq, Slew* slew);
+		NoteSequence(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int tempo, PinAnalogOut output, bool randomize_seq);
 };
 
-class nw2s::RandomNoteSequence : public nw2s::TimeBasedDevice
+class nw2s::RandomNoteSequence : public nw2s::Sequence
 {
 	public:
-		static RandomNoteSequence* create(NoteName key, ScaleType scale, int tempo, PinAnalogOut output, PinDigitalOut gate_out, int gate_duration, Slew* slew);
+		static RandomNoteSequence* create(NoteName key, ScaleType scale, int tempo, PinAnalogOut output);
 		virtual void timer(unsigned long t);
+		void setgate(Gate* gate);
 	
 	private:
 		Key* key;
 		int period;
 		AnalogOut* output;
-		PinDigitalOut gate_out;
-		volatile int gate_state;
-		int gate_duration;
-		Slew* slew;
 		ScaleNote current_note;
 		
-		RandomNoteSequence(NoteName key, ScaleType scale, int tempo, PinAnalogOut output, PinDigitalOut gate_out, int gate_duration, Slew* slew);
+		RandomNoteSequence(NoteName key, ScaleType scale, int tempo, PinAnalogOut output);
 };
 
-class nw2s::RandomTimeSequence : public nw2s::TimeBasedDevice
+class nw2s::RandomTimeSequence : public nw2s::Sequence
 {
 	public:
-		static RandomTimeSequence* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output, PinDigitalOut gate_out, int gate_duration, bool randomize_seq, Slew* slew);
-		static RandomTimeSequence* create(NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output, PinDigitalOut gate_out, int gate_duration, Slew* slew);
+		static RandomTimeSequence* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output, bool randomize_seq);
+		static RandomTimeSequence* create(NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output);
 		virtual void timer(unsigned long t);
 	
 	private:
@@ -112,36 +123,28 @@ class nw2s::RandomTimeSequence : public nw2s::TimeBasedDevice
 		volatile int sequence_index;
 		volatile unsigned long last_t;
 		volatile unsigned long next_t;
-		PinDigitalOut gate_out;
-		volatile int gate_state;
-		int gate_duration;
-		Slew* slew;
 		ScaleNote current_note;
 		
-		RandomTimeSequence(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output, PinDigitalOut gate_out, int gate_duration, bool randomize_seq, Slew* slew);
-		RandomTimeSequence(NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output, PinDigitalOut gate_out, int gate_duration, Slew* slew);
+		RandomTimeSequence(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output, bool randomize_seq);
+		RandomTimeSequence(NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output);
 		void calculate_next_t(unsigned long t);		
 };
 
-class nw2s::CVNoteSequence : public nw2s::TimeBasedDevice
+class nw2s::CVNoteSequence : public nw2s::Sequence
 {
 	public:
-		static CVNoteSequence* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input, PinDigitalOut gate_out, int gate_duration, Slew* slew);
+		static CVNoteSequence* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input);
 		virtual void timer(unsigned long t);
 	
 	private:
-		int gate_duration;
 		volatile int sequence_index;
-		volatile int gate_state;
 		std::vector<SequenceNote>* notes;
 		Key* key;
 	 	AnalogOut* output;
-		PinDigitalOut gate_out;
 		PinAnalogIn cv_in;
-		Slew* slew;
 		unsigned long last_note_t;
 		
-		CVNoteSequence(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input, PinDigitalOut gate_out, int gate_duration, Slew* slew);
+		CVNoteSequence(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input);
 };
 
 #endif

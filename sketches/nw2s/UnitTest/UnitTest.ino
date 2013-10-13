@@ -47,14 +47,14 @@ void setup()
 	//EventManager::registerdevice(VariableClock::create(25, 125, ARDCORE_IN_A2, ARDCORE_OUT_D1));
 		
 	/* Set up a sample sequence that we'll use in the demos */
-	const int sequence_length = 35;
+	const int sequence_length = 34;
 	// SequenceNote notelist[sequence_length] = { {0,1}, {4,1}, {0,1}, {4,1}, {0,1}, {4,1}, {0,1}, {4,1} };
 	// std::vector<SequenceNote>* notes = new vector<SequenceNote>(notelist, notelist + sequence_length);
 	// 
 	SequenceNote notelist2[sequence_length] = { {1,1}, {1,3}, {1,5}, {1,1}, {1,3}, {1,5}, {1,1}, {1,5}, 
 												{2,1}, {2,3}, {2,5}, {2,1}, {2,3}, {2,5}, {2,1}, {2,5}, 
 												{3,1}, {3,3}, {3,5}, {3,1}, {3,3}, {3,5}, {3,1}, {3,5}, 
-												{4,1}, {4,3}, {4,5}, {4,1}, {4,3}, {4,5}, {4,1}, {4,5}, {5,1} };
+												{4,1}, {4,3}, {4,5}, {4,1}, {4,3}, {4,5}, {4,1}, {5,1} };
 	std::vector<SequenceNote>* notes2 = new vector<SequenceNote>(notelist2, notelist2 + sequence_length);
 	
 	SequenceNote notelist3[6] = { {0,1}, {1,1}, {2,1}, {3,1}, {4,1}, {5,1} };
@@ -90,7 +90,14 @@ void setup()
 
 	/* Move through a sequence based on a CV input */
 	//EventManager::registerdevice(CVNoteSequence::create(notes3, C, MAJOR, ARDCORE_DAC, ARDCORE_IN_A0, ARDCORE_OUT_D0, 200, NULL));
-	EventManager::registerdevice(CVNoteSequence::create(notes2, C, MAJOR, ARDCORE_DAC, ARDCORE_IN_A0, ARDCORE_OUT_D0, 200, LinearSlew::create(1000)));
+	
+	CVNoteSequence* sequence1 = CVNoteSequence::create(notes2, C, MAJOR, ARDCORE_DAC, ARDCORE_IN_A0);
+	sequence1->setgate(Gate::create(ARDCORE_OUT_D0, 200));
+	sequence1->setslew(LinearSlew::create(1000));
+	EventManager::registerdevice(sequence1);
+	
+	
+	
 	//EventManager::registerdevice(CVNoteSequence::create(notes3, C, MAJOR, 20, DUE_SPI_4822_0, DUE_OUT_D0, 200, false, NULL));
 	
 
