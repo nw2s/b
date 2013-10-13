@@ -24,6 +24,7 @@
 #include "IO.h"
 #include "Slew.h"
 #include "Gate.h"
+#include "Envelope.h"
 
 namespace nw2s
 {
@@ -51,6 +52,7 @@ namespace nw2s
 //TODO: RandomTimeSeq based on scale
 //TOOD: sample-based envelope generator
 //TODO: CV sequence
+//TODO: gaussian stuff
 //TODO: envelope generator
 //TOOD: overflow slew
 
@@ -60,12 +62,15 @@ class nw2s::Sequence : public nw2s::TimeBasedDevice
 	public: 
 		void setgate(Gate* gate);
 		void setslew(Slew* slew);
+		void seteg(Envelope* eg);
 		virtual void timer(unsigned long t) = 0;
 	
 	protected:
 		Gate* gate;	
 		Slew* slew;
-
+		Envelope* envelope;
+		
+		Sequence();
 };
 
 
@@ -74,8 +79,6 @@ class nw2s::NoteSequence : public nw2s::Sequence
 	public:
 		static NoteSequence* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int tempo, PinAnalogOut output, bool randomize_seq);
 		virtual void timer(unsigned long t);
-		//void setSlew(Slew slew);
-		//void setEG(EnvelopeGenerator eg);
 	
 	private:
 		bool randomize_seq;

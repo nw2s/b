@@ -55,6 +55,13 @@ CVNoteSequence* CVNoteSequence::create(vector<SequenceNote>* notes, NoteName key
 	return new CVNoteSequence(notes, key, scale, output, input);
 }
 
+Sequence::Sequence()
+{
+	this->gate = NULL;
+	this->slew = NULL;
+	this->eg = NULL;
+}
+
 void Sequence::setgate(Gate* gate)
 {
 	this->gate = gate;
@@ -63,6 +70,11 @@ void Sequence::setgate(Gate* gate)
 void Sequence::setslew(Slew* slew)
 {
 	this->slew = slew;
+}
+
+void Sequence::seteg(Envelope* eg)
+{
+	this->eg = eg;
 }
 
 NoteSequence::NoteSequence(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int tempo, PinAnalogOut pin, bool randomize_seq)
@@ -104,15 +116,9 @@ void NoteSequence::timer(unsigned long t)
 		if (this->slew == NULL) this->output->outputNoteCV(this->key->getNote(this->current_octave, this->current_degree));
 	}
 
-	if (this->slew != NULL)
-	{
-		this->output->outputSlewedNoteCV(this->key->getNote(this->current_octave, this->current_degree), this->slew, period_t);
-	}
-	
-	if (this->gate != NULL)
-	{
-		this->gate->timer(period_t);
-	}
+	if (this->slew != NULL) this->output->outputSlewedNoteCV(this->key->getNote(this->current_octave, this->current_degree), this->slew, period_t);
+	if (this->gate != NULL) this->gate->timer(period_t);
+	if (this->eg != NULL) this->eg->timer(period_t);
 	
 }
 

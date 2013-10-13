@@ -130,6 +130,8 @@ class nw2s::AnalogOut
 		static nw2s::AnalogOut* create(PinAnalogOut pin);
 		void outputNoteCV(ScaleNote note);
 		void outputSlewedNoteCV(ScaleNote note, Slew* slew, int t);
+		void outputCV(int v);
+		void outputSlewedCV(int v, Slew* slew);
 		
 	private:
 		PinAnalogOut pin;
