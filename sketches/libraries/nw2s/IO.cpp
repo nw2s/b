@@ -147,3 +147,42 @@ void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew, int t)
 #endif 
 
 }
+
+
+void AnalogOut::outputCV(int cv)
+{
+
+#ifdef __AVR__
+
+	if (pin == ARDCORE_DAC)
+	{
+		byte v = cv;
+	
+		//Serial.print("\n" + String(v));
+	
+	  	PORTB = (PORTB & B11100000) | (v >> 3);
+		PORTD = (PORTD & B00011111) | ((v & B00000111) << 5);
+	}	
+
+#endif
+
+#ifdef _SAM3XA_
+
+	if ((pin >= DUE_SPI_4822_0) && (pin <= DUE_SPI_4822_15))
+	{
+		if (this->spidac_index == 0)
+		{
+			this->spidac.setValue_A(cv);
+		}
+		else
+		{
+			this->spidac.setValue_B(cv);
+		}
+	}
+
+#endif 
+
+
+}
+
+

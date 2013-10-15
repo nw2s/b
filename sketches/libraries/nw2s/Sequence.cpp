@@ -114,11 +114,13 @@ void NoteSequence::timer(unsigned long t)
 		this->current_octave = (*this->notes)[noteindex].octave;		
 
 		if (this->slew == NULL) this->output->outputNoteCV(this->key->getNote(this->current_octave, this->current_degree));
+
+		if (this->envelope != NULL) this->envelope->reset(t);
 	}
 
 	if (this->slew != NULL) this->output->outputSlewedNoteCV(this->key->getNote(this->current_octave, this->current_degree), this->slew, period_t);
 	if (this->gate != NULL) this->gate->timer(period_t);
-	if (this->envelope != NULL) this->envelope->timer(period_t);
+	if (this->envelope != NULL) this->envelope->timer(t);
 	
 }
 
@@ -146,18 +148,14 @@ void RandomNoteSequence::timer(unsigned long t)
 	
 	if (period_t == 0)
 	{
-		this->current_note = this->key->getRandomNote();
-		
+		this->current_note = this->key->getRandomNote();		
 		if (this->slew == NULL) this->output->outputNoteCV(this->current_note);		
+		if (this->envelope != NULL) this->envelope->reset(t);
 	}
 
-	if (this->slew != NULL)
-	{
-		this->output->outputSlewedNoteCV(this->current_note, this->slew, t % this->period);
-	}
-	
+	if (this->slew != NULL) this->output->outputSlewedNoteCV(this->current_note, this->slew, t % this->period);	
 	if (this->gate != NULL) this->gate->timer(period_t);
-	if (this->envelope != NULL) this->envelope->timer(period_t);
+	if (this->envelope != NULL) this->envelope->timer(t);
 
 }
 
@@ -202,7 +200,8 @@ void RandomTimeSequence::timer(unsigned long t)
 		
 		this->current_note = this->key->getNote(octave, degree);
 		
-		if (this->slew == NULL) this->output->outputNoteCV(this->current_note);
+		if (this->slew == NULL) this->output->outputNoteCV(this->current_note);		
+		if (this->envelope != NULL) this->envelope->reset(t);
 		
 		/* Calculation of the current tempo is only done on clock tick */
 		this->last_t = t;	
@@ -213,7 +212,7 @@ void RandomTimeSequence::timer(unsigned long t)
 
 	if (this->slew != NULL) this->output->outputSlewedNoteCV(this->current_note, this->slew, period_t);
 	if (this->gate != NULL) this->gate->timer(period_t);
-	if (this->envelope != NULL) this->envelope->timer(period_t);
+	if (this->envelope != NULL) this->envelope->timer(t);
 }
 
 void RandomTimeSequence::calculate_next_t(unsigned long t)
@@ -275,6 +274,8 @@ void CVNoteSequence::timer(unsigned long t)
 		int octave = (*this->notes)[noteindex].octave;		
 			
 		this->output->outputNoteCV(this->key->getNote(octave, degree));
+
+		if (this->envelope != NULL) this->envelope->reset(t);		
 	}
 	else if (this->slew != NULL)
 	{		
@@ -295,7 +296,7 @@ void CVNoteSequence::timer(unsigned long t)
 	}
 
 	if (this->gate != NULL) this->gate->timer(period_t);
-	if (this->envelope != NULL) this->envelope->timer(period_t);	
+	if (this->envelope != NULL) this->envelope->timer(t);	
 }
 
 

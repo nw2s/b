@@ -91,9 +91,11 @@ void setup()
 	/* Move through a sequence based on a CV input */
 	//EventManager::registerdevice(CVNoteSequence::create(notes3, C, MAJOR, ARDCORE_DAC, ARDCORE_IN_A0, ARDCORE_OUT_D0, 200, NULL));
 	
-	CVNoteSequence* sequence1 = CVNoteSequence::create(notes2, C, MAJOR, ARDCORE_DAC, ARDCORE_IN_A0);
+	//CVNoteSequence* sequence1 = CVNoteSequence::create(notes2, C, MAJOR, ANALOG_OUT_NONE, ARDCORE_IN_A0);
+	NoteSequence* sequence1 = NoteSequence::create(notes2, C, MAJOR, 20, ANALOG_OUT_NONE, false);
 	sequence1->setgate(Gate::create(ARDCORE_OUT_D0, 200));
 	sequence1->setslew(LinearSlew::create(1000));
+	sequence1->seteg(ADSR::create(10, 10, 2048, 250, 200, false, ARDCORE_DAC));
 	EventManager::registerdevice(sequence1);
 	
 	

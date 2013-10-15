@@ -25,13 +25,13 @@
 
 namespace nw2s
 {
-	enum EnvelopeState
-	{
-		ENVELOPE_STATE_A = 0,
-		ENVELOPE_STATE_D = 1,
-		ENVELOPE_STATE_S = 2,
-		ENVELOPE_STATE_R = 3,
-	};
+#ifdef __AVR__
+	static const int CV_MAX = 254;
+#else
+	static const int CV_MAX = 4096;
+#endif
+
+	static const unsigned char MIN_ATTACK = 5;
 	
 	class Envelope;
 	class ADSR;
@@ -40,27 +40,32 @@ namespace nw2s
 class nw2s::Envelope
 {
 	public:
-		virtual void timer(unsigned int t) = 0;
-		virtual void reset() = 0;
+		virtual void timer(unsigned long t) = 0;
+		virtual void reset(unsigned long t) = 0;
 	};
 
 class nw2s::ADSR : public Envelope
 {
 	public:
-		static ADSR* create(unsigned int a, unsigned int d, unsigned int s, unsigned int r, bool repeat, PinAnalogOut pin);
-		virtual void timer(unsigned int t);
-		virtual void reset();
+		static ADSR* create(unsigned int a, unsigned int d, unsigned int s, unsigned int r, unsigned int gate, bool repeat, PinAnalogOut pin);
+		virtual void timer(unsigned long t);
+		virtual void reset(unsigned long t);
 		
 	private:
+		unsigned long t_start;
 		unsigned int a;
 		unsigned int d;
 		unsigned int s;
 		unsigned int r;
+		unsigned int gate;
+		unsigned int t_a;
+		unsigned int t_d;
+		unsigned int t_s;
+		unsigned int t_r;
 		bool repeat;
 		AnalogOut* output;
-		EnvelopeState state;
 		
-		ADSR(unsigned int a, unsigned int d, unsigned int s, unsigned int r, bool repeat, PinAnalogOut pin);
+		ADSR(unsigned int a, unsigned int d, unsigned int s, unsigned int r, unsigned int gate, bool repeat, PinAnalogOut pin);
 	};
 
 

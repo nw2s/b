@@ -22,31 +22,97 @@
 
 using namespace nw2s;
 
-ADSR* ADSR::create(unsigned int a, unsigned int d, unsigned int s, unsigned int r, bool repeat, PinAnalogOut pin)
+//TODO: Scalable and Shiftable output
+
+ADSR* ADSR::create(unsigned int a, unsigned int d, unsigned int s, unsigned int r, unsigned int gate, bool repeat, PinAnalogOut pin)
 {
-	return new ADSR(a, d, s, r, repeat, pin);
+	return new ADSR(a, d, s, r, gate, repeat, pin);
 }
 
-ADSR::ADSR(unsigned int a, unsigned int d, unsigned int s, unsigned int r, bool repeat, PinAnalogOut pin)
+ADSR::ADSR(unsigned int a, unsigned int d, unsigned int s, unsigned int r, unsigned int gate, bool repeat, PinAnalogOut pin)
 {
-	this->a = a;
-	this->d = d;
-	this->s = s;
-	this->r = r;
+	/* Normalize the input values */
+	this->a = a < MIN_ATTACK ? MIN_ATTACK : a;
+	this->d = d < MIN_ATTACK ? MIN_ATTACK : d;
+	this->s = s > CV_MAX ? CV_MAX : s;
+	this->r = r < MIN_ATTACK ? MIN_ATTACK : r;
 	this->repeat = repeat;
-
+	this->t_start = 0;
+	this->gate = gate;
+	
+	/* Calculate time of each envelope */
+	this->t_a = a;
+	this->t_d = a + ((d * (s - CV_MAX)) / (-1 * CV_MAX));
+	
+	/* If the decay time is already past how long the gate is open, skip the S and R phases */
+	if (t_d >= gate)
+	{
+		this->t_d = d;		
+		this->t_s = -1;
+		this->t_r = -1;
+	}
+	else
+	{
+		this->t_s = gate;
+		this->t_r = ((gate * CV_MAX) + (r * s)) / CV_MAX;
+	}
+	
 	/* Start the ADSR at 0 */
 	this->output = AnalogOut::create(pin);
 	this->output->outputCV(0);
+	
+	// Serial.print("\na: " + String(this->a));
+	// Serial.print("\nd: " + String(this->d));
+	// Serial.print("\ns: " + String(this->s));
+	// Serial.print("\nr: " + String(this->r));
+	// Serial.print("\ngate: " + String(this->gate));
+	// Serial.print("\nta: " + String(this->t_a));
+	// Serial.print("\ntd: " + String(this->t_d));
+	// Serial.print("\nts: " + String(this->t_s));
+	// Serial.print("\ntr: " + String(this->t_r));
+	Serial.print("========");
 }
 
-void ADSR::timer(unsigned int t)
+void ADSR::timer(unsigned long t)
 {
-	
+	if (this->t_start == 0) this->t_start = t;
+
+	unsigned int t_env = t - this->t_start;
+		
+	/* Calculate state based on time */
+	if (t_env <= this->t_a)
+	{
+		if (t % 1 == 0) Serial.print("\na: " + String(t_env));
+		if (t % 1 == 0) Serial.print(" " + String((CV_MAX * t_env) / this->a));
+		this->output->outputCV((CV_MAX * t_env) / this->a);
+	}
+	else if (t_env <= t_d)
+	{
+		// if (t % 5 == 0) Serial.print("\n" + String(t_env));
+		// if (t % 5 == 0) Serial.print(" " + String((CV_MAX * (t_env - this->a)) / this->d));
+		this->output->outputCV(CV_MAX - ((CV_MAX * (t_env - this->a)) / this->d));
+	}
+	else if (t_env <= t_s)
+	{
+		// if (t % 5 == 0) Serial.print("\n" + String(t_env));
+		// if (t % 5 == 0) Serial.print(" " + String(s));
+		this->output->outputCV(s);
+	}
+	else if (t_env <= t_r)
+	{
+		// if (t % 5 == 0) Serial.print("\n" + String(t_env));
+		// if (t % 5 == 0) Serial.print(" " + String((CV_MAX * (t_env - this->gate)) / this->r ));
+		this->output->outputCV(s - ( (CV_MAX * (t_env - this->gate)) / this->r ));
+	}
+	else if (repeat)
+	{
+		this->reset(t);
+	}
 }
 
-void ADSR::reset()
+void ADSR::reset(unsigned long t)
 {
-	
+	this->t_start = 0;
+	this->output->outputCV(0);
 }
 
