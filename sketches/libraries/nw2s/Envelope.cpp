@@ -42,19 +42,26 @@ ADSR::ADSR(unsigned int a, unsigned int d, unsigned int s, unsigned int r, unsig
 	
 	/* Calculate time of each envelope */
 	this->t_a = a;
-	this->t_d = a + ((d * (s - CV_MAX)) / (-1 * CV_MAX));
+	this->t_d = (int)a - (((int)d * ((int)s - CV_MAX)) / CV_MAX);
+	
+	Serial.print("\n----");
+	Serial.print("\n" + String((int)s - CV_MAX));
+	Serial.print("\n" + String((int)d * ((int)s - CV_MAX)));
+	Serial.print("\n" + String(((int)d * ((int)s - CV_MAX)) / CV_MAX));
+	Serial.print("\n----");
+	
 	
 	/* If the decay time is already past how long the gate is open, skip the S and R phases */
-	if (t_d >= gate)
+	if (this->t_d >= gate)
 	{
-		this->t_d = d;		
-		this->t_s = -1;
-		this->t_r = -1;
+		this->t_d = a + d;		
+		this->t_s = 0;
+		this->t_r = 0;
 	}
 	else
 	{
 		this->t_s = gate;
-		this->t_r = ((gate * CV_MAX) + (r * s)) / CV_MAX;
+		this->t_r = gate + (((int)gate * CV_MAX) + ((int)r * (int)s)) / CV_MAX;
 	}
 	
 	/* Start the ADSR at 0 */
@@ -65,12 +72,13 @@ ADSR::ADSR(unsigned int a, unsigned int d, unsigned int s, unsigned int r, unsig
 	// Serial.print("\nd: " + String(this->d));
 	// Serial.print("\ns: " + String(this->s));
 	// Serial.print("\nr: " + String(this->r));
-	// Serial.print("\ngate: " + String(this->gate));
-	// Serial.print("\nta: " + String(this->t_a));
-	// Serial.print("\ntd: " + String(this->t_d));
-	// Serial.print("\nts: " + String(this->t_s));
-	// Serial.print("\ntr: " + String(this->t_r));
-	Serial.print("========");
+	Serial.print("\n========");
+	Serial.print("\ngate: " + String(this->gate));
+	Serial.print("\nta: " + String(this->t_a));
+	Serial.print("\ntd: " + String(this->t_d));
+	Serial.print("\nts: " + String(this->t_s));
+	Serial.print("\ntr: " + String(this->t_r));
+	Serial.print("\n========");
 }
 
 void ADSR::timer(unsigned long t)
@@ -82,27 +90,27 @@ void ADSR::timer(unsigned long t)
 	/* Calculate state based on time */
 	if (t_env <= this->t_a)
 	{
-		if (t % 1 == 0) Serial.print("\na: " + String(t_env));
-		if (t % 1 == 0) Serial.print(" " + String((CV_MAX * t_env) / this->a));
+		// if (t % 1 == 0) Serial.print("\na: " + String(t_env));
+		// if (t % 1 == 0) Serial.print(" " + String((CV_MAX * t_env) / this->a));
 		this->output->outputCV((CV_MAX * t_env) / this->a);
 	}
 	else if (t_env <= t_d)
 	{
-		// if (t % 5 == 0) Serial.print("\n" + String(t_env));
-		// if (t % 5 == 0) Serial.print(" " + String((CV_MAX * (t_env - this->a)) / this->d));
+		// if (t % 1 == 0) Serial.print("\nd: " + String(t_env));
+		// if (t % 1 == 0) Serial.print(" " + String(CV_MAX - ((CV_MAX * (t_env - this->a)) / this->d)));
 		this->output->outputCV(CV_MAX - ((CV_MAX * (t_env - this->a)) / this->d));
 	}
 	else if (t_env <= t_s)
 	{
-		// if (t % 5 == 0) Serial.print("\n" + String(t_env));
-		// if (t % 5 == 0) Serial.print(" " + String(s));
+		// if (t % 1 == 0) Serial.print("\ns: " + String(t_env));
+		// if (t % 1 == 0) Serial.print(" " + String(s));
 		this->output->outputCV(s);
 	}
 	else if (t_env <= t_r)
 	{
-		// if (t % 5 == 0) Serial.print("\n" + String(t_env));
-		// if (t % 5 == 0) Serial.print(" " + String((CV_MAX * (t_env - this->gate)) / this->r ));
-		this->output->outputCV(s - ( (CV_MAX * (t_env - this->gate)) / this->r ));
+		if (t % 1 == 0) Serial.print("\nr: " + String(t_env));
+		if (t % 1 == 0) Serial.print(" " + String(this->s - ((CV_MAX * (t_env - this->gate)) / this->r )));
+		this->output->outputCV(this->s - ((CV_MAX * (t_env - this->gate)) / this->r ));
 	}
 	else if (repeat)
 	{
