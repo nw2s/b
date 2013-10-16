@@ -95,7 +95,7 @@ void setup()
 	NoteSequence* sequence1 = NoteSequence::create(notes2, C, MAJOR, 20, ANALOG_OUT_NONE, false);
 	sequence1->setgate(Gate::create(ARDCORE_OUT_D0, 200));
 	sequence1->setslew(LinearSlew::create(1000));
-	sequence1->seteg(ADSR::create(10, 10, 100, 250, 200, false, ARDCORE_DAC));
+	sequence1->seteg(ADSR::create(100, 250, 254, 1250, 1200, false, ARDCORE_DAC));
 	EventManager::registerdevice(sequence1);
 	
 	
