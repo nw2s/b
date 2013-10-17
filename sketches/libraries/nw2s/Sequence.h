@@ -56,6 +56,7 @@ namespace nw2s
 //TODO: envelope generator
 //TOOD: overflow slew
 //TODO: drive tempo from external clock
+//TODO: ASR envelope
 
 
 class nw2s::Sequence : public nw2s::TimeBasedDevice
