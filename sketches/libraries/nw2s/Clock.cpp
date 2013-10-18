@@ -40,9 +40,9 @@ VariableClock* VariableClock::create(int mintempo, int maxtempo, PinAnalogIn inp
 	return new VariableClock(mintempo, maxtempo, input, beats_per_measure);
 }
 
-RandomClock* RandomClock::create(int mintempo, int maxtempo, unsigned char beats_per_measure)
+SlaveClock* SlaveClock::create(PinDigitalIn input, unsigned char beats_per_measure)
 {	
-	return new RandomClock(mintempo, maxtempo, beats_per_measure);
+	return new SlaveClock(input, beats_per_measure);
 }
 
 void Clock::registerdevice(BeatDevice* device)
@@ -125,26 +125,103 @@ void VariableClock::update_tempo(unsigned long t)
 	this->last_clock_t = t;
 }
 
-RandomClock::RandomClock(int mintempo, int maxtempo, unsigned char beats_per_measure)
+
+int SlaveClock::period_samples[5] = { 0, 0, 0, 0, 0};
+volatile int SlaveClock::period = 0;
+volatile unsigned long SlaveClock::t = 0;
+volatile unsigned long SlaveClock::last_clock_t = 0;
+volatile unsigned long SlaveClock::next_clock_t = 0;
+unsigned char SlaveClock::period_sample_state = 0;
+PinDigitalIn SlaveClock::input = DIGITAL_IN_NONE;
+
+
+SlaveClock::SlaveClock(PinDigitalIn input, unsigned char beats_per_measure)
 {
-	/* Make sure the pin is low, initialize variables */
-	this->beats_per_measure = beats_per_measure;
-	this->last_clock_t = 0;
-	this->next_clock_t = 0;
+	SlaveClock::input = input;
+	SlaveClock::beats_per_measure = beats_per_measure;
+	SlaveClock::last_clock_t = 0;
+	SlaveClock::next_clock_t = 0;
+	SlaveClock::period_sample_state = 0;
 	
-	/* The random clock operates on a random period based on an input voltage */
-	this->mintempo = (mintempo < 1) ? 1 : (mintempo > 500) ? 500 : mintempo;
-	this->maxtempo = (maxtempo < 1) ? 1 : (maxtempo > 500) ? 500 : maxtempo;	
+#ifdef __AVR__
+	attachInterrupt(0, SlaveClock::isr, RISING);
+#else
+	attachInterrupt(input, SlaveClock::isr, RISING);
+#endif	
 }
 
-void RandomClock::timer(unsigned long t)
-{	
-	//TODO: calculate next_t
-}
-
-void RandomClock::next_t(unsigned long t)
+void SlaveClock::isr()
 {
-	this->next_clock_t = (this->last_clock_t + (60000 / random(mintempo, maxtempo)));	
+	if ((SlaveClock::period_samples[0] == 0) && (SlaveClock::last_clock_t == 0))
+	{
+		Serial.print("\nfirst...");
+		
+		/* Nothing's initialized */
+		SlaveClock::last_clock_t = SlaveClock::t;
+	}
+	else if (SlaveClock::period_samples[0] == 0)
+	{
+		Serial.print("\nsecond...");
+
+		/* This is the second rising state, so set up the period samples */
+		SlaveClock::period = SlaveClock::t - SlaveClock::last_clock_t; 
+		
+		SlaveClock::period_samples[0] = SlaveClock::period;
+		SlaveClock::period_samples[1] = SlaveClock::period;
+		SlaveClock::period_samples[2] = SlaveClock::period;
+		SlaveClock::period_samples[3] = SlaveClock::period;
+		SlaveClock::period_samples[4] = SlaveClock::period;
+
+		/* Force events to fire on the rising edge */
+		SlaveClock::next_clock_t = 0;
+	}
+	else
+	{
+		Serial.print("\n" + SlaveClock::t);
+
+		/* This is steady state, just update the clock periods */
+		SlaveClock::period_samples[SlaveClock::period_sample_state] = SlaveClock::t - SlaveClock::last_clock_t;
+		
+		unsigned int periodsum = SlaveClock::period_samples[0] + SlaveClock::period_samples[1] + SlaveClock::period_samples[2] + SlaveClock::period_samples[3] + SlaveClock::period_samples[4];
+		SlaveClock::period = periodsum / 5;
+
+		SlaveClock::last_clock_t = 0;
+	}
+}
+
+void SlaveClock::timer(unsigned long t)
+{	
+	SlaveClock::t = t;
+	
+	if (SlaveClock::period != 0)
+	{
+		if (SlaveClock::last_clock_t == 0)
+		{
+			this->update_tempo(t);
+		}
+	
+		if (t >= SlaveClock::next_clock_t)
+		{
+			this->update_tempo(t);
+			//TODO: Update the clock display on Due based boards
+		}
+	
+		for (int i = 0; i < this->devices.size(); i++)
+		{
+			if (t % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
+			{
+				this->devices[i]->reset();
+			}
+		
+			this->devices[i]->timer(t);
+		}	
+	}
+}
+
+void SlaveClock::update_tempo(unsigned long t)
+{
+	SlaveClock::next_clock_t = (t + this->period);
+	SlaveClock::last_clock_t = t;
 }
 
 

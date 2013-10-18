@@ -44,7 +44,10 @@ void setup()
 	//Clock* democlock = FixedClock::create(75, 16);
 	
 	/* Variable clock running between 75 and 125BPM based on A0 input value */
-	Clock* democlock = VariableClock::create(25, 125, ARDCORE_IN_A0, 16);
+	//Clock* democlock = VariableClock::create(25, 125, ARDCORE_IN_A0, 16);
+
+	/* Variable clock running between 75 and 125BPM based on A0 input value */
+	Clock* democlock = SlaveClock::create(ARDCORE_CLOCK_IN, 16);
 
 	/* Register the clock with the EventManager */
 	EventManager::registerdevice(democlock);

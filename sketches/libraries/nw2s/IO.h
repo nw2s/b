@@ -43,7 +43,6 @@ namespace nw2s
 
 	enum PinDigitalOut
 	{
-		ARDCORE_CLOCK_IN = 2,
 		ARDCORE_OUT_D0 = 3,
 		ARDCORE_OUT_D1 = 4,
 		ARDCORE_OUT_EX_D0 = 5,
@@ -60,7 +59,11 @@ namespace nw2s
 		DIGITAL_OUT_NONE = -1,
 	};
 
-	
+	enum PinDigitalIn
+	{
+		DIGITAL_IN_NONE = -1,
+		ARDCORE_CLOCK_IN = 2
+	};
 
 	enum PinAnalogOut
 	{
@@ -125,6 +128,10 @@ namespace nw2s
 		DUE_SPI_4822_15 = 1045,
 	};
 
+	enum PinDigitalIn
+	{
+		DIGITAL_IN_NONE = -1,
+	};
 
 #endif
 
