@@ -24,14 +24,17 @@
 
 using namespace nw2s;
 
-Trigger* Trigger::create(PinDigitalOut output)
+Trigger* Trigger::create(PinDigitalOut output, int clock_division)
 {	
-	return new Trigger(output);
+	return new Trigger(output, clock_division);
 }
 
-Trigger::Trigger(PinDigitalOut output)
+Trigger::Trigger(PinDigitalOut output, int clock_division)
 {
+	this->clock_division = clock_division;
+	
 	/* Make sure the pin is low */
+	pinMode(output, OUTPUT);
 	this->output = output;
 	this->state = LOW;
 	this->t_start = 0;
@@ -43,11 +46,11 @@ void Trigger::reset()
 	/* Reset turns the trigger on */
 	this->t_start = 0;
 	this->state = HIGH;
-	digitalWrite(this->output, HIGH);		
+	digitalWrite(this->output, HIGH);
 }
 
 void Trigger::timer(unsigned long t)
-{
+{	
 	/* If the state is low, nothing else to do */
 	if (this->state == LOW) return;
 	

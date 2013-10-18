@@ -24,22 +24,57 @@
 #include "EventManager.h"
 #include "IO.h"
 
+#include <iterator>
+#include <vector>
+
+using namespace std;
+
 namespace nw2s
 {		
+	static const int DIV_WHOLE = 4000;
+	static const int DIV_HALF = 2000;
+	static const int DIV_HALF_DOT = 3000;
+	static const int DIV_QUARTER = 1000;
+	static const int DIV_QUARTER_TRIPLET = 666;
+	static const int DIV_QUARTER_DOT = 1500;
+	static const int DIV_EIGHTH = 500;
+	static const int DIV_EIGHTH_TRIPLET = 333;
+	static const int DIV_EIGHTH_DOT = 750;
+	static const int DIV_SIXTEENTH = 250;
+	static const int DIV_SIXTEENTH_TRIPLET = 167;
+	static const int DIV_SIXTEENTH_DOT = 375;
+	static const int DIV_THIRTYSECOND = 125;
+	static const int DIV_THIRTYSECOND_DOT = 188;
+	static const int DIV_THIRTYSECOND_TRIPLET = 83;
+	
+	class BeatDevice;
 	class Clock;
 	class FixedClock;
 	class VariableClock;
-	class RandomClock;		
+	class RandomClock;
+	
 }
+
+class nw2s::BeatDevice : public TimeBasedDevice
+{
+	public:
+		virtual int getclockdivision();
+		virtual void reset() = 0;
+		
+	protected:
+		int clock_division;
+
+};
 
 class nw2s::Clock : public nw2s::TimeBasedDevice
 {
 	public:
 		virtual void timer(unsigned long t) = 0;
-		virtual void reset();
+ 		void registerdevice(BeatDevice* device);
 		
 	protected:
 		unsigned char beats_per_measure;
+		vector<BeatDevice*> devices;
 };
 
 class nw2s::FixedClock : public Clock

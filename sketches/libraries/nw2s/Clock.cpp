@@ -22,11 +22,12 @@
 #include "Clock.h"
 #include <Arduino.h>
 
+using namespace std;
 using namespace nw2s;
 
-void Clock::reset()
+int BeatDevice::getclockdivision()
 {
-	/* Clocks don't need to implement reset */
+	return this->clock_division;
 }
 
 FixedClock* FixedClock::create(int tempo, unsigned char beats_per_measure)
@@ -44,6 +45,11 @@ RandomClock* RandomClock::create(int mintempo, int maxtempo, unsigned char beats
 	return new RandomClock(mintempo, maxtempo, beats_per_measure);
 }
 
+void Clock::registerdevice(BeatDevice* device)
+{
+	this->devices.push_back(device);	
+}
+
 FixedClock::FixedClock(int tempo, unsigned char beats_per_measure)
 {
 	/* The fixed clock operates on a regular period based on the tempo */
@@ -55,11 +61,24 @@ FixedClock::FixedClock(int tempo, unsigned char beats_per_measure)
 
 void FixedClock::timer(unsigned long t)
 {
+	if (t % this->period == 0)
+	{
+		//TODO: Update the clock display on Due based boards
+	}
+	
+	for (int i = 0; i < this->devices.size(); i++)
+	{
+		if (t % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
+		{
+			this->devices[i]->reset();
+		}
+		
+		this->devices[i]->timer(t);
+	}	
 }
 
 VariableClock::VariableClock(int mintempo, int maxtempo, PinAnalogIn input, unsigned char beats_per_measure)
 {
-	/* Make sure the pin is low, initialize variables */
 	this->input = input;
 	this->beats_per_measure = beats_per_measure;
 	
@@ -69,19 +88,41 @@ VariableClock::VariableClock(int mintempo, int maxtempo, PinAnalogIn input, unsi
 	
 	this->mintempo = normalized_mintempo;
 	this->maxtempo = normalized_maxtempo;
+	
+	this->last_clock_t = 0;
 }
 
 void VariableClock::timer(unsigned long t)
 {
-	//TODO: Update time on beats
+	if (this->last_clock_t == 0)
+	{
+		this->update_tempo(t);
+	}
+	
+	if (t >= this->next_clock_t)
+	{
+		this->update_tempo(t);
+		//TODO: Update the clock display on Due based boards
+	}
+	
+	for (int i = 0; i < this->devices.size(); i++)
+	{
+		if (t % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
+		{
+			this->devices[i]->reset();
+		}
+		
+		this->devices[i]->timer(t);
+	}	
 }
 
 void VariableClock::update_tempo(unsigned long t)
 {
-	int tempo = (((this->maxtempo - this->mintempo) * (analogRead(this->input)) / 1024)) + this->mintempo;
- 	this->period = 60000 / tempo;
+	int tempo = ((((unsigned long)this->maxtempo - (unsigned long)this->mintempo) * ((unsigned long)analogRead(this->input)) / 1023UL)) + this->mintempo;
+ 	this->period = 60000UL / tempo;
 
-	this->next_clock_t = (this->last_clock_t + this->period);	
+	this->next_clock_t = (t + this->period);
+	this->last_clock_t = t;
 }
 
 RandomClock::RandomClock(int mintempo, int maxtempo, unsigned char beats_per_measure)

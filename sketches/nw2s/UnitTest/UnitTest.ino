@@ -20,6 +20,7 @@
 
 #include <Key.h>
 #include <EventManager.h>
+#include <Trigger.h>
 #include <Clock.h>
 #include <Slew.h>
 #include <Sequence.h>
@@ -38,7 +39,33 @@ void setup()
 	EventManager::initialize();
 
 	/* Fixed clock running at 75BPM on an Ardcore D0 */
-	//EventManager::registerdevice(FixedClock::create(75, ARDCORE_OUT_D0));
+	FixedClock* fixedclock = FixedClock::create(75, 16);
+	EventManager::registerdevice(fixedclock);
+	
+	/* Gate running quarter notes on expander port 0 */
+	Trigger* trigger0 = Trigger::create(ARDCORE_OUT_EX_D0, DIV_QUARTER);
+	fixedclock->registerdevice(trigger0);
+
+	Trigger* trigger1 = Trigger::create(ARDCORE_OUT_EX_D1, DIV_HALF);
+	fixedclock->registerdevice(trigger1);
+
+	Trigger* trigger2 = Trigger::create(ARDCORE_OUT_EX_D2, DIV_EIGHTH_DOT);
+	fixedclock->registerdevice(trigger2);
+
+	Trigger* trigger3 = Trigger::create(ARDCORE_OUT_EX_D3, DIV_QUARTER_TRIPLET);
+	fixedclock->registerdevice(trigger3);
+
+	Trigger* trigger4 = Trigger::create(ARDCORE_OUT_EX_D4, DIV_SIXTEENTH);
+	fixedclock->registerdevice(trigger4);
+
+	Trigger* trigger5 = Trigger::create(ARDCORE_OUT_EX_D5, DIV_WHOLE);
+	fixedclock->registerdevice(trigger5);
+
+	Trigger* trigger6 = Trigger::create(ARDCORE_OUT_EX_D6, DIV_EIGHTH_TRIPLET);
+	fixedclock->registerdevice(trigger6);
+
+	Trigger* trigger7 = Trigger::create(ARDCORE_OUT_EX_D7, DIV_THIRTYSECOND);
+	fixedclock->registerdevice(trigger7);
 
 	/* Random clock pulses between 25 and 125 BPM on D0 */
 	//EventManager::registerdevice(RandomClock::create(25,125, ARDCORE_OUT_D0));

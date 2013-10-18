@@ -18,25 +18,23 @@
 
 */
 
-#ifndef Triggerk_h
+#ifndef Trigger_h
 #define Trigger_h
 
 #include "IO.h"
-#include "EventManager.h"
+#include "Clock.h"
 
 namespace nw2s
 {		
 	class Trigger;
 
-	//class TimeBasedDevice;
-	
 	const int TRIGGER_TIME = 20;
 }
 
-class nw2s::Trigger : public nw2s::TimeBasedDevice
+class nw2s::Trigger : public nw2s::BeatDevice
 {
 	public:
-		static Trigger* create(PinDigitalOut output);
+		static Trigger* create(PinDigitalOut output, int clock_division);
 		virtual void timer(unsigned long t);
 		virtual void reset();
 
@@ -45,7 +43,7 @@ class nw2s::Trigger : public nw2s::TimeBasedDevice
 		unsigned long t_start;
 		PinDigitalOut output;
 		
-		Trigger(PinDigitalOut output);		
+		Trigger(PinDigitalOut output, int clock_division);		
 };
 
 #endif
