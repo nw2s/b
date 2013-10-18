@@ -92,11 +92,11 @@ void setup()
 	//EventManager::registerdevice(CVNoteSequence::create(notes3, C, MAJOR, ARDCORE_DAC, ARDCORE_IN_A0, ARDCORE_OUT_D0, 200, NULL));
 	
 	//CVNoteSequence* sequence1 = CVNoteSequence::create(notes2, C, MAJOR, ANALOG_OUT_NONE, ARDCORE_IN_A0);
-	NoteSequence* sequence1 = NoteSequence::create(notes2, C, MAJOR, 20, ANALOG_OUT_NONE, false);
-	sequence1->setgate(Gate::create(ARDCORE_OUT_D0, 200));
-	sequence1->setslew(LinearSlew::create(1000));
-	sequence1->seteg(ADSR::create(100, 250, 254, 1250, 1200, false, ARDCORE_DAC));
-	EventManager::registerdevice(sequence1);
+	// NoteSequence* sequence1 = NoteSequence::create(notes2, C, MAJOR, 20, ANALOG_OUT_NONE, false);
+	// sequence1->setgate(Gate::create(ARDCORE_OUT_D0, 200));
+	// sequence1->setslew(LinearSlew::create(1000));
+	// sequence1->seteg(ADSR::create(100, 250, 254, 1250, 1200, false, ARDCORE_DAC));
+	// EventManager::registerdevice(sequence1);
 	
 	
 	

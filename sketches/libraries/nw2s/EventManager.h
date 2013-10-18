@@ -36,7 +36,7 @@ class nw2s::TimeBasedDevice
 {
 	public:
 		virtual void timer(unsigned long t) = 0;
-
+		virtual void reset() = 0;
 };
 
 class nw2s::EventManager

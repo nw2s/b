@@ -77,6 +77,11 @@ void Sequence::seteg(Envelope* envelope)
 	this->envelope = envelope;
 }
 
+void Sequence::reset()
+{
+	/* We aren't doin anything with this yet... */
+}
+
 NoteSequence::NoteSequence(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int tempo, PinAnalogOut pin, bool randomize_seq)
 {
 	this->key = new Key(scale, key);
