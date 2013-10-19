@@ -127,12 +127,10 @@ void VariableClock::update_tempo(unsigned long t)
 
 
 volatile bool SlaveClock::trigger = false;
-int SlaveClock::period_samples[5] = { 0, 0, 0, 0, 0};
 volatile int SlaveClock::period = 0;
 volatile unsigned long SlaveClock::t = 0;
 volatile unsigned long SlaveClock::last_clock_t = 0;
 volatile unsigned long SlaveClock::next_clock_t = 0;
-unsigned char SlaveClock::period_sample_state = 0;
 PinDigitalIn SlaveClock::input = DIGITAL_IN_NONE;
 
 
@@ -168,24 +166,15 @@ void SlaveClock::timer(unsigned long t)
 			else
 			{
 				SlaveClock::period = t - last_clock_t;
-				SlaveClock::period_samples[0] = SlaveClock::period;
-				SlaveClock::period_samples[1] = SlaveClock::period;
-				SlaveClock::period_samples[2] = SlaveClock::period;
-				SlaveClock::period_samples[3] = SlaveClock::period;
-				SlaveClock::period_samples[4] = SlaveClock::period;
 				SlaveClock::last_clock_t = t;
 			}
 		}
 		else
 		{
 			//TODO: Update the clock display on Due based boards
-			SlaveClock::period_samples[SlaveClock::period_sample_state] = SlaveClock::t - SlaveClock::last_clock_t;
-			SlaveClock::period_sample_state = (SlaveClock::period_sample_state + 1) % 5;
-
-			SlaveClock::period = ((unsigned long)SlaveClock::period_samples[0] + (unsigned long)SlaveClock::period_samples[1] + (unsigned long)SlaveClock::period_samples[2] + (unsigned long)SlaveClock::period_samples[3] + (unsigned long)SlaveClock::period_samples[4]) / 5UL;
+			SlaveClock::period = SlaveClock::t - SlaveClock::last_clock_t;
 			SlaveClock::next_clock_t = (t + this->period);
 			SlaveClock::last_clock_t = t;
-
 		}
 
 		/* Reset */

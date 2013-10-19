@@ -116,8 +116,6 @@ class nw2s::SlaveClock : public Clock
 		static volatile bool trigger;
 		static volatile unsigned long t;
 		static volatile int period;
-		static int period_samples[5];
-		static unsigned char period_sample_state;
 		static PinDigitalIn input;
 		static volatile unsigned long last_clock_t;
 		static volatile unsigned long next_clock_t;
