@@ -1,4 +1,4 @@
-b - Microcontroller-based modular synth control framework
+b
 =
 
 nw2s::b is a generalized framework and set of tools for controlling modular synthesizers using microcontrollers such as the Arduino. It is designed to leverage the hardware controller of the same name, but will also run on the Ardcore and its expansion module. 
