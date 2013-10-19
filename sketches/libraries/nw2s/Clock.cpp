@@ -126,6 +126,7 @@ void VariableClock::update_tempo(unsigned long t)
 }
 
 
+volatile bool SlaveClock::trigger = false;
 int SlaveClock::period_samples[5] = { 0, 0, 0, 0, 0};
 volatile int SlaveClock::period = 0;
 volatile unsigned long SlaveClock::t = 0;
@@ -139,9 +140,6 @@ SlaveClock::SlaveClock(PinDigitalIn input, unsigned char beats_per_measure)
 {
 	SlaveClock::input = input;
 	SlaveClock::beats_per_measure = beats_per_measure;
-	SlaveClock::last_clock_t = 0;
-	SlaveClock::next_clock_t = 0;
-	SlaveClock::period_sample_state = 0;
 	
 #ifdef __AVR__
 	attachInterrupt(0, SlaveClock::isr, RISING);
@@ -152,76 +150,59 @@ SlaveClock::SlaveClock(PinDigitalIn input, unsigned char beats_per_measure)
 
 void SlaveClock::isr()
 {
-	if ((SlaveClock::period_samples[0] == 0) && (SlaveClock::last_clock_t == 0))
-	{
-		Serial.print("\nfirst...");
-		
-		/* Nothing's initialized */
-		SlaveClock::last_clock_t = SlaveClock::t;
-	}
-	else if (SlaveClock::period_samples[0] == 0)
-	{
-		Serial.print("\nsecond...");
-
-		/* This is the second rising state, so set up the period samples */
-		SlaveClock::period = SlaveClock::t - SlaveClock::last_clock_t; 
-		
-		SlaveClock::period_samples[0] = SlaveClock::period;
-		SlaveClock::period_samples[1] = SlaveClock::period;
-		SlaveClock::period_samples[2] = SlaveClock::period;
-		SlaveClock::period_samples[3] = SlaveClock::period;
-		SlaveClock::period_samples[4] = SlaveClock::period;
-
-		/* Force events to fire on the rising edge */
-		SlaveClock::next_clock_t = 0;
-	}
-	else
-	{
-		Serial.print("\n" + SlaveClock::t);
-
-		/* This is steady state, just update the clock periods */
-		SlaveClock::period_samples[SlaveClock::period_sample_state] = SlaveClock::t - SlaveClock::last_clock_t;
-		
-		unsigned int periodsum = SlaveClock::period_samples[0] + SlaveClock::period_samples[1] + SlaveClock::period_samples[2] + SlaveClock::period_samples[3] + SlaveClock::period_samples[4];
-		SlaveClock::period = periodsum / 5;
-
-		SlaveClock::last_clock_t = 0;
-	}
+	SlaveClock::trigger = true;
 }
 
 void SlaveClock::timer(unsigned long t)
 {	
 	SlaveClock::t = t;
 	
-	if (SlaveClock::period != 0)
+	if (SlaveClock::trigger)
 	{
-		if (SlaveClock::last_clock_t == 0)
+		if (SlaveClock::period == 0)
 		{
-			this->update_tempo(t);
-		}
-	
-		if (t >= SlaveClock::next_clock_t)
-		{
-			this->update_tempo(t);
-			//TODO: Update the clock display on Due based boards
-		}
-	
-		for (int i = 0; i < this->devices.size(); i++)
-		{
-			if (t % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
+			if (SlaveClock::last_clock_t == 0)
 			{
-				this->devices[i]->reset();
+				SlaveClock::last_clock_t = t;
 			}
-		
-			this->devices[i]->timer(t);
-		}	
-	}
-}
+			else
+			{
+				SlaveClock::period = t - last_clock_t;
+				SlaveClock::period_samples[0] = SlaveClock::period;
+				SlaveClock::period_samples[1] = SlaveClock::period;
+				SlaveClock::period_samples[2] = SlaveClock::period;
+				SlaveClock::period_samples[3] = SlaveClock::period;
+				SlaveClock::period_samples[4] = SlaveClock::period;
+				SlaveClock::last_clock_t = t;
+			}
+		}
+		else
+		{
+			//TODO: Update the clock display on Due based boards
+			SlaveClock::period_samples[SlaveClock::period_sample_state] = SlaveClock::t - SlaveClock::last_clock_t;
+			SlaveClock::period_sample_state = (SlaveClock::period_sample_state + 1) % 5;
 
-void SlaveClock::update_tempo(unsigned long t)
-{
-	SlaveClock::next_clock_t = (t + this->period);
-	SlaveClock::last_clock_t = t;
+			SlaveClock::period = ((unsigned long)SlaveClock::period_samples[0] + (unsigned long)SlaveClock::period_samples[1] + (unsigned long)SlaveClock::period_samples[2] + (unsigned long)SlaveClock::period_samples[3] + (unsigned long)SlaveClock::period_samples[4]) / 5UL;
+			SlaveClock::next_clock_t = (t + this->period);
+			SlaveClock::last_clock_t = t;
+
+		}
+
+		/* Reset */
+		trigger = false;
+		
+		//Serial.print("\np: " + String(SlaveClock::period));
+	}
+
+	for (int i = 0; i < this->devices.size(); i++)
+	{
+		if (t % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
+		{
+			this->devices[i]->reset();
+		}
+
+		this->devices[i]->timer(t);
+	}		
 }
 
 

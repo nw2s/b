@@ -113,6 +113,7 @@ class nw2s::SlaveClock : public Clock
 		virtual void timer(unsigned long t);
 	
 	private:
+		static volatile bool trigger;
 		static volatile unsigned long t;
 		static volatile int period;
 		static int period_samples[5];
@@ -122,7 +123,7 @@ class nw2s::SlaveClock : public Clock
 		static volatile unsigned long next_clock_t;
 
 		SlaveClock(PinDigitalIn input, unsigned char beats_per_measure);
-		void update_tempo(unsigned long t);
+		// void update_tempo(unsigned long t);
 		static void isr();
 };
 

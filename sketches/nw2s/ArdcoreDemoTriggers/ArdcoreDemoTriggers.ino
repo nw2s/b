@@ -58,22 +58,22 @@ void setup()
 
 	Trigger* trigger1 = Trigger::create(ARDCORE_OUT_EX_D1, DIV_HALF);
 	democlock->registerdevice(trigger1);
-
+	
 	Trigger* trigger2 = Trigger::create(ARDCORE_OUT_EX_D2, DIV_EIGHTH_DOT);
 	democlock->registerdevice(trigger2);
-
+	
 	Trigger* trigger3 = Trigger::create(ARDCORE_OUT_EX_D3, DIV_QUARTER_TRIPLET);
 	democlock->registerdevice(trigger3);
-
+	
 	Trigger* trigger4 = Trigger::create(ARDCORE_OUT_EX_D4, DIV_SIXTEENTH);
 	democlock->registerdevice(trigger4);
-
+	
 	Trigger* trigger5 = Trigger::create(ARDCORE_OUT_EX_D5, DIV_WHOLE);
 	democlock->registerdevice(trigger5);
-
+	
 	Trigger* trigger6 = Trigger::create(ARDCORE_OUT_EX_D6, DIV_EIGHTH_TRIPLET);
 	democlock->registerdevice(trigger6);
-
+	
 	Trigger* trigger7 = Trigger::create(ARDCORE_OUT_EX_D7, DIV_THIRTYSECOND);
 	democlock->registerdevice(trigger7);
 	
