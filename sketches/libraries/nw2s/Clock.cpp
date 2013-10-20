@@ -178,9 +178,7 @@ void SlaveClock::timer(unsigned long t)
 		}
 
 		/* Reset */
-		trigger = false;
-		
-		//Serial.print("\np: " + String(SlaveClock::period));
+		trigger = false;		
 	}
 
 	for (int i = 0; i < this->devices.size(); i++)

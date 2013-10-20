@@ -26,8 +26,17 @@
 /*
 
 	This demo sets up a bunch of weird clock divisions/triggers on the Ardcore expansion's D0 - D7. 
+
+	The first thing that every nw2s::b sketch needs is an EventManager. 
 	
 	There are a number of clocks available to run the triggers which this sketch is meant to illustrate.
+	Simply uncomment the one you'd like to test. 
+
+	The EventManager is the top-level object that is what makes things happen. To the event manager, you
+	attach time based devices such as clocks, random CV generators, and so forth. 
+	
+	In this case, we're attaching a clock. Clocks in turn generate beats and to them, you attach
+	beat-based devices such as triggers and sequencers. 
 
 */
 
@@ -36,18 +45,17 @@ using namespace nw2s;
 void setup() 
 {
 	Serial.begin(19200);
-	Serial.print("\n\nStarting...\n");
 
 	EventManager::initialize();
 
 	/* Fixed clock running at 75BPM */
-	//Clock* democlock = FixedClock::create(75, 16);
+	Clock* democlock = FixedClock::create(75, 16);
 	
 	/* Variable clock running between 75 and 125BPM based on A0 input value */
 	//Clock* democlock = VariableClock::create(25, 125, ARDCORE_IN_A0, 16);
 
 	/* Clock slaving to the Ardcore clock input */
-	Clock* democlock = SlaveClock::create(ARDCORE_CLOCK_IN, 16);
+	//Clock* democlock = SlaveClock::create(ARDCORE_CLOCK_IN, 16);
 
 	/* Register the clock with the EventManager */
 	EventManager::registerdevice(democlock);
