@@ -88,11 +88,11 @@ void ADSR::timer(unsigned long t)
 	}
 	else if (repeat)
 	{
-		this->reset(t);
+		this->reset();
 	}
 }
 
-void ADSR::reset(unsigned long t)
+void ADSR::reset()
 {
 	this->t_start = 0;
 	this->output->outputCV(0);

@@ -25,15 +25,19 @@
 #include "Slew.h"
 #include "Gate.h"
 #include "Envelope.h"
+#include "Clock.h"
 
 namespace nw2s
 {
+	
 	struct SequenceNote
 	{
 		int octave;
 		int degree;
 	};
 	
+	typedef std::vector<SequenceNote> NoteSequenceData;
+
 	class Sequence;
 	class NoteSequence;
 	class RandomNoteSequence;
@@ -45,14 +49,14 @@ namespace nw2s
 	class TimeBasedDevice;
 }
 
-class nw2s::Sequence : public nw2s::TimeBasedDevice
+class nw2s::Sequence : public nw2s::BeatDevice
 {
 	public: 
 		void setgate(Gate* gate);
 		void setslew(Slew* slew);
 		void seteg(Envelope* eg);
 		virtual void timer(unsigned long t) = 0;
-		virtual void reset();
+		virtual void reset() = 0;
 	
 	protected:
 		Gate* gate;	
@@ -66,67 +70,68 @@ class nw2s::Sequence : public nw2s::TimeBasedDevice
 class nw2s::NoteSequence : public nw2s::Sequence
 {
 	public:
-		static NoteSequence* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int tempo, PinAnalogOut output, bool randomize_seq);
+		static NoteSequence* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq);
 		virtual void timer(unsigned long t);
+		virtual void reset();
 	
 	private:
 		bool randomize_seq;
 		int current_degree;
 		int current_octave;
-		int period;
 		volatile int sequence_index;
 		std::vector<SequenceNote>* notes;
 		Key* key;
 	 	AnalogOut* output;
 		
-		NoteSequence(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int tempo, PinAnalogOut output, bool randomize_seq);
+		NoteSequence(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq);
 };
 
 class nw2s::RandomNoteSequence : public nw2s::Sequence
 {
 	public:
-		static RandomNoteSequence* create(NoteName key, ScaleType scale, int tempo, PinAnalogOut output);
+		static RandomNoteSequence* create(NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output);
 		virtual void timer(unsigned long t);
-		void setgate(Gate* gate);
+		virtual void reset();
 	
 	private:
 		Key* key;
-		int period;
 		AnalogOut* output;
 		ScaleNote current_note;
 		
-		RandomNoteSequence(NoteName key, ScaleType scale, int tempo, PinAnalogOut output);
+		RandomNoteSequence(NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output);
 };
 
-class nw2s::RandomTimeSequence : public nw2s::Sequence
-{
-	public:
-		static RandomTimeSequence* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output, bool randomize_seq);
-		static RandomTimeSequence* create(NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output);
-		virtual void timer(unsigned long t);
-	
-	private:
-		std::vector<SequenceNote>* notes;
-		Key* key;
-		int mintempo;
-		int maxtempo;
-		bool randomize_seq;
-		AnalogOut* output;
-		volatile int sequence_index;
-		volatile unsigned long last_t;
-		volatile unsigned long next_t;
-		ScaleNote current_note;
-		
-		RandomTimeSequence(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output, bool randomize_seq);
-		RandomTimeSequence(NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output);
-		void calculate_next_t(unsigned long t);		
-};
+// class nw2s::RandomTimeSequence : public nw2s::Sequence
+// {
+// 	public:
+// 		static RandomTimeSequence* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output, bool randomize_seq);
+// 		static RandomTimeSequence* create(NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output);
+// 		virtual void timer(unsigned long t);
+// 		virtual void reset();
+// 	
+// 	private:
+// 		std::vector<SequenceNote>* notes;
+// 		Key* key;
+// 		int mintempo;
+// 		int maxtempo;
+// 		bool randomize_seq;
+// 		AnalogOut* output;
+// 		volatile int sequence_index;
+// 		volatile unsigned long last_t;
+// 		volatile unsigned long next_t;
+// 		ScaleNote current_note;
+// 		
+// 		RandomTimeSequence(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output, bool randomize_seq);
+// 		RandomTimeSequence(NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output);
+// 		void calculate_next_t(unsigned long t);		
+// };
 
 class nw2s::CVNoteSequence : public nw2s::Sequence
 {
 	public:
 		static CVNoteSequence* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input);
 		virtual void timer(unsigned long t);
+		virtual void reset();
 	
 	private:
 		volatile int sequence_index;

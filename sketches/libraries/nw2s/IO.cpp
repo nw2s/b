@@ -113,14 +113,14 @@ void AnalogOut::outputNoteCV(ScaleNote note)
 
 }
 
-void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew, int t)
+void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew)
 {
 	
 #ifdef __AVR__
 	
 	if (pin == ARDCORE_DAC)
 	{
-		byte v = slew->calculate_value(note.cv, t);
+		byte v = slew->calculate_value(note.cv);
 	
 	  	PORTB = (PORTB & B11100000) | (v >> 3);
 		PORTD = (PORTD & B00011111) | ((v & B00000111) << 5);		
@@ -130,7 +130,7 @@ void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew, int t)
 
 #ifdef _SAM3XA_
 
-	int v = slew->calculate_value(note.cv, t);
+	int v = slew->calculate_value(note.cv);
 
 	if ((pin >= DUE_SPI_4822_0) && (pin <= DUE_SPI_4822_15))
 	{		

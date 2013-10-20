@@ -38,16 +38,17 @@ Gate::Gate(PinDigitalOut pin, unsigned int duration)
 	digitalWrite(this->pin, LOW);	
 }
 
-void Gate::timer(unsigned int t)
+void Gate::timer(unsigned long t)
 {
-	if ((this->state == false) && (t < this->duration))
-	{
-		this->state = true;
-		digitalWrite(this->pin, HIGH);
-	}
-	else if ((this->state == true) && (t >= duration))
-	{
-		this->state = false;
-		digitalWrite(this->pin, LOW);
-	}	
+	//TODO: convert from period t to t
+	// if ((this->state == false) && (t < this->duration))
+	// {
+	// 	this->state = true;
+	// 	digitalWrite(this->pin, HIGH);
+	// }
+	// else if ((this->state == true) && (t >= duration))
+	// {
+	// 	this->state = false;
+	// 	digitalWrite(this->pin, LOW);
+	// }	
 }

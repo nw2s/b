@@ -62,7 +62,7 @@ class nw2s::BeatDevice : public TimeBasedDevice
 		
 	protected:
 		int clock_division;
-
+		BeatDevice();
 };
 
 class nw2s::Clock : public nw2s::TimeBasedDevice

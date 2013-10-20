@@ -33,7 +33,7 @@ class nw2s::Gate
 {
 	public:
 		static Gate* create(PinDigitalOut pin, unsigned int duration);
-		void timer(unsigned int t);
+		void timer(unsigned long t);
 		void updateDuration();
 
 	private:

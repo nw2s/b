@@ -18,56 +18,9 @@
 
 */
 
-#ifndef Slew_h
-#define Slew_h
-
-#ifdef __AVR__
-#define CVTYPE unsigned char
-#else
-#define CVTYPE int
-#endif
-
-namespace nw2s
-{
-	class Slew;
-	class DecaySlew;
-	class LinearSlew;
-}
-
-class nw2s::Slew
-{
-	public: 
-		virtual CVTYPE calculate_value(CVTYPE input_value) = 0;
-};
-
-class nw2s::DecaySlew : public Slew
-{
-	public:
-		static DecaySlew* create(int duration);
-		virtual CVTYPE calculate_value(CVTYPE input_value);
-		
-	private:
-		bool initialized;
-		int speed;
-		CVTYPE lastvalue;
-		DecaySlew(int speed);
-};
-
-class nw2s::LinearSlew : public Slew
-{
-	public:
-		static LinearSlew* create(int speed);
-		virtual CVTYPE calculate_value(CVTYPE input_value);
-
-	private:
-		bool initialized;
-		int speed;
-		CVTYPE lastvalue;
-		LinearSlew(int speed);
-};
-
-
-#endif
-
+#include <EventManager.h>
+#include <Trigger.h>
+#include <Clock.h>
+#include <IO.h>
 
 

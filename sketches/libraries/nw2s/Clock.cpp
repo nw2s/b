@@ -25,6 +25,11 @@
 using namespace std;
 using namespace nw2s;
 
+BeatDevice::BeatDevice()
+{
+	this->clock_division = DIV_QUARTER;
+}
+
 int BeatDevice::getclockdivision()
 {
 	return this->clock_division;

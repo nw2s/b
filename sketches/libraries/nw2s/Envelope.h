@@ -41,7 +41,7 @@ class nw2s::Envelope
 {
 	public:
 		virtual void timer(unsigned long t) = 0;
-		virtual void reset(unsigned long t) = 0;
+		virtual void reset() = 0;
 	};
 
 class nw2s::ADSR : public Envelope
@@ -49,7 +49,7 @@ class nw2s::ADSR : public Envelope
 	public:
 		static ADSR* create(unsigned int a, unsigned int d, unsigned int s, unsigned int r, unsigned int gate, bool repeat, PinAnalogOut pin);
 		virtual void timer(unsigned long t);
-		virtual void reset(unsigned long t);
+		virtual void reset();
 		
 	private:
 		unsigned long t_start;

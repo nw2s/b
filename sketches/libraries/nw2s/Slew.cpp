@@ -40,7 +40,7 @@ DecaySlew::DecaySlew(int speed)
 	this->speed = speed;
 }
 
-CVTYPE DecaySlew::calculate_value(CVTYPE input, int t)
+CVTYPE DecaySlew::calculate_value(CVTYPE input)
 {
 	//TODO: Can't retrigger?
 	//TODO: There seems to be a weird thing at the end when slewing up.
@@ -53,7 +53,9 @@ CVTYPE DecaySlew::calculate_value(CVTYPE input, int t)
 	
 	long scale_input = input * 100L;
 
-	this->lastvalue = scale_input + ( ( ( this->lastvalue - scale_input ) * ( ( ( this->speed - ((t + (this->speed/5))/(this->speed/5))) * 100L) / this->speed ) ) / 100L ); 
+	//TODO: fix this when done with refactor
+	this->lastvalue = scale_input;
+	//this->lastvalue = scale_input + ( ( ( this->lastvalue - scale_input ) * ( ( ( this->speed - ((t + (this->speed/5))/(this->speed/5))) * 100L) / this->speed ) ) / 100L ); 
 	
 	return lastvalue / 100;
 }
@@ -64,7 +66,7 @@ LinearSlew::LinearSlew(int speed)
 	this->speed = speed;
 }
 
-CVTYPE LinearSlew::calculate_value(CVTYPE input, int t)
+CVTYPE LinearSlew::calculate_value(CVTYPE input)
 {	
 	if (!initialized)
 	{

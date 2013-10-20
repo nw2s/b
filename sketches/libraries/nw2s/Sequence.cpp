@@ -30,24 +30,14 @@
 using namespace std;
 using namespace nw2s;
 
-NoteSequence* NoteSequence::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int tempo, PinAnalogOut output, bool randomize_seq)
+NoteSequence* NoteSequence::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq)
 {
-	return new NoteSequence(notes, key, scale, tempo, output, randomize_seq);
+	return new NoteSequence(notes, key, scale, clockdivision, output, randomize_seq);
 }
 
-RandomNoteSequence* RandomNoteSequence::create(NoteName key, ScaleType scale, int tempo, PinAnalogOut output)
+RandomNoteSequence* RandomNoteSequence::create(NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output)
 {
-	return new RandomNoteSequence(key, scale, tempo, output);
-}
-
-RandomTimeSequence* RandomTimeSequence::create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output, bool randomize_seq)
-{
-	return new RandomTimeSequence(notes, key, scale, mintempo, maxtempo, output, randomize_seq);
-}
-
-RandomTimeSequence* RandomTimeSequence::create(NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output)
-{
-	return new RandomTimeSequence(key, scale, mintempo, maxtempo, output);
+	return new RandomNoteSequence(key, scale, clockdivision, output);
 }
 
 CVNoteSequence* CVNoteSequence::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input)
@@ -77,18 +67,14 @@ void Sequence::seteg(Envelope* envelope)
 	this->envelope = envelope;
 }
 
-void Sequence::reset()
-{
-	/* We aren't doin anything with this yet... */
-}
 
-NoteSequence::NoteSequence(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int tempo, PinAnalogOut pin, bool randomize_seq)
+NoteSequence::NoteSequence(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut pin, bool randomize_seq)
 {
 	this->key = new Key(scale, key);
 	this->output = output;
 	this->sequence_index = 0;
 	this->randomize_seq = randomize_seq;
-	this->gate = NULL;
+	this->clock_division = clockdivision;
 		
 	/* Copy the sequence to our own memory */
 	this->notes = new vector<SequenceNote>();
@@ -100,137 +86,121 @@ NoteSequence::NoteSequence(vector<SequenceNote>* notes, NoteName key, ScaleType 
 	int startdegree = (*this->notes)[noteindex].degree;
 	int startoctave = (*this->notes)[noteindex].octave;
 	this->output = AnalogOut::create(pin);
-	this->output->outputNoteCV(this->key->getNote(startoctave, startdegree));
-		
-	/* The fixed sequence operates on a regular period based on the tempo */
-	int normalized_tempo = (tempo < 1) ? 1 : (tempo > 500) ? 500 : tempo;
-	float periodms = (1.0 / normalized_tempo) * 60000.0;
-	this->period = round(periodms);	
+	this->output->outputNoteCV(this->key->getNote(startoctave, startdegree));		
 }
 
 void NoteSequence::timer(unsigned long t)
 {
-	unsigned int period_t = t % this->period;
-	
-	if (period_t == 0)
-	{
-		int noteindex = (randomize_seq) ? random(this->notes->size()) : ++(this->sequence_index) % this->notes->size();
-		this->current_degree = (*this->notes)[noteindex].degree;
-		this->current_octave = (*this->notes)[noteindex].octave;		
-
-		if (this->slew == NULL) this->output->outputNoteCV(this->key->getNote(this->current_octave, this->current_degree));
-
-		if (this->envelope != NULL) this->envelope->reset(t);
-	}
-
-	if (this->slew != NULL) this->output->outputSlewedNoteCV(this->key->getNote(this->current_octave, this->current_degree), this->slew, period_t);
-	if (this->gate != NULL) this->gate->timer(period_t);
-	if (this->envelope != NULL) this->envelope->timer(t);
-	
+	if (this->slew != NULL) this->output->outputSlewedNoteCV(this->key->getNote(this->current_octave, this->current_degree), this->slew);
+	if (this->gate != NULL) this->gate->timer(t);
+	if (this->envelope != NULL) this->envelope->timer(t);	
 }
 
-RandomNoteSequence::RandomNoteSequence(NoteName key, ScaleType scale, int tempo, PinAnalogOut pin)
+void NoteSequence::reset()
+{
+	//Serial.print(" - in reset");
+	int noteindex = (randomize_seq) ? random(this->notes->size()) : ++(this->sequence_index) % this->notes->size();
+	this->current_degree = (*this->notes)[noteindex].degree;
+	this->current_octave = (*this->notes)[noteindex].octave;		
+
+	if (this->slew == NULL) this->output->outputNoteCV(this->key->getNote(this->current_octave, this->current_degree));
+
+	if (this->envelope != NULL) this->envelope->reset();
+}
+
+RandomNoteSequence::RandomNoteSequence(NoteName key, ScaleType scale, int clockdivision, PinAnalogOut pin)
 {
 	this->key = new Key(scale, key);
 	this->output = output;
-	this->gate = NULL;
+	this->clock_division = clockdivision;
 		
 	/* Start the CV at a random note in the sequence */
 	this->current_note = this->key->getRandomNote();
 	this->output = AnalogOut::create(pin);
 	this->output->outputNoteCV(this->current_note);
-
-	/* The fixed sequence operates on a regular period based on the tempo */
-	//TODO: Convert to integers
-	int normalized_tempo = (tempo < 1) ? 1 : (tempo > 500) ? 500 : tempo;
-	float periodms = (1.0 / normalized_tempo) * 60000.0;
-	this->period = round(periodms);	
 }
 
 void RandomNoteSequence::timer(unsigned long t)
 {	
-	unsigned int period_t = t % this->period;
-	
-	if (period_t == 0)
-	{
-		this->current_note = this->key->getRandomNote();		
-		if (this->slew == NULL) this->output->outputNoteCV(this->current_note);		
-		if (this->envelope != NULL) this->envelope->reset(t);
-	}
-
-	if (this->slew != NULL) this->output->outputSlewedNoteCV(this->current_note, this->slew, t % this->period);	
-	if (this->gate != NULL) this->gate->timer(period_t);
-	if (this->envelope != NULL) this->envelope->timer(t);
-
-}
-
-RandomTimeSequence::RandomTimeSequence(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut pin, bool randomize_seq)
-{
-	this->key = new Key(scale, key);
-	this->output = output;
-	this->gate = NULL;
-	this->sequence_index = 0;
-	this->randomize_seq = randomize_seq;
-	this->last_t = 0;
-	this->next_t = 0;
-		
-	/* Copy the sequence to our own memory */
-	this->notes = new vector<SequenceNote>();
-	copy(notes->begin(), notes->end(), back_inserter(*this->notes));
-
-	int noteindex = (randomize_seq) ? random(this->notes->size()) : 0;
-
-	/* Start at either the first or a random item in the sequence */
-	int startdegree = (*this->notes)[noteindex].degree;
-	int startoctave = (*this->notes)[noteindex].octave;
-	this->output = AnalogOut::create(pin);
-	this->output->outputNoteCV(this->key->getNote(startoctave, startdegree));
-
-	/* The random time sequence operates on a random period based on the tempo */
-	this->mintempo = (mintempo < 1) ? 1 : (mintempo > 500) ? 500 : mintempo;
-	this->maxtempo = (maxtempo < 1) ? 1 : (maxtempo > 500) ? 500 : maxtempo;
-}
-
-void RandomTimeSequence::timer(unsigned long t)
-{	
-	if (this->next_t == 0)
-	{
-		this->calculate_next_t(t);
-	}
-	else if (t >= next_t)
-	{
-		int noteindex = (randomize_seq) ? random(this->notes->size()) : ++(this->sequence_index) % this->notes->size();
-		int degree = (*this->notes)[noteindex].degree;
-		int octave = (*this->notes)[noteindex].octave;
-		
-		this->current_note = this->key->getNote(octave, degree);
-		
-		if (this->slew == NULL) this->output->outputNoteCV(this->current_note);		
-		if (this->envelope != NULL) this->envelope->reset(t);
-		
-		/* Calculation of the current tempo is only done on clock tick */
-		this->last_t = t;	
-		this->calculate_next_t(t);		
-	}
-	
-	int period_t = t - last_t;
-
-	if (this->slew != NULL) this->output->outputSlewedNoteCV(this->current_note, this->slew, period_t);
-	if (this->gate != NULL) this->gate->timer(period_t);
+	if (this->slew != NULL) this->output->outputSlewedNoteCV(this->current_note, this->slew);	
+	if (this->gate != NULL) this->gate->timer(t);
 	if (this->envelope != NULL) this->envelope->timer(t);
 }
 
-void RandomTimeSequence::calculate_next_t(unsigned long t)
+void RandomNoteSequence::reset()
 {
-	int tempo = random(mintempo, maxtempo);
-	
-	//TODO: Convert to integers
-	float periodms = (1.0 / tempo) * 60000.0;
-
-	this->next_t = (this->last_t + round(periodms));
-	
-	Serial.print("\n t - " + String(this->next_t));
+	this->current_note = this->key->getRandomNote();		
+	if (this->slew == NULL) this->output->outputNoteCV(this->current_note);		
+	if (this->envelope != NULL) this->envelope->reset();
 }
+
+// RandomTimeSequence::RandomTimeSequence(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut pin, bool randomize_seq)
+// {
+// 	this->key = new Key(scale, key);
+// 	this->output = output;
+// 	this->gate = NULL;
+// 	this->sequence_index = 0;
+// 	this->randomize_seq = randomize_seq;
+// 	this->last_t = 0;
+// 	this->next_t = 0;
+// 		
+// 	/* Copy the sequence to our own memory */
+// 	this->notes = new vector<SequenceNote>();
+// 	copy(notes->begin(), notes->end(), back_inserter(*this->notes));
+// 
+// 	int noteindex = (randomize_seq) ? random(this->notes->size()) : 0;
+// 
+// 	/* Start at either the first or a random item in the sequence */
+// 	int startdegree = (*this->notes)[noteindex].degree;
+// 	int startoctave = (*this->notes)[noteindex].octave;
+// 	this->output = AnalogOut::create(pin);
+// 	this->output->outputNoteCV(this->key->getNote(startoctave, startdegree));
+// 
+// 	/* The random time sequence operates on a random period based on the tempo */
+// 	this->mintempo = (mintempo < 1) ? 1 : (mintempo > 500) ? 500 : mintempo;
+// 	this->maxtempo = (maxtempo < 1) ? 1 : (maxtempo > 500) ? 500 : maxtempo;
+// }
+// 
+// void RandomTimeSequence::timer(unsigned long t)
+// {	
+// 	if (this->next_t == 0)
+// 	{
+// 		this->calculate_next_t(t);
+// 	}
+// 	else if (t >= next_t)
+// 	{
+// 		int noteindex = (randomize_seq) ? random(this->notes->size()) : ++(this->sequence_index) % this->notes->size();
+// 		int degree = (*this->notes)[noteindex].degree;
+// 		int octave = (*this->notes)[noteindex].octave;
+// 		
+// 		this->current_note = this->key->getNote(octave, degree);
+// 		
+// 		if (this->slew == NULL) this->output->outputNoteCV(this->current_note);		
+// 		if (this->envelope != NULL) this->envelope->reset(t);
+// 		
+// 		/* Calculation of the current tempo is only done on clock tick */
+// 		this->last_t = t;	
+// 		this->calculate_next_t(t);		
+// 	}
+// 	
+// 	int period_t = t - last_t;
+// 
+// 	if (this->slew != NULL) this->output->outputSlewedNoteCV(this->current_note, this->slew, period_t);
+// 	if (this->gate != NULL) this->gate->timer(period_t);
+// 	if (this->envelope != NULL) this->envelope->timer(t);
+// }
+// 
+// void RandomTimeSequence::calculate_next_t(unsigned long t)
+// {
+// 	int tempo = random(mintempo, maxtempo);
+// 	
+// 	//TODO: Convert to integers
+// 	float periodms = (1.0 / tempo) * 60000.0;
+// 
+// 	this->next_t = (this->last_t + round(periodms));
+// 	
+// 	Serial.print("\n t - " + String(this->next_t));
+// }
 
 CVNoteSequence::CVNoteSequence(vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut pin, PinAnalogIn input)
 {	
@@ -280,7 +250,7 @@ void CVNoteSequence::timer(unsigned long t)
 			
 		this->output->outputNoteCV(this->key->getNote(octave, degree));
 
-		if (this->envelope != NULL) this->envelope->reset(t);		
+		if (this->envelope != NULL) this->envelope->reset();		
 	}
 	else if (this->slew != NULL)
 	{		
@@ -297,10 +267,10 @@ void CVNoteSequence::timer(unsigned long t)
 		int degree = (*this->notes)[noteindex].degree;
 		int octave = (*this->notes)[noteindex].octave;		
 	
-		this->output->outputSlewedNoteCV(this->key->getNote(octave, degree), this->slew, period_t);
+		this->output->outputSlewedNoteCV(this->key->getNote(octave, degree), this->slew);
 	}
 
-	if (this->gate != NULL) this->gate->timer(period_t);
+	if (this->gate != NULL) this->gate->timer(t);
 	if (this->envelope != NULL) this->envelope->timer(t);	
 }
 
