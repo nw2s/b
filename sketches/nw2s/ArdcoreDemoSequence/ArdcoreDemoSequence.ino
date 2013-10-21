@@ -34,7 +34,7 @@ void setup()
 	EventManager::initialize();
 
 	/* Fixed clock running at 75BPM on an Ardcore D0 */
-	FixedClock* fixedclock = FixedClock::create(75, 16);
+	FixedClock* fixedclock = FixedClock::create(20, 16);
 	EventManager::registerdevice(fixedclock);
 
 	/* Set up the note data for the sequence */
@@ -49,10 +49,12 @@ void setup()
 	/* Build our note-based seuqnce */
 	NoteSequence* sequence = NoteSequence::create(notes, C, MAJOR, DIV_QUARTER, ARDCORE_DAC, false);
 
-	/* Add some meta values */
-	//sequence->setgate(Gate::create(ARDCORE_OUT_D0, 200));
-	//sequence->setslew(LinearSlew::create(1000));
-	//sequence->seteg(ADSR::create(100, 250, 254, 1250, 1200, false, ARDCORE_DAC));
+	/* Add some modifier values */
+	sequence->setgate(Gate::create(ARDCORE_OUT_D0, 75));
+	sequence->setslew(DecaySlew::create(0.90));
+
+	/* Unfortulately, there aren't enough outputs to support both pitch CV and ADSR on the Ardcore */
+	//sequence->seteg(ADSR::create(20, 40, 254, 1250, 1200, false, ARDCORE_DAC));
 
 	fixedclock->registerdevice(sequence);
 }

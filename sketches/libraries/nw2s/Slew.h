@@ -43,14 +43,14 @@ class nw2s::Slew
 class nw2s::DecaySlew : public Slew
 {
 	public:
-		static DecaySlew* create(int duration);
+		static DecaySlew* create(float timeconstant);
 		virtual CVTYPE calculate_value(CVTYPE input_value);
 		
 	private:
 		bool initialized;
-		int speed;
-		CVTYPE lastvalue;
-		DecaySlew(int speed);
+		float timeconstant;
+		float lastvalue;
+		DecaySlew(float timeconstant);
 };
 
 class nw2s::LinearSlew : public Slew
@@ -62,6 +62,7 @@ class nw2s::LinearSlew : public Slew
 	private:
 		bool initialized;
 		int speed;
+		long lastvalue_scaled;
 		CVTYPE lastvalue;
 		LinearSlew(int speed);
 };

@@ -23,9 +23,9 @@
 
 using namespace nw2s;
 
-DecaySlew* DecaySlew::create(int speed)
+DecaySlew* DecaySlew::create(float timeconstant)
 {
-	return new DecaySlew(speed);
+	return new DecaySlew(timeconstant);
 }
 
 LinearSlew* LinearSlew::create(int speed)
@@ -34,60 +34,61 @@ LinearSlew* LinearSlew::create(int speed)
 }
 
 
-DecaySlew::DecaySlew(int speed)
+DecaySlew::DecaySlew(float timeconstant)
 {
+	/* Normalize input to 0.1 < timeconstant < 0.99 */
+	this->timeconstant = (timeconstant < 0.1) ? 0.1 : ((timeconstant > 0.99) ? 0.99 : timeconstant);
 	this->initialized = false;
-	this->speed = speed;
 }
 
 CVTYPE DecaySlew::calculate_value(CVTYPE input)
-{
-	//TODO: Can't retrigger?
-	//TODO: There seems to be a weird thing at the end when slewing up.
-	
+{	
 	if (!initialized)
 	{
-		lastvalue = input * 100L; 
-		initialized = true;
+		this->lastvalue = input; 
+		this->initialized = true;
+	}
+
+	/* Don't get caught on a rounding error */
+	if ((this->lastvalue >= input - 0.1) && (this->lastvalue <= input + 0.1))
+	{
+		this->lastvalue = input;
+		return input;
 	}
 	
-	long scale_input = input * 100L;
-
-	//TODO: fix this when done with refactor
-	this->lastvalue = scale_input;
-	//this->lastvalue = scale_input + ( ( ( this->lastvalue - scale_input ) * ( ( ( this->speed - ((t + (this->speed/5))/(this->speed/5))) * 100L) / this->speed ) ) / 100L ); 
-	
-	return lastvalue / 100;
+	this->lastvalue = input + ((this->lastvalue - (1.0 * input)) * timeconstant);
+		
+	return (int)this->lastvalue;
 }
 
 LinearSlew::LinearSlew(int speed)
 {
+	/* Normalize input to 1 < speed < 100 */
+	this->speed = (speed < 1) ? 1 : ((speed > 100) ? 100 : speed);
 	this->initialized = false;
-	this->speed = speed;
 }
 
 CVTYPE LinearSlew::calculate_value(CVTYPE input)
 {	
 	if (!initialized)
 	{
-		lastvalue = input; 
+		this->lastvalue_scaled = input * 100; 
+		this->lastvalue = input; 
 		initialized = true;
 	}
 
-	if (lastvalue == input)
+	if (this->lastvalue == input)
 	{
 		return input;
 	}
-	else if ((int)lastvalue > (int)input)
-	{
-		return --lastvalue;
-	}
-	else
-	{
-		return ++lastvalue;
-	}
-}
 
+	int factor = (input < this->lastvalue) ? -1L : 1L;
+	
+	this->lastvalue_scaled = (this->lastvalue_scaled) + (factor * (long)this->speed);
+	this->lastvalue = this->lastvalue_scaled / 100;
+
+	return this->lastvalue;
+}
 
 
 

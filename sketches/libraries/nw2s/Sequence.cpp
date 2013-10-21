@@ -98,7 +98,6 @@ void NoteSequence::timer(unsigned long t)
 
 void NoteSequence::reset()
 {
-	//Serial.print(" - in reset");
 	int noteindex = (randomize_seq) ? random(this->notes->size()) : ++(this->sequence_index) % this->notes->size();
 	this->current_degree = (*this->notes)[noteindex].degree;
 	this->current_octave = (*this->notes)[noteindex].octave;		

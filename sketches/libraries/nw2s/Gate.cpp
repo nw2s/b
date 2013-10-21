@@ -60,4 +60,6 @@ void Gate::timer(unsigned long t)
 void Gate::reset()
 {
 	this->last_clock_t = 0;
+	this->state = false;
+	digitalWrite(this->pin, LOW);
 }
