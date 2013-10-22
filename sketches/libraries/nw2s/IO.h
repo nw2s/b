@@ -77,14 +77,22 @@ namespace nw2s
 
 	enum PinDigitalOut
 	{
-		DUE_OUT_D0 = 22,
-		DUE_OUT_D1 = 23,
-		DUE_OUT_D2 = 24,
-		DUE_OUT_D3 = 25,
-		DUE_OUT_D4 = 26,
-		DUE_OUT_D5 = 27,
-		DUE_OUT_D6 = 28,
-		DUE_OUT_D7 = 29,
+		DUE_OUT_D00 = 22,
+		DUE_OUT_D01 = 23,
+		DUE_OUT_D02 = 24,
+		DUE_OUT_D03 = 25,
+		DUE_OUT_D04 = 26,
+		DUE_OUT_D05 = 27,
+		DUE_OUT_D06 = 28,
+		DUE_OUT_D07 = 29,
+		DUE_OUT_D08 = 29,
+		DUE_OUT_D09 = 29,
+		DUE_OUT_D10 = 29,
+		DUE_OUT_D11 = 29,
+		DUE_OUT_D12 = 29,
+		DUE_OUT_D13 = 29,
+		DUE_OUT_D14 = 29,
+		DUE_OUT_D15 = 29,
 		
 		DIGITAL_OUT_NONE = -1,
 	};
@@ -131,6 +139,10 @@ namespace nw2s
 	enum PinDigitalIn
 	{
 		DIGITAL_IN_NONE = -1,
+		DUE_IN_D0 = 50,
+		DUE_IN_D1 = 51,
+		DUE_IN_D2 = 52,
+		DUE_IN_D3 = 53,
 	};
 
 

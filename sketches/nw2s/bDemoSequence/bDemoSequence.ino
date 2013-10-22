@@ -52,7 +52,7 @@ void setup()
 	NoteSequence* sequence = NoteSequence::create(notes, C, MAJOR, DIV_EIGHTH, DUE_SPI_4822_00);
 
 	/* Add some modifier values */
-	sequence->setgate(Gate::create(DUE_OUT_D0, 75));
+	sequence->setgate(Gate::create(DUE_OUT_D00, 75));
 	sequence->setslew(DecaySlew::create(0.90));
 	sequence->seteg(ADSR::create(20, 40, 254, 1250, 1200, false, DUE_SPI_4822_03));
 

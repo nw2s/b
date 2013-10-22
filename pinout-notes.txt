@@ -51,12 +51,12 @@
 46 - METRO_MUX_3
 47 - METRO_LE
 
-48 - IN_D0
-49 - IN_D1
-50 - IN_D2
-51 - IN_D3
-52 - IN_D4
-53 - IN_D5
+48 - 
+49 - 
+50 - IN_D0
+51 - IN_D1
+52 - IN_D2
+53 - IN_D3
 
 
 
