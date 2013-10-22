@@ -1,0 +1,242 @@
+
+
+
+2.048V
+
+4096
+
+0.5mV per bit
+
+2.5 gain
+
+0.00125mV per bit
+
+
+
+
+
+6 pot
+6 analog in
+
+16 analog out
+8 clock/trigger out
+
+
+22 - GATE00
+23 - GATE01
+24 - GATE02
+25 - GATE03
+26 - GATE04
+27 - GATE05
+28 - GATE06
+29 - GATE07
+30 - GATE08
+31 - GATE09
+32 - GATE10
+33 - GATE11
+34 - GATE12
+35 - GATE13
+36 - GATE14
+37 - GATE15
+
+38 - DAC_CS_MUX_0
+39 - DAC_CS_MUX_1
+40 - DAC_CS_MUX_2
+41 - DAC_CS_MUX_OE
+42 - DAC_LATCH
+
+43 - METRO_MUX_0
+44 - METRO_MUX_1
+45 - METRO_MUX_2
+46 - METRO_MUX_3
+47 - METRO_LE
+
+48 - IN_D0
+49 - IN_D1
+50 - IN_D2
+51 - IN_D3
+52 - IN_D4
+53 - IN_D5
+
+
+
+
+
+
+Digital 22 - 53
+
+22 - GATE0
+23 - GATE1
+24 - GATE2
+25 - GATE3
+26 - GATE4
+27 - GATE5
+28 - GATE6
+29 - GATE7
+30 - CSDAC00
+30 - CSDAC01
+31 - LDAC00
+31 - LDAC01
+32 - CSDAC02
+32 - CSDAC03
+33 - LDAC02
+33 - LDAC03
+34 - CSDAC04
+34 - CSDAC05
+35 - LDAC04
+35 - LDAC05
+36 - CSDAC06
+36 - CSDAC07
+37 - LDAC06
+37 - LDAC07
+38 - CSDAC08
+38 - CSDAC09
+39 - LDAC08
+39 - LDAC09
+40 - CSDAC10
+40 - CSDAC11
+41 - LDAC10
+41 - LDAC11
+42 - CSDAC12
+42 - CSDAC13
+43 - LDAC12
+43 - LDAC13
+44 - CSDAC14
+44 - CSDAC15
+45 - LDAC14
+45 - LDAC15
+46
+47
+48
+49 - LATCH_DAC_BANK1
+50 - IN_D0
+51 - IN_D1
+52 - IN_D2
+53 - IN_D3
+
+
+
+nw2s::b
+
+16 CV Outputs
+8 Gate/Trigger Outputs
+8 Potentiometer Inputs
+3 Switched Analog/Potentiometer Inputs
+1 Switched Analog/Noise/Potentiometer Inputs
+4 Gate Inputs
+1 Noise Output
+
+84Mhz Arduino Due Platform
+12 bit DAC resolution
+Optocoupled digital I/O
+Buffered analog I/O
+On-board dedicated entropy source
+Open-source runtime
+Simplified programming framework
+Uses standard shield footprint for easy upgrades
+Through-hole mounted components and socketed ICs
+Available as kit or assembled
+
+
+
+The goal of this project is to produce the first completely versatile gate, sequencer, LFO, CV generator and CV processor that can leverage today's powerful micro-controllers and peripherals.
+
+This unit's compositional strengths lie in algorithmic, rich, textural, evolving sequences and pads possible by simultaneously modulating a large number of parameters across a number of voices. Inspiration can be had from the number of random motion and automata devices included in the source code.
+
+With a significant amount of open source code out of the box, there is no shortage of inspiration. Most of the individual patches can be run on the Ardcore, but are able to be run side-by-side on the b. 
+
+Your synths are modular, shouldn't your sequencer be as well? Each layer of the b's architecture is replaceable and modifiable. 
+
+
+
+
+I've been developing a framework for algorithmic composition using microcontrollers such as the Arduino or Beagle. The code is currently supported on the Ardcore which runs on the Uno as well as the Due which is the board I'm using in a multi-output design.
+
+The goal of the framework is to provide a number of modular building blocks on which you can design custom sequenced and algorithmic compositional tools.
+
+This is a demonstration of a fixed ADSR generator and gate output that are based on a regular clock. The sound source is a Morphing Terrarium with the Z position modulated by the decayed gate output and the VCA modulated by the ADSR output. The X/Y position is unmodulated, but sent to a bubblesound SEM20 with the cutoff frequency modulated by an LFO. 
+
+Obviously, the ADSR is nothing in and of itself, but with any framework, the work to get to this point is mostly unseen. This is as much a POC of the framework concept as anything else. 
+
+I'm in the process of building a prototype that will be able to generate all of the control signals at once. Having all of them together makes a framework that much more significant.
+
+And for a few more details... Outputs are digitized using a Radial DI amplified by a Daking preamp into an Avid HD IO. There's some Lexicon Random Hall, Valhalla Ubermod, and Soundtoys Crystalizer processing added afterwards.
+
+For more information on the code, please see https://github.com/nw2s/b. I'll have some more information on the hardware prototyping soon. Just getting some details together. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+22 - GATE0
+23 - GATE1
+24 - GATE2
+25 - GATE3
+26 - GATE4
+27 - GATE5
+28 - GATE6
+29 - GATE7
+30 - CSDAC00
+30 - CSDAC01
+31 - LDAC00
+31 - LDAC01
+32 - CSDAC02
+32 - CSDAC03
+33 - LDAC02
+33 - LDAC03
+34 - CSDAC04
+34 - CSDAC05
+35 - LDAC04
+35 - LDAC05
+36 - CSDAC06
+36 - CSDAC07
+37 - LDAC06
+37 - LDAC07
+38 - CSDAC08
+38 - CSDAC09
+39 - LDAC08
+39 - LDAC09
+40 - CSDAC10
+40 - CSDAC11
+41 - LDAC10
+41 - LDAC11
+42 - CSDAC12
+42 - CSDAC13
+43 - LDAC12
+43 - LDAC13
+44 - CSDAC14
+44 - CSDAC15
+45 - LDAC14
+45 - LDAC15
+46
+47
+48
+49
+50
+51
+52 - IN_D0
+53 - IN_D1
+
+
+
+
+
+
+
+
+
+

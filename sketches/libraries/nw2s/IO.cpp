@@ -20,9 +20,9 @@
 
 
 
+#include "mcp4822.h"
 #include "IO.h"
 #include <SPI.h>
-#include "mcp4822.h"
 
 using namespace nw2s;
 
@@ -54,7 +54,7 @@ AnalogOut::AnalogOut(PinAnalogOut pin)
 #ifdef _SAM3XA_
 
 	/* nw2s::b runs on a SAM platform */
-	if ((pin >= DUE_SPI_4822_0) && (pin <= DUE_SPI_4822_15))
+	if ((pin >= DUE_SPI_4822_00) && (pin <= DUE_SPI_4822_15))
 	{
 		/* Calculate the CS and latch pins from the out pin */
 		int cspin = (pin - DUE_SPI_4822_PREFIX) - (DUE_SPI_4822_PREFIX % 2);
@@ -96,7 +96,7 @@ void AnalogOut::outputNoteCV(ScaleNote note)
 
 #ifdef _SAM3XA_
 
-	if ((pin >= DUE_SPI_4822_0) && (pin <= DUE_SPI_4822_15))
+	if ((pin >= DUE_SPI_4822_00) && (pin <= DUE_SPI_4822_15))
 	{
 		if (this->spidac_index == 0)
 		{
@@ -132,7 +132,7 @@ void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew)
 
 	int v = slew->calculate_value(note.cv);
 
-	if ((pin >= DUE_SPI_4822_0) && (pin <= DUE_SPI_4822_15))
+	if ((pin >= DUE_SPI_4822_00) && (pin <= DUE_SPI_4822_15))
 	{		
 		if (this->spidac_index == 0)
 		{
@@ -168,7 +168,7 @@ void AnalogOut::outputCV(int cv)
 
 #ifdef _SAM3XA_
 
-	if ((pin >= DUE_SPI_4822_0) && (pin <= DUE_SPI_4822_15))
+	if ((pin >= DUE_SPI_4822_00) && (pin <= DUE_SPI_4822_15))
 	{
 		if (this->spidac_index == 0)
 		{
@@ -184,5 +184,35 @@ void AnalogOut::outputCV(int cv)
 
 
 }
+
+void IOUtils::setupPins()
+{
+#ifdef _SAM3XA_
+	for (int pin = 22; pin <= 47; pin++)
+	{
+		pinMode(pin, OUTPUT);		
+	}
+
+	//TODO: Can we design this pin out of the equation?
+	/* Beat display LE */
+	digitalWrite(47, LOW);
+#endif
+}
+
+
+void IOUtils::displayBeat(int beat)
+{
+#ifdef _SAM3XA_
+	//TODO: Optimize with register math
+	digitalWrite(47, LOW);
+	digitalWrite(43, (1 & beat) ? HIGH : LOW);
+	digitalWrite(44, (2 & beat) ? HIGH : LOW);
+	digitalWrite(45, (4 & beat) ? HIGH : LOW);
+	digitalWrite(46, (8 & beat) ? HIGH : LOW);
+	digitalWrite(47, HIGH);
+#endif
+}
+
+
 
 

@@ -22,6 +22,8 @@
 #include <Trigger.h>
 #include <Clock.h>
 #include <Sequence.h>
+#include <IO.h>
+#include <SPI.h>
 
 using namespace nw2s;
 
@@ -34,7 +36,7 @@ void setup()
 	EventManager::initialize();
 
 	/* Fixed clock running at 75BPM on an Ardcore D0 */
-	FixedClock* fixedclock = FixedClock::create(20, 16);
+	FixedClock* fixedclock = FixedClock::create(75, 8);
 	EventManager::registerdevice(fixedclock);
 
 	/* Set up the note data for the sequence */
@@ -47,14 +49,14 @@ void setup()
 	NoteSequenceData* notes = new NoteSequenceData(notelist, notelist + 34);
 
 	/* Build our note-based seuqnce */
-	NoteSequence* sequence = NoteSequence::create(notes, C, MAJOR, DIV_QUARTER, ARDCORE_DAC);
+	NoteSequence* sequence = NoteSequence::create(notes, C, MAJOR, DIV_EIGHTH, DUE_SPI_4822_00);
 
 	/* Add some modifier values */
-	sequence->setgate(Gate::create(ARDCORE_OUT_D0, 75));
-	sequence->setslew(DecaySlew::create(0.90));
+	sequence->setgate(Gate::create(DUE_OUT_D0, 75));
+	//sequence->setslew(DecaySlew::create(0.90));
 
 	/* Unfortulately, there aren't enough outputs to support both pitch CV and ADSR on the Ardcore */
-	//sequence->seteg(ADSR::create(20, 40, 254, 1250, 1200, false, ARDCORE_DAC));
+	//sequence->seteg(ADSR::create(20, 40, 254, 1250, 1200, false, DUE_SPI_4822_01));
 
 	fixedclock->registerdevice(sequence);
 }

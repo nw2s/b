@@ -55,22 +55,29 @@ void Clock::registerdevice(BeatDevice* device)
 	this->devices.push_back(device);	
 }
 
+Clock::Clock()
+{
+}
+
 FixedClock::FixedClock(int tempo, unsigned char beats_per_measure)
 {
 	/* The fixed clock operates on a regular period based on the tempo */
 	int normalized_tempo = (tempo < 1) ? 1 : (tempo > 500) ? 500 : tempo;
 		
+	this->beat = 0;
 	this->period = 60000 / normalized_tempo;
 	this->beats_per_measure = beats_per_measure;
 }
 
 void FixedClock::timer(unsigned long t)
 {
+
 	if (t % this->period == 0)
 	{
-		//TODO: Update the clock display on Due based boards
+		IOUtils::displayBeat(this->beat);				
+		this->beat = (this->beat + 1) % this->beats_per_measure;		
 	}
-	
+
 	for (int i = 0; i < this->devices.size(); i++)
 	{
 		if (t % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)

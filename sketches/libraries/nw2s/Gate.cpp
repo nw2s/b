@@ -41,19 +41,20 @@ Gate::Gate(PinDigitalOut pin, unsigned int duration)
 
 void Gate::timer(unsigned long t)
 {
-	if (this->last_clock_t == 0) this->last_clock_t == t;
-
-	unsigned int period_t = t - this->last_clock_t;
-
-	if ((this->state == false) && (period_t < this->duration))
+	if ((this->state == false) && (this->last_clock_t == 0))
 	{
+		//Serial.print("\ngate high");
 		this->state = true;
 		digitalWrite(this->pin, HIGH);
+		
+		this->last_clock_t = t;
 	}
-	else if ((this->state == true) && (period_t >= duration))
+	else if ((this->state == true) && (t - this->last_clock_t >= this->duration))
 	{
 		this->state = false;
 		digitalWrite(this->pin, LOW);
+		Serial.print("\n" + String(this->last_clock_t));
+		Serial.print("\t" + String(t));
 	}	
 }
 

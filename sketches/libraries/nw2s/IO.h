@@ -133,8 +133,10 @@ namespace nw2s
 		DIGITAL_IN_NONE = -1,
 	};
 
+
 #endif
 
+	class IOUtils;
 	class AnalogOut;
 	
 }
@@ -157,6 +159,14 @@ class nw2s::AnalogOut
 		int spidac_index;
 #endif
 
+};
+
+
+class nw2s::IOUtils
+{
+	public:
+		static void displayBeat(int beat);
+		static void setupPins();
 };
 
 #endif

@@ -104,6 +104,7 @@ void NoteSequence::reset()
 
 	if (this->slew == NULL) this->output->outputNoteCV(this->key->getNote(this->current_octave, this->current_degree));
 
+	if (this->gate != NULL) this->gate->reset();
 	if (this->envelope != NULL) this->envelope->reset();
 }
 

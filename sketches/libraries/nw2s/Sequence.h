@@ -70,7 +70,7 @@ class nw2s::Sequence : public nw2s::BeatDevice
 class nw2s::NoteSequence : public nw2s::Sequence
 {
 	public:
-		static NoteSequence* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq);
+		static NoteSequence* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq = false);
 		virtual void timer(unsigned long t);
 		virtual void reset();
 	

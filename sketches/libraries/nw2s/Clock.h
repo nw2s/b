@@ -74,6 +74,7 @@ class nw2s::Clock : public nw2s::TimeBasedDevice
 	protected:
 		unsigned char beats_per_measure;
 		vector<BeatDevice*> devices;
+		Clock();
 };
 
 class nw2s::FixedClock : public Clock
@@ -84,6 +85,7 @@ class nw2s::FixedClock : public Clock
 		
 	private:
 		int period;
+		int beat;
 		
 		FixedClock(int tempo, unsigned char beats_per_measure);		
 };
