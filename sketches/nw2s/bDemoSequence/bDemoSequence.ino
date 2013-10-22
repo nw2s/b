@@ -53,10 +53,8 @@ void setup()
 
 	/* Add some modifier values */
 	sequence->setgate(Gate::create(DUE_OUT_D0, 75));
-	//sequence->setslew(DecaySlew::create(0.90));
-
-	/* Unfortulately, there aren't enough outputs to support both pitch CV and ADSR on the Ardcore */
-	//sequence->seteg(ADSR::create(20, 40, 254, 1250, 1200, false, DUE_SPI_4822_01));
+	sequence->setslew(DecaySlew::create(0.90));
+	sequence->seteg(ADSR::create(20, 40, 254, 1250, 1200, false, DUE_SPI_4822_03));
 
 	fixedclock->registerdevice(sequence);
 }
