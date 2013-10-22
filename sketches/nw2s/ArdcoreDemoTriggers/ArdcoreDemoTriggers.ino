@@ -51,8 +51,11 @@ void setup()
 	/* Fixed clock running at 75BPM */
 	Clock* democlock = FixedClock::create(75, 16);
 	
-	/* Variable clock running between 75 and 125BPM based on A0 input value */
+	/* Variable clock running between 25 and 125BPM based on A0 input value */
 	//Clock* democlock = VariableClock::create(25, 125, ARDCORE_IN_A0, 16);
+
+	/* Random clock running between 75 and 80BPM */
+	//Clock* democlock = RandomTempoClock::create(75, 80, 16);
 
 	/* Clock slaving to the Ardcore clock input */
 	//Clock* democlock = SlaveClock::create(ARDCORE_CLOCK_IN, 16);

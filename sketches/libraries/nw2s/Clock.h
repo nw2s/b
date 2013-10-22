@@ -52,6 +52,7 @@ namespace nw2s
 	class FixedClock;
 	class VariableClock;
 	class SlaveClock;
+	class RandomTempoClock;
 }
 
 class nw2s::BeatDevice : public TimeBasedDevice
@@ -74,6 +75,7 @@ class nw2s::Clock : public nw2s::TimeBasedDevice
 	protected:
 		unsigned char beats_per_measure;
 		vector<BeatDevice*> devices;
+		int beat;
 		Clock();
 };
 
@@ -85,7 +87,6 @@ class nw2s::FixedClock : public Clock
 		
 	private:
 		int period;
-		int beat;
 		
 		FixedClock(int tempo, unsigned char beats_per_measure);		
 };
@@ -123,9 +124,26 @@ class nw2s::SlaveClock : public Clock
 		static volatile unsigned long next_clock_t;
 
 		SlaveClock(PinDigitalIn input, unsigned char beats_per_measure);
-		// void update_tempo(unsigned long t);
 		static void isr();
 };
+
+class nw2s::RandomTempoClock : public Clock
+{
+	public:
+		static RandomTempoClock* create(int mintempo, int maxtempo, unsigned char beats_per_measure);
+		virtual void timer(unsigned long t);
+
+	private:
+		int mintempo;
+		int maxtempo;
+		volatile int period;
+		volatile unsigned long last_clock_t;
+		volatile unsigned long next_clock_t;
+
+		RandomTempoClock(int mintempo, int maxtempo, unsigned char beats_per_measure);
+		void update_tempo(unsigned long t);
+};
+
 
 #endif
 

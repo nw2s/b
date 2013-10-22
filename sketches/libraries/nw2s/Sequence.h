@@ -101,31 +101,6 @@ class nw2s::RandomNoteSequence : public nw2s::Sequence
 		RandomNoteSequence(NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output);
 };
 
-// class nw2s::RandomTimeSequence : public nw2s::Sequence
-// {
-// 	public:
-// 		static RandomTimeSequence* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output, bool randomize_seq);
-// 		static RandomTimeSequence* create(NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output);
-// 		virtual void timer(unsigned long t);
-// 		virtual void reset();
-// 	
-// 	private:
-// 		std::vector<SequenceNote>* notes;
-// 		Key* key;
-// 		int mintempo;
-// 		int maxtempo;
-// 		bool randomize_seq;
-// 		AnalogOut* output;
-// 		volatile int sequence_index;
-// 		volatile unsigned long last_t;
-// 		volatile unsigned long next_t;
-// 		ScaleNote current_note;
-// 		
-// 		RandomTimeSequence(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output, bool randomize_seq);
-// 		RandomTimeSequence(NoteName key, ScaleType scale, int mintempo, int maxtempo, PinAnalogOut output);
-// 		void calculate_next_t(unsigned long t);		
-// };
-
 class nw2s::CVNoteSequence : public nw2s::Sequence
 {
 	public:

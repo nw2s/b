@@ -45,6 +45,11 @@ VariableClock* VariableClock::create(int mintempo, int maxtempo, PinAnalogIn inp
 	return new VariableClock(mintempo, maxtempo, input, beats_per_measure);
 }
 
+RandomTempoClock* RandomTempoClock::create(int mintempo, int maxtempo, unsigned char beats_per_measure)
+{	
+	return new RandomTempoClock(mintempo, maxtempo, beats_per_measure);
+}
+
 SlaveClock* SlaveClock::create(PinDigitalIn input, unsigned char beats_per_measure)
 {	
 	return new SlaveClock(input, beats_per_measure);
@@ -91,15 +96,13 @@ void FixedClock::timer(unsigned long t)
 
 VariableClock::VariableClock(int mintempo, int maxtempo, PinAnalogIn input, unsigned char beats_per_measure)
 {
+	this->beat = 0;
 	this->input = input;
 	this->beats_per_measure = beats_per_measure;
 	
 	/* The variable clock operates on a period based on an input voltage */
-	int normalized_mintempo = (mintempo < 1) ? 1 : (mintempo > 500) ? 500 : mintempo;
-	int normalized_maxtempo = (maxtempo < 1) ? 1 : (maxtempo > 500) ? 500 : maxtempo;
-	
-	this->mintempo = normalized_mintempo;
-	this->maxtempo = normalized_maxtempo;
+	this->mintempo = (mintempo < 1) ? 1 : (mintempo > 500) ? 500 : mintempo;
+	this->maxtempo = (maxtempo < 1) ? 1 : (maxtempo > 500) ? 500 : maxtempo;
 	
 	this->last_clock_t = 0;
 }
@@ -108,13 +111,18 @@ void VariableClock::timer(unsigned long t)
 {
 	if (this->last_clock_t == 0)
 	{
+		IOUtils::displayBeat(this->beat);				
+		this->beat = (this->beat + 1) % this->beats_per_measure;		
+
 		this->update_tempo(t);
 	}
 	
 	if (t >= this->next_clock_t)
 	{
+		IOUtils::displayBeat(this->beat);				
+		this->beat = (this->beat + 1) % this->beats_per_measure;		
+
 		this->update_tempo(t);
-		//TODO: Update the clock display on Due based boards
 	}
 	
 	for (int i = 0; i < this->devices.size(); i++)
@@ -137,6 +145,58 @@ void VariableClock::update_tempo(unsigned long t)
 	this->last_clock_t = t;
 }
 
+RandomTempoClock::RandomTempoClock(int mintempo, int maxtempo, unsigned char beats_per_measure)
+{
+	this->beat = 0;
+	this->beats_per_measure = beats_per_measure;
+	
+	/* The random clock operates on a period based on randomly changing value */
+	this->mintempo = (mintempo < 1) ? 1 : (mintempo > 500) ? 500 : mintempo;
+	this->maxtempo = (maxtempo < 1) ? 1 : (maxtempo > 500) ? 500 : maxtempo;
+	
+	this->last_clock_t = 0;
+}
+
+
+void RandomTempoClock::timer(unsigned long t)
+{
+	if (this->last_clock_t == 0)
+	{
+		IOUtils::displayBeat(this->beat);				
+		this->beat = (this->beat + 1) % this->beats_per_measure;		
+
+		this->update_tempo(t);
+	}
+	
+	if (t >= this->next_clock_t)
+	{
+		IOUtils::displayBeat(this->beat);				
+		this->beat = (this->beat + 1) % this->beats_per_measure;		
+
+		this->update_tempo(t);
+	}
+	
+	for (int i = 0; i < this->devices.size(); i++)
+	{
+		if (t % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
+		{
+			this->devices[i]->reset();
+		}
+		
+		this->devices[i]->timer(t);
+	}	
+}
+
+void RandomTempoClock::update_tempo(unsigned long t)
+{
+	int tempo = random(mintempo, maxtempo);
+ 	this->period = 60000UL / tempo;
+
+	this->next_clock_t = (t + this->period);
+	this->last_clock_t = t;
+	
+	Serial.print("\ntempo: " + String(tempo));
+}
 
 volatile bool SlaveClock::trigger = false;
 volatile int SlaveClock::period = 0;
