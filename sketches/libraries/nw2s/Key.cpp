@@ -124,7 +124,7 @@ void Key::initScaleNotes(int notesperoctave, int noteindexes[])
 			/* Skip the negative locations */
 			if (cvlocation > -1)
 			{	
-				ScaleNote note = { SCALE_NOTES[cvlocation].index, SCALE_NOTES[cvlocation].cv, SCALE_NOTES[cvlocation].cvin, octaveindex, noteindex + 1 };
+				ScaleNote note = { noteindex, SCALE_NOTES[cvlocation].cv, SCALE_NOTES[cvlocation].cvin, octaveindex, noteindex + 1 };
 				this->notes.push_back(note);
 			}
 		}

@@ -83,7 +83,7 @@ namespace nw2s
 
 #ifdef __AVR__
 
-	static const ScaleNote SCALE_NOTES[NOTE_CV_SIZE] = {
+	static const ScaleCV SCALE_NOTES[NOTE_CV_SIZE] = {
 	
 		{ 0, 0 },
 		{ 4, 9 },
@@ -151,7 +151,7 @@ namespace nw2s
 
 #else
 
-	static const ScaleNote SCALE_NOTES[NOTE_CV_SIZE] = {
+	static const ScaleCV SCALE_NOTES[NOTE_CV_SIZE] = {
 	
 		{ 0, 0 },
 		{ 67, 9 },

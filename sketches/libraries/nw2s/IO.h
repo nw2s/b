@@ -113,27 +113,30 @@ namespace nw2s
 		DUE_IN_A11 = A11,
 	};
 
+
+	static const int DUE_SPI_4822_PREFIX = 1000;
+	static const int DUE_SPI_LATCH = 42;
+	
 	enum PinAnalogOut
 	{
 		ANALOG_OUT_NONE = -2,
 		
-		DUE_SPI_4822_PREFIX = 1000,
-		DUE_SPI_4822_00 = 1030,
-		DUE_SPI_4822_01 = 1031,
-		DUE_SPI_4822_02 = 1032,
-		DUE_SPI_4822_03 = 1033,
-		DUE_SPI_4822_04 = 1034,
-		DUE_SPI_4822_05 = 1035,
-		DUE_SPI_4822_06 = 1036,
-		DUE_SPI_4822_07 = 1037,
-		DUE_SPI_4822_08 = 1038,
-		DUE_SPI_4822_09 = 1039,
-		DUE_SPI_4822_10 = 1040,
-		DUE_SPI_4822_11 = 1041,
-		DUE_SPI_4822_12 = 1042,
-		DUE_SPI_4822_13 = 1043,
-		DUE_SPI_4822_14 = 1044,
-		DUE_SPI_4822_15 = 1045,
+		DUE_SPI_4822_00 = 1000,
+		DUE_SPI_4822_01 = 1001,
+		DUE_SPI_4822_02 = 1002,
+		DUE_SPI_4822_03 = 1003,
+		DUE_SPI_4822_04 = 1004,
+		DUE_SPI_4822_05 = 1005,
+		DUE_SPI_4822_06 = 1006,
+		DUE_SPI_4822_07 = 1007,
+		DUE_SPI_4822_08 = 1008,
+		DUE_SPI_4822_09 = 1009,
+		DUE_SPI_4822_10 = 1010,
+		DUE_SPI_4822_11 = 1011,
+		DUE_SPI_4822_12 = 1012,
+		DUE_SPI_4822_13 = 1013,
+		DUE_SPI_4822_14 = 1014,
+		DUE_SPI_4822_15 = 1015,
 	};
 
 	enum PinDigitalIn
@@ -144,7 +147,6 @@ namespace nw2s
 		DUE_IN_D2 = 52,
 		DUE_IN_D3 = 53,
 	};
-
 
 #endif
 
@@ -169,6 +171,7 @@ class nw2s::AnalogOut
 #ifdef _SAM3XA_
 		MCP4822 spidac;
 		int spidac_index;
+		int csvalue;
 #endif
 
 };

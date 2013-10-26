@@ -1,25 +1,14 @@
 
 
 
-2.048V
-
-4096
-
-0.5mV per bit
-
-2.5 gain
-
-0.00125mV per bit
-
-
-
-
-
-6 pot
-6 analog in
-
-16 analog out
-8 clock/trigger out
+02 - CS0
+03 - CS1
+04 - CS2
+05 - CS3
+06 - CS4
+07 - CS5
+08 - CS6
+09 - CS7
 
 
 22 - GATE00
@@ -39,10 +28,6 @@
 36 - GATE14
 37 - GATE15
 
-38 - DAC_CS_MUX_0
-39 - DAC_CS_MUX_1
-40 - DAC_CS_MUX_2
-41 - DAC_CS_MUX_OE
 42 - DAC_LATCH
 
 43 - METRO_MUX_0
@@ -59,78 +44,29 @@
 53 - IN_D3
 
 
-
-
-
-
-Digital 22 - 53
-
-22 - GATE0
-23 - GATE1
-24 - GATE2
-25 - GATE3
-26 - GATE4
-27 - GATE5
-28 - GATE6
-29 - GATE7
-30 - CSDAC00
-30 - CSDAC01
-31 - LDAC00
-31 - LDAC01
-32 - CSDAC02
-32 - CSDAC03
-33 - LDAC02
-33 - LDAC03
-34 - CSDAC04
-34 - CSDAC05
-35 - LDAC04
-35 - LDAC05
-36 - CSDAC06
-36 - CSDAC07
-37 - LDAC06
-37 - LDAC07
-38 - CSDAC08
-38 - CSDAC09
-39 - LDAC08
-39 - LDAC09
-40 - CSDAC10
-40 - CSDAC11
-41 - LDAC10
-41 - LDAC11
-42 - CSDAC12
-42 - CSDAC13
-43 - LDAC12
-43 - LDAC13
-44 - CSDAC14
-44 - CSDAC15
-45 - LDAC14
-45 - LDAC15
-46
-47
-48
-49 - LATCH_DAC_BANK1
-50 - IN_D0
-51 - IN_D1
-52 - IN_D2
-53 - IN_D3
-
-
-
 nw2s::b
 
-16 CV Outputs
-8 Gate/Trigger Outputs
-8 Potentiometer Inputs
-3 Switched Analog/Potentiometer Inputs
-1 Switched Analog/Noise/Potentiometer Inputs
-4 Gate Inputs
+37 Total Outputs
+12 Potentiometers
+16 Total Inputs
+4 Momentary/Toggle Switches
+
+
+16 Direct Coupled CV Outputs
+4 Alternative AC Coupled (Audio Frequency) Outputs
+16 5V Gate/Trigger Outputs
+12 Switched Analog/Potentiometer Inputs
+4 Momentary/Toggle Inputs
+4 Gate/Trigger Inputs
 1 Noise Output
+
 
 84Mhz Arduino Due Platform
 12 bit DAC resolution
 Optocoupled digital I/O
 Buffered analog I/O
 On-board dedicated entropy source
+Interrupts available on all inputs
 Open-source runtime
 Simplified programming framework
 Uses standard shield footprint for easy upgrades

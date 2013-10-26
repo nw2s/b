@@ -57,9 +57,9 @@ AnalogOut::AnalogOut(PinAnalogOut pin)
 	if ((pin >= DUE_SPI_4822_00) && (pin <= DUE_SPI_4822_15))
 	{
 		/* Calculate the CS and latch pins from the out pin */
-		int cspin = (pin - DUE_SPI_4822_PREFIX) - (DUE_SPI_4822_PREFIX % 2);
-		int ldacpin = cspin + 1;
-		this->spidac_index = DUE_SPI_4822_PREFIX % 2;
+		int cspin = ((pin - DUE_SPI_4822_PREFIX) / 2) + 2;
+		int ldacpin = DUE_SPI_LATCH;
+		this->spidac_index = pin % 2;
 		
 		Serial.print("\nUsing cspin = " + String(cspin));
 		Serial.print("\nUsing ldacpin = " + String(ldacpin));
@@ -98,6 +98,12 @@ void AnalogOut::outputNoteCV(ScaleNote note)
 
 	if ((pin >= DUE_SPI_4822_00) && (pin <= DUE_SPI_4822_15))
 	{
+		Serial.print("\ncv: " + String(note.cv));
+		Serial.print("\tcvin: " + String(note.cvin));
+		Serial.print("\tindex: " + String(note.index));
+		Serial.print("\to: " + String(note.octave));
+		Serial.print("\td: " + String(note.degree));
+		
 		if (this->spidac_index == 0)
 		{
 			this->spidac.setValue_A(note.cv);
@@ -188,9 +194,22 @@ void AnalogOut::outputCV(int cv)
 void IOUtils::setupPins()
 {
 #ifdef _SAM3XA_
-	for (int pin = 22; pin <= 47; pin++)
+
+	for (int pin = 22; pin <= 29; pin++)
 	{
-		pinMode(pin, OUTPUT);		
+		pinMode(pin, OUTPUT);
+		digitalWrite(pin, LOW);	
+	}
+
+	for (int pin = 42; pin <= 47; pin++)
+	{
+		pinMode(pin, OUTPUT);
+	}
+
+	for (int pin = 2; pin <= 8; pin++)
+	{
+		pinMode(pin, OUTPUT);
+		digitalWrite(pin, LOW);	
 	}
 
 	//TODO: Can we design this pin out of the equation?
