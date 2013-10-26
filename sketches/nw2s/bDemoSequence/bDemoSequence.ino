@@ -49,14 +49,14 @@ void setup()
 	NoteSequenceData* notes = new NoteSequenceData(notelist, notelist + 34);
 
 	/* Build our note-based seuqnce */
-	NoteSequence* sequence = NoteSequence::create(notes, C, MAJOR, DIV_EIGHTH, DUE_SPI_4822_00);
+	NoteSequencer* sequencer = NoteSequencer::create(notes, C, MAJOR, DIV_EIGHTH, DUE_SPI_4822_00);
 
 	/* Add some modifier values */
-	sequence->setgate(Gate::create(DUE_OUT_D00, 75));
-	sequence->setslew(DecaySlew::create(0.90));
-	sequence->seteg(ADSR::create(20, 40, 254, 1250, 1200, false, DUE_SPI_4822_03));
+	sequencer->setgate(Gate::create(DUE_OUT_D00, 75));
+	sequencer->setslew(DecaySlew::create(0.90));
+	sequencer->seteg(ADSR::create(20, 40, 254, 1250, 1200, false, DUE_SPI_4822_03));
 
-	fixedclock->registerdevice(sequence);
+	fixedclock->registerdevice(sequencer);
 }
 
 void loop() 

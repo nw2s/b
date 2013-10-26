@@ -42,10 +42,10 @@ void setup()
 	SequenceNote notelist3[6] = { {0,1}, {1,1}, {2,1}, {3,1}, {4,1}, {5,1} };
 	std::vector<SequenceNote>* notes3 = new vector<SequenceNote>(notelist3, notelist3 + 6);
 
-	NoteSequence* s1 = NoteSequence::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_00, false);
-	NoteSequence* s2 = NoteSequence::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_00, false);
-	NoteSequence* s3 = NoteSequence::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_00, false);
-	NoteSequence* s4 = NoteSequence::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_00, false);
+	NoteSequencer* s1 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_00, false);
+	NoteSequencer* s2 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_00, false);
+	NoteSequencer* s3 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_00, false);
+	NoteSequencer* s4 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_00, false);
 
 	s1->setgate(Gate::create(DUE_OUT_D00, 75));
 	s2->setgate(Gate::create(DUE_OUT_D01, 100));

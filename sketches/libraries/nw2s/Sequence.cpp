@@ -30,45 +30,45 @@
 using namespace std;
 using namespace nw2s;
 
-NoteSequence* NoteSequence::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq)
+NoteSequencer* NoteSequencer::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq)
 {
-	return new NoteSequence(notes, key, scale, clockdivision, output, randomize_seq);
+	return new NoteSequencer(notes, key, scale, clockdivision, output, randomize_seq);
 }
 
-RandomNoteSequence* RandomNoteSequence::create(NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output)
+RandomNoteSequencer* RandomNoteSequencer::create(NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output)
 {
-	return new RandomNoteSequence(key, scale, clockdivision, output);
+	return new RandomNoteSequencer(key, scale, clockdivision, output);
 }
 
-CVNoteSequence* CVNoteSequence::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input)
+CVNoteSequencer* CVNoteSequencer::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input)
 {
-	return new CVNoteSequence(notes, key, scale, output, input);
+	return new CVNoteSequencer(notes, key, scale, output, input);
 }
 
-Sequence::Sequence()
+Sequencer::Sequencer()
 {
 	this->gate = NULL;
 	this->slew = NULL;
 	this->envelope = NULL;
 }
 
-void Sequence::setgate(Gate* gate)
+void Sequencer::setgate(Gate* gate)
 {
 	this->gate = gate;
 }
 
-void Sequence::setslew(Slew* slew)
+void Sequencer::setslew(Slew* slew)
 {
 	this->slew = slew;
 }
 
-void Sequence::seteg(Envelope* envelope)
+void Sequencer::seteg(Envelope* envelope)
 {
 	this->envelope = envelope;
 }
 
 
-NoteSequence::NoteSequence(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut pin, bool randomize_seq)
+NoteSequencer::NoteSequencer(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut pin, bool randomize_seq)
 {
 	this->key = new Key(scale, key);
 	this->output = output;
@@ -89,14 +89,14 @@ NoteSequence::NoteSequence(vector<SequenceNote>* notes, NoteName key, ScaleType 
 	this->output->outputNoteCV(this->key->getNote(startoctave, startdegree));		
 }
 
-void NoteSequence::timer(unsigned long t)
+void NoteSequencer::timer(unsigned long t)
 {
 	if (this->slew != NULL) this->output->outputSlewedNoteCV(this->key->getNote(this->current_octave, this->current_degree), this->slew);
 	if (this->gate != NULL) this->gate->timer(t);
 	if (this->envelope != NULL) this->envelope->timer(t);	
 }
 
-void NoteSequence::reset()
+void NoteSequencer::reset()
 {
 	int noteindex = (randomize_seq) ? random(this->notes->size()) : ++(this->sequence_index) % this->notes->size();
 	this->current_degree = (*this->notes)[noteindex].degree;
@@ -108,7 +108,7 @@ void NoteSequence::reset()
 	if (this->envelope != NULL) this->envelope->reset();
 }
 
-RandomNoteSequence::RandomNoteSequence(NoteName key, ScaleType scale, int clockdivision, PinAnalogOut pin)
+RandomNoteSequencer::RandomNoteSequencer(NoteName key, ScaleType scale, int clockdivision, PinAnalogOut pin)
 {
 	this->key = new Key(scale, key);
 	this->output = output;
@@ -120,21 +120,21 @@ RandomNoteSequence::RandomNoteSequence(NoteName key, ScaleType scale, int clockd
 	this->output->outputNoteCV(this->current_note);
 }
 
-void RandomNoteSequence::timer(unsigned long t)
+void RandomNoteSequencer::timer(unsigned long t)
 {	
 	if (this->slew != NULL) this->output->outputSlewedNoteCV(this->current_note, this->slew);	
 	if (this->gate != NULL) this->gate->timer(t);
 	if (this->envelope != NULL) this->envelope->timer(t);
 }
 
-void RandomNoteSequence::reset()
+void RandomNoteSequencer::reset()
 {
 	this->current_note = this->key->getRandomNote();		
 	if (this->slew == NULL) this->output->outputNoteCV(this->current_note);		
 	if (this->envelope != NULL) this->envelope->reset();
 }
 
-CVNoteSequence::CVNoteSequence(vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut pin, PinAnalogIn input)
+CVNoteSequencer::CVNoteSequencer(vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut pin, PinAnalogIn input)
 {	
 	this->key = new Key(scale, key);
 	this->output = output;
@@ -158,7 +158,7 @@ CVNoteSequence::CVNoteSequence(vector<SequenceNote>* notes, NoteName key, ScaleT
 	this->output->outputNoteCV(this->key->getNote(startoctave, startdegree));	
 }
 
-void CVNoteSequence::timer(unsigned long t)
+void CVNoteSequencer::timer(unsigned long t)
 {			
 	int period_t = t - this->last_note_t;
 
@@ -206,6 +206,10 @@ void CVNoteSequence::timer(unsigned long t)
 	if (this->envelope != NULL) this->envelope->timer(t);	
 }
 
+void CVNoteSequencer::reset()
+{
+	
+}
 
 
 

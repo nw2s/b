@@ -32,7 +32,6 @@ using namespace nw2s;
 
 void setup() 
 {
-	//Serial.begin(9600);
 	Serial.begin(19200);
 	Serial.print("\n\nStarting...\n");
 

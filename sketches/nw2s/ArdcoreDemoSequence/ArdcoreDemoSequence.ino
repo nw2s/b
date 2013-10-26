@@ -47,16 +47,16 @@ void setup()
 	NoteSequenceData* notes = new NoteSequenceData(notelist, notelist + 34);
 
 	/* Build our note-based seuqnce */
-	NoteSequence* sequence = NoteSequence::create(notes, C, MAJOR, DIV_QUARTER, ARDCORE_DAC);
+	NoteSequencer* sequencer = NoteSequencer::create(notes, C, MAJOR, DIV_QUARTER, ARDCORE_DAC);
 
 	/* Add some modifier values */
-	sequence->setgate(Gate::create(ARDCORE_OUT_D0, 75));
-	sequence->setslew(DecaySlew::create(0.90));
+	sequencer->setgate(Gate::create(ARDCORE_OUT_D0, 75));
+	sequencer->setslew(DecaySlew::create(0.90));
 
 	/* Unfortulately, there aren't enough outputs to support both pitch CV and ADSR on the Ardcore */
-	//sequence->seteg(ADSR::create(20, 40, 254, 1250, 1200, false, ARDCORE_DAC));
+	//sequencer->seteg(ADSR::create(20, 40, 254, 1250, 1200, false, ARDCORE_DAC));
 
-	fixedclock->registerdevice(sequence);
+	fixedclock->registerdevice(sequencer);
 }
 
 void loop() 

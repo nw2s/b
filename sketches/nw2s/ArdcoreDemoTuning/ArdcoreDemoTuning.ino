@@ -46,7 +46,7 @@ void setup()
 	SequenceNote notelist[6] = { {0,1}, {1,1}, {2,1}, {3,1}, {4,1}, {5,1} };
 	std::vector<SequenceNote>* notes = new vector<SequenceNote>(notelist, notelist + 6);
 
-	EventManager::registerdevice(CVNoteSequence::create(notes, C, MAJOR, ARDCORE_DAC, ARDCORE_IN_A0));
+	EventManager::registerdevice(CVNoteSequencer::create(notes, C, MAJOR, ARDCORE_DAC, ARDCORE_IN_A0));
 }
 
 void loop() 
