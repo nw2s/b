@@ -278,8 +278,6 @@ void CVSequencer::timer(unsigned long t)
 {	
 	if (this->slew != NULL) 
 	{
-		if (t % 100 == 0) Serial.print("\n" + String(t));
-		if (t % 100 == 0) Serial.print("\t" + String(this->current_value));
 		this->output->outputSlewedCV(this->current_value, this->slew);
 	}
 	if (this->gate != NULL) this->gate->timer(t);
@@ -318,13 +316,6 @@ void MorphingNoteSequencer::reset()
 		SequenceNote targetNote = (*this->notes)[target];
 		(*this->notes)[target] = (*this->notes)[this->sequence_index];
 		(*this->notes)[this->sequence_index] = targetNote;
-
-		Serial.print("\ns: " + String(this->notes->size()));
-		Serial.print("\tt: " + String(target));
-		Serial.print("\ti: " + String(this->sequence_index));
-		Serial.print("\t" + String((*this->notes)[this->sequence_index].degree));
-		Serial.print("\t" + String((*this->notes)[target].octave));
-		Serial.print("\t" + String((*this->notes)[target].degree));
 	}
 	
 	NoteSequencer::reset();
