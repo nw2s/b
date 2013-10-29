@@ -35,6 +35,11 @@ NoteSequencer* NoteSequencer::create(vector<SequenceNote>* notes, NoteName key, 
 	return new NoteSequencer(notes, key, scale, clockdivision, output, randomize_seq);
 }
 
+MorphingNoteSequencer* MorphingNoteSequencer::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output)
+{
+	return new MorphingNoteSequencer(notes, key, scale, chaos, clockdivision, output);
+}
+
 RandomNoteSequencer* RandomNoteSequencer::create(NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output)
 {
 	return new RandomNoteSequencer(key, scale, clockdivision, output);
@@ -44,6 +49,22 @@ CVNoteSequencer* CVNoteSequencer::create(vector<SequenceNote>* notes, NoteName k
 {
 	return new CVNoteSequencer(notes, key, scale, output, input);
 }
+
+CVSequencer* CVSequencer::create(vector<int>* values, int clockdivision, PinAnalogOut output, bool randomize_seq)
+{
+	return new CVSequencer(values, clockdivision, output, randomize_seq);
+}
+
+CVSequencer* CVSequencer::create(int clockdivision, PinAnalogOut output)
+{
+	return new CVSequencer(0, 5000, clockdivision, output);
+}
+
+CVSequencer* CVSequencer::create(int min, int max, int clockdivision, PinAnalogOut output)
+{
+	return new CVSequencer(min, max, clockdivision, output);
+}
+
 
 Sequencer::Sequencer()
 {
@@ -80,11 +101,11 @@ NoteSequencer::NoteSequencer(vector<SequenceNote>* notes, NoteName key, ScaleTyp
 	this->notes = new vector<SequenceNote>();
 	copy(notes->begin(), notes->end(), back_inserter(*this->notes));
 	
-	int noteindex = (randomize_seq) ? random(this->notes->size()) : 0;
+	this->sequence_index = (randomize_seq) ? random(this->notes->size()) : 0;
 	
 	/* Output the first note of the sequence */
-	int startdegree = (*this->notes)[noteindex].degree;
-	int startoctave = (*this->notes)[noteindex].octave;
+	int startdegree = (*this->notes)[this->sequence_index].degree;
+	int startoctave = (*this->notes)[this->sequence_index].octave;
 	this->output = AnalogOut::create(pin);
 	this->output->outputNoteCV(this->key->getNote(startoctave, startdegree));		
 }
@@ -98,14 +119,19 @@ void NoteSequencer::timer(unsigned long t)
 
 void NoteSequencer::reset()
 {
-	int noteindex = (randomize_seq) ? random(this->notes->size()) : ++(this->sequence_index) % this->notes->size();
-	this->current_degree = (*this->notes)[noteindex].degree;
-	this->current_octave = (*this->notes)[noteindex].octave;		
+	this->sequence_index = (randomize_seq) ? random(this->notes->size()) : ++(this->sequence_index) % this->notes->size();
 
-	if (this->slew == NULL) this->output->outputNoteCV(this->key->getNote(this->current_octave, this->current_degree));
+	/* If there's a HOLD in the sequence, then we don't change the note or trigger any events */
+	if ((*this->notes)[this->sequence_index].degree != 0)
+	{
+		this->current_degree = (*this->notes)[this->sequence_index].degree;
+		this->current_octave = (*this->notes)[this->sequence_index].octave;		
 
-	if (this->gate != NULL) this->gate->reset();
-	if (this->envelope != NULL) this->envelope->reset();
+		if (this->slew == NULL) this->output->outputNoteCV(this->key->getNote(this->current_octave, this->current_degree));
+
+		if (this->gate != NULL) this->gate->reset();
+		if (this->envelope != NULL) this->envelope->reset();
+	}
 }
 
 RandomNoteSequencer::RandomNoteSequencer(NoteName key, ScaleType scale, int clockdivision, PinAnalogOut pin)
@@ -211,7 +237,98 @@ void CVNoteSequencer::reset()
 	
 }
 
+CVSequencer::CVSequencer(vector<int>* values, int clockdivision, PinAnalogOut pin, bool randomize_seq)
+{
+	this->output = output;
+	this->sequence_index = 0;
+	this->randomize_seq = randomize_seq;
+	this->clock_division = clockdivision;
 
+	/* Copy the sequence to our own memory */
+	this->values = new vector<int>();
+	copy(values->begin(), values->end(), back_inserter(*this->values));
+	this->current_value = 
+	this->sequence_index = (randomize_seq) ? random(this->values->size()) : 0;
+	this->current_value = (*this->values)[this->sequence_index];
+	
+	/* Output the first note of the sequence */
+	this->output = AnalogOut::create(pin);
+	this->output->outputCV(this->current_value);		
+}
+
+CVSequencer::CVSequencer(int min, int max, int clockdivision, PinAnalogOut pin)
+{
+	this->values = NULL;
+	this->output = output;
+	this->sequence_index = 0;
+	this->randomize_seq = randomize_seq;
+	this->clock_division = clockdivision;
+
+	this->min = (min < 0) ? 0 : min;
+	this->max = (max > 5000) ? 5000 : max;
+
+	this->current_value = random(this->min, this->max);
+	
+	/* Output the first note of the sequence */
+	this->output = AnalogOut::create(pin);
+	this->output->outputCV(this->current_value);		
+}
+
+void CVSequencer::timer(unsigned long t)
+{	
+	if (this->slew != NULL) 
+	{
+		if (t % 100 == 0) Serial.print("\n" + String(t));
+		if (t % 100 == 0) Serial.print("\t" + String(this->current_value));
+		this->output->outputSlewedCV(this->current_value, this->slew);
+	}
+	if (this->gate != NULL) this->gate->timer(t);
+	if (this->envelope != NULL) this->envelope->timer(t);	
+}
+
+void CVSequencer::reset()
+{
+	if (values != NULL)
+	{
+		this->sequence_index = (randomize_seq) ? random(this->values->size()) : ++(this->sequence_index) % this->values->size();
+		this->current_value = (*this->values)[this->sequence_index];
+	}
+	else
+	{
+		this->current_value = random(0, 5000);		
+	}
+
+	if (this->slew == NULL) this->output->outputCV(this->current_value);
+
+	if (this->gate != NULL) this->gate->reset();
+	if (this->envelope != NULL) this->envelope->reset();
+}
+
+MorphingNoteSequencer::MorphingNoteSequencer(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output) : NoteSequencer(notes, key, scale, clockdivision, output, false)
+{
+	this->chaos = chaos;	
+}
+
+void MorphingNoteSequencer::reset()
+{	
+	/* Theres a chance that we want to randomly (permanently) swap this note with another from the sequence */
+	if (this->chaos >= random(100))
+	{
+		int target = random(this->notes->size());
+		SequenceNote targetNote = (*this->notes)[target];
+		(*this->notes)[target] = (*this->notes)[this->sequence_index];
+		(*this->notes)[this->sequence_index] = targetNote;
+
+		Serial.print("\ns: " + String(this->notes->size()));
+		Serial.print("\tt: " + String(target));
+		Serial.print("\ti: " + String(this->sequence_index));
+		Serial.print("\t" + String((*this->notes)[this->sequence_index].degree));
+		Serial.print("\t" + String((*this->notes)[target].octave));
+		Serial.print("\t" + String((*this->notes)[target].degree));
+	}
+	
+	NoteSequencer::reset();
+}
 
 
 

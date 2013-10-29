@@ -59,12 +59,8 @@ AnalogOut::AnalogOut(PinAnalogOut pin)
 		/* Calculate the CS and latch pins from the out pin */
 		int cspin = ((pin - DUE_SPI_4822_PREFIX) / 2) + 2;
 		int ldacpin = DUE_SPI_LATCH;
+
 		this->spidac_index = pin % 2;
-		
-		Serial.print("\nUsing cspin = " + String(cspin));
-		Serial.print("\nUsing ldacpin = " + String(ldacpin));
-		Serial.print("\nUsing chip out = " + String(this->spidac_index));
-		
 		this->spidac = MCP4822(cspin,ldacpin);
 		
 	    this->spidac.begin();
@@ -97,13 +93,7 @@ void AnalogOut::outputNoteCV(ScaleNote note)
 #ifdef _SAM3XA_
 
 	if ((pin >= DUE_SPI_4822_00) && (pin <= DUE_SPI_4822_15))
-	{
-		Serial.print("\ncv: " + String(note.cv));
-		Serial.print("\tcvin: " + String(note.cvin));
-		Serial.print("\tindex: " + String(note.index));
-		Serial.print("\to: " + String(note.octave));
-		Serial.print("\td: " + String(note.degree));
-		
+	{		
 		if (this->spidac_index == 0)
 		{
 			this->spidac.setValue_A(note.cv);
@@ -160,12 +150,12 @@ void AnalogOut::outputCV(int cv)
 
 #ifdef __AVR__
 
+	int dacval = (cv * 240UL) / 5000;
+
 	if (pin == ARDCORE_DAC)
 	{
-		byte v = cv;
-	
-		//Serial.print("\n" + String(v));
-	
+		byte v = dacval;
+		
 	  	PORTB = (PORTB & B11100000) | (v >> 3);
 		PORTD = (PORTD & B00011111) | ((v & B00000111) << 5);
 	}	
@@ -174,15 +164,57 @@ void AnalogOut::outputCV(int cv)
 
 #ifdef _SAM3XA_
 
+	int dacval = (cv * 4000UL) / 5000;
+
 	if ((pin >= DUE_SPI_4822_00) && (pin <= DUE_SPI_4822_15))
 	{
 		if (this->spidac_index == 0)
 		{
-			this->spidac.setValue_A(cv);
+			this->spidac.setValue_A(dacval);
 		}
 		else
 		{
-			this->spidac.setValue_B(cv);
+			this->spidac.setValue_B(dacval);
+		}
+	}
+
+#endif 
+
+
+}
+
+void AnalogOut::outputSlewedCV(int cv, Slew* slew)
+{
+
+#ifdef __AVR__
+
+	int slewval = slew->calculate_value(cv);
+	int dacval = (slewval * 240UL) / 5000;
+
+	if (pin == ARDCORE_DAC)
+	{
+		byte v = dacval;
+		
+	  	PORTB = (PORTB & B11100000) | (v >> 3);
+		PORTD = (PORTD & B00011111) | ((v & B00000111) << 5);
+	}	
+
+#endif
+
+#ifdef _SAM3XA_
+
+	int slewval = slew->calculate_value(cv);
+	int dacval = (slewval * 4000UL) / 5000;
+
+	if ((pin >= DUE_SPI_4822_00) && (pin <= DUE_SPI_4822_15))
+	{
+		if (this->spidac_index == 0)
+		{
+			this->spidac.setValue_A(dacval);
+		}
+		else
+		{
+			this->spidac.setValue_B(dacval);
 		}
 	}
 
@@ -212,17 +244,27 @@ void IOUtils::setupPins()
 		digitalWrite(pin, LOW);	
 	}
 
-	//TODO: Can we design this pin out of the equation?
 	/* Beat display LE */
 	digitalWrite(47, LOW);
 #endif
 }
 
+void* IOUtils::clockinstance = NULL;
 
-void IOUtils::displayBeat(int beat)
+void IOUtils::displayBeat(int beat, void* clockinstance)
 {
 #ifdef _SAM3XA_
-	//TODO: Optimize with register math
+
+	/* There's only one clock display, so only allow one instance to update the display. */
+	if (IOUtils::clockinstance == NULL)
+	{
+		IOUtils::clockinstance = clockinstance;
+	}
+	else
+	{
+		if (clockinstance != IOUtils::clockinstance) return;
+	}
+
 	digitalWrite(47, LOW);
 	digitalWrite(43, (1 & beat) ? HIGH : LOW);
 	digitalWrite(44, (2 & beat) ? HIGH : LOW);
@@ -230,6 +272,7 @@ void IOUtils::displayBeat(int beat)
 	digitalWrite(46, (8 & beat) ? HIGH : LOW);
 	digitalWrite(47, HIGH);
 #endif
+
 }
 
 

@@ -29,12 +29,13 @@
 
 namespace nw2s
 {
-	
 	struct SequenceNote
 	{
 		int octave;
 		int degree;
 	};
+	
+	static const SequenceNote HOLD = {0, 0};
 	
 	typedef std::vector<SequenceNote> NoteSequenceData;
 
@@ -44,9 +45,7 @@ namespace nw2s
 	class RandomTimeSequencer;
 	class CVNoteSequencer;
 	class CVSequencer;
-	class RandomCVSequencer;
 	class MorphingNoteSequencer;
-	class MorphingCVSequencer;
 	
 	class TimeBasedDevice;
 }
@@ -80,10 +79,13 @@ class nw2s::NoteSequencer : public nw2s::Sequencer
 		bool randomize_seq;
 		int current_degree;
 		int current_octave;
-		volatile int sequence_index;
-		std::vector<SequenceNote>* notes;
 		Key* key;
 	 	AnalogOut* output;
+
+	
+	protected:
+		volatile int sequence_index;
+		std::vector<SequenceNote>* notes;
 		
 		NoteSequencer(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq);
 };
@@ -119,6 +121,41 @@ class nw2s::CVNoteSequencer : public nw2s::Sequencer
 		unsigned long last_note_t;
 		
 		CVNoteSequencer(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input);
+};
+
+class  nw2s::CVSequencer : public Sequencer
+{
+	public:
+		static CVSequencer* create(std::vector<int>* values, int clockdivision, PinAnalogOut output, bool randomize_seq = false);
+		static CVSequencer* create(int clockdivision, PinAnalogOut output);
+		static CVSequencer* create(int min, int max, int clockdivision, PinAnalogOut output);
+		virtual void timer(unsigned long t);
+		virtual void reset();
+
+	private:
+		bool randomize_seq;
+		int min;
+		int max;
+		volatile int sequence_index;
+		volatile int current_value;
+		std::vector<int>* values;
+	 	AnalogOut* output;
+	
+		CVSequencer(std::vector<int>* values, int clockdivision, PinAnalogOut output, bool randomize_seq);
+		CVSequencer(int min, int max, int clockdivision, PinAnalogOut output);
+};
+
+class nw2s::MorphingNoteSequencer : public NoteSequencer
+{
+	public:
+		static MorphingNoteSequencer* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output);
+		virtual void reset();
+		
+	private:
+		int chaos;
+
+		MorphingNoteSequencer(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output);
+		//static NoteSequencer* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq = false);
 };
 
 #endif

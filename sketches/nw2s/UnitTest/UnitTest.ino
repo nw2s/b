@@ -37,25 +37,19 @@ void setup()
 
 	EventManager::initialize();
 
-	FixedClock* fixedclock = FixedClock::create(5, 6);
+	Clock* fixedclock = RandomDropoutClock::create(125, 8, 20);
 
-	SequenceNote notelist3[6] = { {0,1}, {1,1}, {2,1}, {3,1}, {4,1}, {5,1} };
-	std::vector<SequenceNote>* notes3 = new vector<SequenceNote>(notelist3, notelist3 + 6);
+	const int sequence_length = 34;
+	SequenceNote notelist[sequence_length] = { {1,1}, {1,3}, {1,5}, {1,1}, {1,3}, {1,5}, {1,1}, {1,5}, 
+												{2,1}, {2,3}, {2,5}, {2,1}, {2,3}, {2,5}, {2,1}, {2,5}, 
+												{3,1}, {3,3}, {3,5}, {3,1}, {3,3}, {3,5}, {3,1}, {3,3}, 
+												{2,5}, {2,1}, {2,3}, {2,1}, {2,5}, {2,1}, {2,3}, {2,1} };
+	std::vector<SequenceNote>* notes = new vector<SequenceNote>(notelist, notelist + sequence_length);
 
-	NoteSequence* s1 = NoteSequence::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_00, false);
-	NoteSequence* s2 = NoteSequence::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_00, false);
-	NoteSequence* s3 = NoteSequence::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_00, false);
-	NoteSequence* s4 = NoteSequence::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_00, false);
-
-	s1->setgate(Gate::create(DUE_OUT_D00, 75));
-	s2->setgate(Gate::create(DUE_OUT_D01, 100));
-	s3->setgate(Gate::create(DUE_OUT_D02, 125));
-	s4->setgate(Gate::create(DUE_OUT_D03, 150));
-
-	fixedclock->registerdevice(s1);
-	fixedclock->registerdevice(s2);
-	fixedclock->registerdevice(s3);
-	fixedclock->registerdevice(s4);
+	Sequencer* sequencer = MorphingNoteSequencer::create(notes, C, MAJOR, 25, DIV_SIXTEENTH, ARDCORE_DAC);
+	sequencer->setslew(LinearSlew::create(50));
+	sequence1->seteg(ADSR::create(10, 250, 254, 1250, 1200, false, DUE_SPI_4822_00));
+	fixedclock->registerdevice(sequencer);
 
 	EventManager::registerdevice(fixedclock);
 	

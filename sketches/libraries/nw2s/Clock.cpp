@@ -40,6 +40,11 @@ FixedClock* FixedClock::create(int tempo, unsigned char beats_per_measure)
 	return new FixedClock(tempo, beats_per_measure);
 }
 
+RandomDropoutClock* RandomDropoutClock::create(int tempo, unsigned char beats_per_measure, int chaos)
+{	
+	return new RandomDropoutClock(tempo, beats_per_measure, chaos);
+}
+
 VariableClock* VariableClock::create(int mintempo, int maxtempo, PinAnalogIn input, unsigned char beats_per_measure)
 {	
 	return new VariableClock(mintempo, maxtempo, input, beats_per_measure);
@@ -62,6 +67,7 @@ void Clock::registerdevice(BeatDevice* device)
 
 Clock::Clock()
 {
+	IOUtils::displayBeat(0, this);
 }
 
 FixedClock::FixedClock(int tempo, unsigned char beats_per_measure)
@@ -79,7 +85,7 @@ void FixedClock::timer(unsigned long t)
 
 	if (t % this->period == 0)
 	{
-		IOUtils::displayBeat(this->beat);				
+		IOUtils::displayBeat(this->beat, this);				
 		this->beat = (this->beat + 1) % this->beats_per_measure;		
 	}
 
@@ -111,7 +117,7 @@ void VariableClock::timer(unsigned long t)
 {
 	if (this->last_clock_t == 0)
 	{
-		IOUtils::displayBeat(this->beat);				
+		IOUtils::displayBeat(this->beat, this);				
 		this->beat = (this->beat + 1) % this->beats_per_measure;		
 
 		this->update_tempo(t);
@@ -119,7 +125,7 @@ void VariableClock::timer(unsigned long t)
 	
 	if (t >= this->next_clock_t)
 	{
-		IOUtils::displayBeat(this->beat);				
+		IOUtils::displayBeat(this->beat, this);				
 		this->beat = (this->beat + 1) % this->beats_per_measure;		
 
 		this->update_tempo(t);
@@ -162,7 +168,7 @@ void RandomTempoClock::timer(unsigned long t)
 {
 	if (this->last_clock_t == 0)
 	{
-		IOUtils::displayBeat(this->beat);				
+		IOUtils::displayBeat(this->beat, this);				
 		this->beat = (this->beat + 1) % this->beats_per_measure;		
 
 		this->update_tempo(t);
@@ -170,7 +176,7 @@ void RandomTempoClock::timer(unsigned long t)
 	
 	if (t >= this->next_clock_t)
 	{
-		IOUtils::displayBeat(this->beat);				
+		IOUtils::displayBeat(this->beat, this);				
 		this->beat = (this->beat + 1) % this->beats_per_measure;		
 
 		this->update_tempo(t);
@@ -262,6 +268,34 @@ void SlaveClock::timer(unsigned long t)
 
 		this->devices[i]->timer(t);
 	}		
+}
+
+RandomDropoutClock::RandomDropoutClock(int tempo, unsigned char beats_per_measure, int chaos) : FixedClock(tempo, beats_per_measure)
+{
+	this->chaos = chaos;
+}
+
+void RandomDropoutClock::timer(unsigned long t)
+{
+	if (t % this->period == 0)
+	{
+		IOUtils::displayBeat(this->beat, this);				
+		this->beat = (this->beat + 1) % this->beats_per_measure;		
+	}
+
+	for (int i = 0; i < this->devices.size(); i++)
+	{		
+		if (t % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
+		{
+			/* This clock occasionally forgets to call reset() on its devices */
+			if (this->chaos <= random(100))
+			{
+				this->devices[i]->reset();
+			}			
+		}
+		
+		this->devices[i]->timer(t);
+	}	
 }
 
 

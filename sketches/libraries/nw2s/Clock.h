@@ -28,6 +28,7 @@
 #include <vector>
 
 using namespace std;
+using namespace nw2s;
 
 namespace nw2s
 {		
@@ -53,6 +54,7 @@ namespace nw2s
 	class VariableClock;
 	class SlaveClock;
 	class RandomTempoClock;
+	class RandomDropoutClock;
 }
 
 class nw2s::BeatDevice : public TimeBasedDevice
@@ -85,7 +87,7 @@ class nw2s::FixedClock : public Clock
 		static FixedClock* create(int tempo, unsigned char beats_per_measure);
 		virtual void timer(unsigned long t);
 		
-	private:
+	protected:
 		int period;
 		
 		FixedClock(int tempo, unsigned char beats_per_measure);		
@@ -144,6 +146,18 @@ class nw2s::RandomTempoClock : public Clock
 		void update_tempo(unsigned long t);
 };
 
+
+class nw2s::RandomDropoutClock : public FixedClock
+{
+	public:
+		static RandomDropoutClock* create(int tempo, unsigned char beats_per_measure, int chaos);
+		virtual void timer(unsigned long t);
+
+	private:
+		int chaos;
+		
+		RandomDropoutClock(int tempo, unsigned char beats_per_measure, int chaos);		
+};
 
 #endif
 

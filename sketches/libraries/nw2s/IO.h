@@ -180,7 +180,9 @@ class nw2s::AnalogOut
 class nw2s::IOUtils
 {
 	public:
-		static void displayBeat(int beat);
+		static void* clockinstance;
+		
+		static void displayBeat(int beat, void* clockinstance);
 		static void setupPins();
 };
 
