@@ -18,6 +18,7 @@
 
 */
 
+#include <MD5.h>
 #include <Key.h>
 #include <EventManager.h>
 #include <Trigger.h>
@@ -26,10 +27,27 @@
 #include <Sequence.h>
 #include <IO.h>
 #include <SPI.h>
-#include <Entropy.h>
 
 
 using namespace nw2s;
+
+/*
+
+	This shetch is used to tune the noise circuit to produce a voltage that will 
+	produce a random sequence of ones and zeros. Because we are using the analog
+	inputs for more useful tasks, we're just using the noise circuit to generate 
+	digital noise. 
+	
+	To tune the circuit, load this sketch with the serial monitor running. The 
+	monitor will show a the ratio of zeros to ones. With a twenty-five-turn
+	pot, the difference between all zeros and all ones is only about a half turn,
+	so watch closely.
+	
+	As long as the ratio of ones to zeros is about 33 to 66%, then the mix 
+	will be sufficient to generate whiteish noise.
+	
+*/
+
 
 void setup() 
 {
@@ -41,15 +59,27 @@ void setup()
 
 void loop() 
 {
+	unsigned long zeros = 0;
+	unsigned long ones = 0;
+	unsigned long t = micros();
+	
 	/* Limit the frequency of these tests to make it readable */
 	if (millis() % 100 == 0)
 	{
-		unsigned long t = micros();
+		for (int i = 0; i < 10000; i++)
+		{
+			if (digitalRead(DUE_IN_DIGITAL_NOISE) == HIGH)
+			{
+				ones++;
+			}
+			else
+			{
+				zeros++;
+			}
+		}
+		
+		int ratio = (zeros * 100) / (zeros + ones);
 
-		long value = Entropy::getValue(1);
-
-		unsigned long t2 = micros();
-
-		Serial.println(String(value) + "\t" + String(t2 - t));
+		Serial.println("zeros: " + String(zeros) + "\tones: " + String(ones) + "\tratio: " + String(ratio) + "%");
 	}		
 }

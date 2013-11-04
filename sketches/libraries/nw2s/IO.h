@@ -137,11 +137,15 @@ namespace nw2s
 		DUE_SPI_4822_13 = 1013,
 		DUE_SPI_4822_14 = 1014,
 		DUE_SPI_4822_15 = 1015,
+		
+		DUE_DAC0 = DAC0,
+		DUE_DAC1 = DAC1,
 	};
 
 	enum PinDigitalIn
 	{
 		DIGITAL_IN_NONE = -1,
+		DUE_IN_DIGITAL_NOISE = 48,
 		DUE_IN_D0 = 50,
 		DUE_IN_D1 = 51,
 		DUE_IN_D2 = 52,

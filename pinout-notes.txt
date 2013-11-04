@@ -1,15 +1,15 @@
 
 
 
-02 - CS0
-03 - CS1
-04 - CS2
-05 - CS3
-06 - CS4
-07 - CS5
-08 - CS6
-09 - CS7
-
+02 - CS_DAC0
+03 - CS_DAC1
+04 - CS_DAC2
+05 - CS_DAC3
+06 - CS_DAC4
+07 - CS_DAC5
+08 - CS_DAC6
+09 - CS_DAC7
+10 - CS_SDCARD
 
 22 - GATE00
 23 - GATE01
@@ -36,7 +36,7 @@
 46 - METRO_MUX_3
 47 - METRO_LE
 
-48 - 
+48 - RNG_NOISE
 49 - 
 50 - IN_D0
 51 - IN_D1
@@ -46,22 +46,22 @@
 
 nw2s::b
 
-37 Total Outputs
+32 Total Outputs
 12 Potentiometers
 16 Total Inputs
 4 Momentary/Toggle Switches
 
 
 16 Direct Coupled CV Outputs
-4 Alternative AC Coupled (Audio Frequency) Outputs
+2 AC Coupled Audio Outputs
 16 5V Gate/Trigger Outputs
 12 Switched Analog/Potentiometer Inputs
 4 Momentary/Toggle Inputs
 4 Gate/Trigger Inputs
-1 Noise Output
 
 
 84Mhz Arduino Due Platform
+Internal micro SD Card
 12 bit DAC resolution
 Fully buffered analog and digital I/O
 On-board dedicated entropy source
@@ -72,6 +72,22 @@ Uses standard shield footprint for easy upgrades
 Through-hole mounted components and socketed ICs
 Available as kit or assembled
 
+
+24HP
+946 / 2 = 473
+128.5mm height
+5mm per
+
+473 / 24
+
+19.7px per HP
+
+786 px = 40HP = 200mm x 128.5mm
+
+190x120mm board?
+
+7.48
+4.72
 
 
 
