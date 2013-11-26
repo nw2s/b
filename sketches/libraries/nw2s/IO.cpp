@@ -54,7 +54,7 @@ AnalogOut::AnalogOut(PinAnalogOut pin)
 #ifdef _SAM3XA_
 
 	/* nw2s::b runs on a SAM platform */
-	if ((pin >= DUE_SPI_4822_00) && (pin <= DUE_SPI_4822_15))
+	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
 	{
 		/* Calculate the CS and latch pins from the out pin */
 		int cspin = ((pin - DUE_SPI_4822_PREFIX) / 2) + 2;
@@ -92,7 +92,7 @@ void AnalogOut::outputNoteCV(ScaleNote note)
 
 #ifdef _SAM3XA_
 
-	if ((pin >= DUE_SPI_4822_00) && (pin <= DUE_SPI_4822_15))
+	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
 	{		
 		if (this->spidac_index == 0)
 		{
@@ -128,7 +128,7 @@ void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew)
 
 	int v = slew->calculate_value(note.cv);
 
-	if ((pin >= DUE_SPI_4822_00) && (pin <= DUE_SPI_4822_15))
+	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
 	{		
 		if (this->spidac_index == 0)
 		{
@@ -233,15 +233,18 @@ void IOUtils::setupPins()
 		digitalWrite(pin, LOW);	
 	}
 
-	for (int pin = 42; pin <= 47; pin++)
+	for (int pin = 41; pin <= 45; pin++)
 	{
+		/* Set up the beatclock pins low */
 		pinMode(pin, OUTPUT);
+		digitalWrite(pin, LOW);
 	}
 
-	for (int pin = 2; pin <= 8; pin++)
+	for (int pin = 2; pin <= 11; pin++)
 	{
+		/* Set up the DAC ~CS pins as high */
 		pinMode(pin, OUTPUT);
-		digitalWrite(pin, LOW);	
+		digitalWrite(pin, HIGH);	
 	}
 
 	/* Beat display LE */
@@ -265,12 +268,14 @@ void IOUtils::displayBeat(int beat, void* clockinstance)
 		if (clockinstance != IOUtils::clockinstance) return;
 	}
 
-	digitalWrite(47, LOW);
-	digitalWrite(43, (1 & beat) ? HIGH : LOW);
-	digitalWrite(44, (2 & beat) ? HIGH : LOW);
-	digitalWrite(45, (4 & beat) ? HIGH : LOW);
-	digitalWrite(46, (8 & beat) ? HIGH : LOW);
-	digitalWrite(47, HIGH);
+	Serial.println(String(beat));
+
+	digitalWrite(45, LOW);
+	digitalWrite(41, (1 & beat) ? HIGH : LOW);
+	digitalWrite(42, (2 & beat) ? HIGH : LOW);
+	digitalWrite(44, (4 & beat) ? HIGH : LOW);
+	digitalWrite(43, (8 & beat) ? HIGH : LOW);
+	digitalWrite(45, HIGH);
 #endif
 
 }

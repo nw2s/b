@@ -101,6 +101,12 @@ void MCP4822::setValue(int dac, int value) {
     // Latch value
     digitalWrite(ldac,LOW);
     digitalWrite(ldac,HIGH);
+
+	Serial.println("-------");
+	Serial.println("cs  " + String(cs));
+	Serial.println("dac " + String(dac));
+	Serial.println("val " + String(value));
+
 }
 
 // ---------------------------------------------------------------------------

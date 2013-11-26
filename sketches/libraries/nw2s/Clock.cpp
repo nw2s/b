@@ -91,6 +91,7 @@ void FixedClock::timer(unsigned long t)
 
 	for (int i = 0; i < this->devices.size(); i++)
 	{
+
 		if (t % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
 		{
 			this->devices[i]->reset();

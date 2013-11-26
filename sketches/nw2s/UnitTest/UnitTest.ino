@@ -36,20 +36,28 @@ void setup()
 	Serial.begin(19200);
 	Serial.print("\n\nStarting...\n");
 
-	pinMode(DUE_IN_DIGITAL_NOISE, INPUT);
+	for (int i = 0; i < 16; i++)
+	{
+		pinMode(22 + i, OUTPUT);
+	}
 }
+
+unsigned long t_global = 0;
 
 void loop() 
 {
-	/* Limit the frequency of these tests to make it readable */
-	if (millis() % 100 == 0)
+	unsigned long t = millis();
+
+	for (int i = 0; i < 16; i++)
 	{
-		unsigned long t = micros();
-
-		long value = Entropy::getValue(1);
-
-		unsigned long t2 = micros();
-
-		Serial.println(String(value) + "\t" + String(t2 - t));
-	}		
+		if (t % 1000 == i * 20)
+		{
+			digitalWrite(22 + i, HIGH);
+			Serial.println(String(22 + i));
+		}
+		else if (t % 500 == i * 20)
+		{
+			digitalWrite(22 + i, LOW);
+		}
+	}
 }

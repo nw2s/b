@@ -92,7 +92,7 @@ void Sequencer::seteg(Envelope* envelope)
 NoteSequencer::NoteSequencer(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut pin, bool randomize_seq)
 {
 	this->key = new Key(scale, key);
-	this->output = output;
+	this->output = AnalogOut::create(pin);
 	this->sequence_index = 0;
 	this->randomize_seq = randomize_seq;
 	this->clock_division = clockdivision;
