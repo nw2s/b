@@ -18,26 +18,21 @@
 
 */
 
-#ifndef Entropy_h
-#define Entropy_h
-
-#include "IO.h"
+#ifndef AudioDevice_h
+#define AudioDevice_h
 
 namespace nw2s
 {
-	class Entropy;
+	class AudioDevice;
 }
 
-class nw2s::Entropy
+class nw2s::AudioDevice
 {
-	public: 
-		static bool getBit();
-		static long getValue();
-		static long getValue(long max);
-		static long getValue(long min, long max);
-		
-	private:
-		static bool seeded;
+	public:
+		static nw2s::AudioDevice* device0;
+		static nw2s::AudioDevice* device1;
+				
+		virtual void timer_handler() = 0;
 };
 
 

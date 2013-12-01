@@ -82,16 +82,14 @@ FixedClock::FixedClock(int tempo, unsigned char beats_per_measure)
 
 void FixedClock::timer(unsigned long t)
 {
-
 	if (t % this->period == 0)
 	{
 		IOUtils::displayBeat(this->beat, this);				
 		this->beat = (this->beat + 1) % this->beats_per_measure;		
 	}
-
+	
 	for (int i = 0; i < this->devices.size(); i++)
-	{
-
+	{	
 		if (t % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
 		{
 			this->devices[i]->reset();

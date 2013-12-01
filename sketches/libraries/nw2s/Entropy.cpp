@@ -19,14 +19,25 @@
 */
 
 #include "Entropy.h"
-#include "MD5.h"
 #include <Arduino.h>
 
 using namespace nw2s;
 
+bool Entropy::seeded = false;
+
+
 #ifdef __AVR__
 
-bool Entropy::seeded = false;
+bool Entropy::getBit()
+{
+	if (!seeded)
+	{
+		randomSeed(micros());
+		Entropy::seeded = true;
+	}
+
+	return (random(0, 1) > 0) ? true : false;
+}
 
 int Entropy::getValue()
 {
@@ -64,34 +75,36 @@ long Entropy::getValue(long min, long max)
 
 #else
 
+bool Entropy::getBit()
+{
+	if (!seeded)
+	{
+		randomSeed(micros());
+		Entropy::seeded = true;
+	}
+
+	return (digitalRead(DUE_IN_DIGITAL_NOISE) ^ random(0, 1) > 0) ? true : false;
+}
+
 long Entropy::getValue()
 {
-	char data[17];
-	
-	/* Read 8 bytes worth of data */
-	for (int k = 0; k < 17; k++)
+	if (!seeded)
 	{
-		unsigned char test = 0;
-
-		/* Read 8 bits for a byte's worth of data */
-		for (int j = 0; j < 8; j++)
-		{
-			test = (test << 1) | digitalRead(DUE_IN_DIGITAL_NOISE);
-		}
-
-		data[k] = test;
+		randomSeed(micros());
+		Entropy::seeded = true;
 	}
+
+	unsigned long noisedata = 0;
 	
-	data[17] = 0;
+	/* Read 31 bits worth of data */
+	for (int j = 0; j < 31; j++)
+	{
+		//TODO: Change this to use the register directly
+		noisedata = (noisedata << 1) | digitalRead(DUE_IN_DIGITAL_NOISE);
+	}
 
-	unsigned char* hash = MD5::make_hash(data);
-
-	/* Convert the 128 bit MD5 to an integer */
-	long value = 0;
-	value = hash[0] ^ hash[1] ^ hash[2] ^ hash[3];
-	value = (value << 8) + hash[4] ^ hash[5] ^ hash[6] ^ hash[7];
-	value = (value << 8) + hash[8] ^ hash[9] ^ hash[10] ^ hash[11];
-	value = (value << 8) + hash[12] ^ hash[13] ^ hash[14] ^ hash[15];	  	
+	/* xor the PRNG number with the noise number */
+	long value = random(0, 2147483647) ^ noisedata;
 
 	return value > -1 ? value : value * -1;
 }

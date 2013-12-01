@@ -18,27 +18,21 @@
 
 */
 
-#ifndef Entropy_h
-#define Entropy_h
+#include <Arduino.h>
+#include "Audiodevice.h"
 
-#include "IO.h"
-
-namespace nw2s
+void TC4_Handler()
 {
-	class Entropy;
+	// We need to get the status to clear it and allow the interrupt to fire again
+	TC_GetStatus(TC1, 1);
+
+	nw2s::AudioDevice::device0->timer_handler();
 }
 
-class nw2s::Entropy
+void TC5_Handler()
 {
-	public: 
-		static bool getBit();
-		static long getValue();
-		static long getValue(long max);
-		static long getValue(long min, long max);
-		
-	private:
-		static bool seeded;
-};
+	// We need to get the status to clear it and allow the interrupt to fire again
+	TC_GetStatus(TC1, 2);
 
-
-#endif
+	nw2s::AudioDevice::device1->timer_handler();
+}

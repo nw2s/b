@@ -85,16 +85,18 @@ namespace nw2s
 		DUE_OUT_D05 = 27,
 		DUE_OUT_D06 = 28,
 		DUE_OUT_D07 = 29,
-		DUE_OUT_D08 = 29,
-		DUE_OUT_D09 = 29,
-		DUE_OUT_D10 = 29,
-		DUE_OUT_D11 = 29,
-		DUE_OUT_D12 = 29,
-		DUE_OUT_D13 = 29,
-		DUE_OUT_D14 = 29,
-		DUE_OUT_D15 = 29,
+		DUE_OUT_D08 = 30,
+		DUE_OUT_D09 = 31,
+		DUE_OUT_D10 = 32,
+		DUE_OUT_D11 = 33,
+		DUE_OUT_D12 = 34,
+		DUE_OUT_D13 = 35,
+		DUE_OUT_D14 = 36,
+		DUE_OUT_D15 = 37,
 		
 		DIGITAL_OUT_NONE = -1,
+
+		SD_CS = 10,
 	};
 
 	enum PinAnalogIn
@@ -136,8 +138,11 @@ namespace nw2s
 		DUE_SPI_4822_02 = 1012,
 		DUE_SPI_4822_03 = 1013,
 		DUE_SPI_4822_00 = 1014,
-		DUE_SPI_4822_01 = 1015,
-		
+		DUE_SPI_4822_01 = 1015,		
+	};
+	
+	enum PinAudioOut
+	{
 		DUE_DAC0 = DAC0,
 		DUE_DAC1 = DAC1,
 	};

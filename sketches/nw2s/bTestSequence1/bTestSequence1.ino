@@ -37,7 +37,7 @@ void setup()
 
 	EventManager::initialize();
 
-	FixedClock* fixedclock = FixedClock::create(120, 16);
+	FixedClock* fixedclock = FixedClock::create(20, 16);
 
 	SequenceNote notelist3[6] = { {0,1}, {1,1}, {2,1}, {3,1}, {4,1}, {5,1} };
 	std::vector<SequenceNote>* notes3 = new vector<SequenceNote>(notelist3, notelist3 + 6);
@@ -46,8 +46,8 @@ void setup()
 	// NoteSequencer* s02 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_01, false);
 	// NoteSequencer* s03 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_02, false);
 	// NoteSequencer* s04 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_03, false);
-	// NoteSequencer* s05 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_04, false);
-	// NoteSequencer* s06 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_05, false);
+	NoteSequencer* s05 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_04, false);
+	NoteSequencer* s06 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_05, false);
 	// NoteSequencer* s07 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_06, false);
 	// NoteSequencer* s08 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_07, false);
 	// NoteSequencer* s09 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_08, false);
@@ -63,8 +63,8 @@ void setup()
 	// fixedclock->registerdevice(s02);
 	// fixedclock->registerdevice(s03);
 	// fixedclock->registerdevice(s04);
-	// fixedclock->registerdevice(s05);
-	// fixedclock->registerdevice(s06);
+	fixedclock->registerdevice(s05);
+	fixedclock->registerdevice(s06);
 	// fixedclock->registerdevice(s07);
 	// fixedclock->registerdevice(s08);
 	// fixedclock->registerdevice(s09);

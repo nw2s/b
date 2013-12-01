@@ -18,27 +18,33 @@
 
 */
 
-#ifndef Entropy_h
-#define Entropy_h
 
-#include "IO.h"
+#ifndef SignalData_h
+#define SignalData_h
 
 namespace nw2s
-{
-	class Entropy;
+{		
+	class SignalData;
+
 }
 
-class nw2s::Entropy
+class nw2s::SignalData
 {
-	public: 
-		static bool getBit();
-		static long getValue();
-		static long getValue(long max);
-		static long getValue(long min, long max);
-		
+	public:
+		static SignalData* fromSDFile(char *filepath);
+		long getSize();
+		short unsigned int getSample(long sample);
+	
 	private:
-		static bool seeded;
+		short unsigned int *data;
+		int size;
+		static bool initialized;
+		
+		SignalData(short unsigned int *data, long size);
+		
 };
 
 
+
 #endif
+

@@ -268,8 +268,6 @@ void IOUtils::displayBeat(int beat, void* clockinstance)
 		if (clockinstance != IOUtils::clockinstance) return;
 	}
 
-	Serial.println(String(beat));
-
 	digitalWrite(45, LOW);
 	digitalWrite(41, (1 & beat) ? HIGH : LOW);
 	digitalWrite(42, (2 & beat) ? HIGH : LOW);
