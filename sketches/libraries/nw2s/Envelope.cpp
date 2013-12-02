@@ -69,6 +69,11 @@ void ADSR::timer(unsigned long t)
 
 	unsigned int t_env = t - this->t_start;
 		
+	// if (t_env == t_a) Serial.println("ADSR: A " + String(t));	
+	// if (t_env == t_d) Serial.println("ADSR: D " + String(t));	
+	// if (t_env == t_s) Serial.println("ADSR: S " + String(t));	
+	// if (t_env == t_r) Serial.println("ADSR: R " + String(t));	
+		
 	/* Calculate state based on time */
 	if (t_env <= this->t_a)
 	{
@@ -94,6 +99,8 @@ void ADSR::timer(unsigned long t)
 
 void ADSR::reset()
 {
+	Serial.println("** ADSR reset");
+	
 	this->t_start = 0;
 	this->output->outputCV(0);
 }

@@ -166,7 +166,7 @@ void AnalogOut::outputCV(int cv)
 
 	int dacval = (cv * 4000UL) / 5000;
 
-	if ((pin >= DUE_SPI_4822_00) && (pin <= DUE_SPI_4822_15))
+	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
 	{
 		if (this->spidac_index == 0)
 		{
@@ -206,7 +206,7 @@ void AnalogOut::outputSlewedCV(int cv, Slew* slew)
 	int slewval = slew->calculate_value(cv);
 	int dacval = (slewval * 4000UL) / 5000;
 
-	if ((pin >= DUE_SPI_4822_00) && (pin <= DUE_SPI_4822_15))
+	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
 	{
 		if (this->spidac_index == 0)
 		{
