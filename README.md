@@ -8,7 +8,7 @@ The goal of the framework is to provide a number of modular building blocks on w
 To that end, I've followed a few design principles: 
 
 * **Flexibility of underlying hardware** - Standalone Arduinos are great for debugging. The Ardcore is a perfect development platform, but the nw2s::b platform unleashes the full potential of the microcontroller-based modular synth control. Why shouldn't it work on all of them?
-* **Ease of implementation** - Just because it's C++ doesn't mean is has to be hard. Building a controller out of the pre-build devices should be easy and straightforward.
+* **Ease of implementation** - Just because it's C++ doesn't mean it has to be hard. Building a controller out of the pre-build devices should be easy and straightforward.
 * **Separation of concerns** - Each piece of the framework should have a well-defined job and do it well. 
 
 To demonstrate the implementation of these principles, the following code shows how to set up a basic sketch that will create a clock that is slaved to the external clock port and creates a few divided trigger signals on the digital outputs. The code should be fairly easy to follow:
