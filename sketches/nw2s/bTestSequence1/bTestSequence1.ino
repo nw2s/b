@@ -26,7 +26,7 @@
 #include <Sequence.h>
 #include <IO.h>
 #include <SPI.h>
-
+#include <SD.h>
 
 using namespace nw2s;
 
@@ -42,10 +42,10 @@ void setup()
 	SequenceNote notelist3[6] = { {0,1}, {1,1}, {2,1}, {3,1}, {4,1}, {5,1} };
 	std::vector<SequenceNote>* notes3 = new vector<SequenceNote>(notelist3, notelist3 + 6);
 
-	// NoteSequencer* s01 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_00, false);
-	// NoteSequencer* s02 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_01, false);
-	// NoteSequencer* s03 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_02, false);
-	// NoteSequencer* s04 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_03, false);
+	NoteSequencer* s01 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_00, false);
+	NoteSequencer* s02 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_01, false);
+	NoteSequencer* s03 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_02, false);
+	NoteSequencer* s04 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_03, false);
 	NoteSequencer* s05 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_04, false);
 	NoteSequencer* s06 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_05, false);
 	// NoteSequencer* s07 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_06, false);
@@ -59,10 +59,10 @@ void setup()
 	// NoteSequencer* s15 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_14, false);
 	// NoteSequencer* s16 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_15, false);
 	// 
-	// fixedclock->registerdevice(s01);
-	// fixedclock->registerdevice(s02);
-	// fixedclock->registerdevice(s03);
-	// fixedclock->registerdevice(s04);
+	fixedclock->registerdevice(s01);
+	fixedclock->registerdevice(s02);
+	fixedclock->registerdevice(s03);
+	fixedclock->registerdevice(s04);
 	fixedclock->registerdevice(s05);
 	fixedclock->registerdevice(s06);
 	// fixedclock->registerdevice(s07);

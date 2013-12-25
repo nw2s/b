@@ -68,7 +68,7 @@ AnalogOut::AnalogOut(PinAnalogOut pin)
 	    SPI.setBitOrder(MSBFIRST);
 	    SPI.setClockDivider(42);
 	    SPI.begin();
-		this->spidac.setGain1X_AB();			
+		//this->spidac.setGain1X_AB();			
 		
 	}
 
@@ -94,6 +94,8 @@ void AnalogOut::outputNoteCV(ScaleNote note)
 
 	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
 	{		
+		Serial.println("here " + String(note.cv));
+		
 		if (this->spidac_index == 0)
 		{
 			this->spidac.setValue_A(note.cv);
