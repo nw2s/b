@@ -30,6 +30,11 @@
 using namespace std;
 using namespace nw2s;
 
+TriggerSequencer* TriggerSequencer::create(vector<int>* triggers, int clockdivision, PinDigitalOut output)
+{
+	return new TriggerSequencer(triggers, clockdivision, output);
+}
+
 NoteSequencer* NoteSequencer::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq)
 {
 	return new NoteSequencer(notes, key, scale, clockdivision, output, randomize_seq);
@@ -86,6 +91,39 @@ void Sequencer::setslew(Slew* slew)
 void Sequencer::seteg(Envelope* envelope)
 {
 	this->envelope = envelope;
+}
+
+
+TriggerSequencer::TriggerSequencer(vector<int>* triggers, int clockdivision, PinDigitalOut pin)
+{
+	this->triggers = new vector<int>();
+	copy(triggers->begin(), triggers->end(), back_inserter(*this->triggers));
+	
+	this->clock_division = clockdivision;
+	this->sequence_index = 0;
+	this->state = false;
+	this->output = pin;
+	digitalWrite(pin, LOW);	
+}
+
+void TriggerSequencer::timer(unsigned long t)
+{
+	if (this->state)
+	{
+		digitalWrite(this->output, LOW);
+		this->state = false;
+	}
+}
+
+void TriggerSequencer::reset()
+{
+	this->sequence_index = ++(this->sequence_index) % this->triggers->size();
+	
+	if (&(this->triggers[this->sequence_index]) != 0)
+	{
+		this->state = true;
+		digitalWrite(this->output, HIGH);
+	}	
 }
 
 

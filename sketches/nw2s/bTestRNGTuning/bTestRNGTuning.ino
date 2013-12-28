@@ -27,6 +27,7 @@
 #include <Sequence.h>
 #include <IO.h>
 #include <SPI.h>
+#include <SD.h>
 
 
 using namespace nw2s;

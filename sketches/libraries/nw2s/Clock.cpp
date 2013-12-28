@@ -68,6 +68,15 @@ void Clock::registerdevice(BeatDevice* device)
 Clock::Clock()
 {
 	IOUtils::displayBeat(0, this);
+
+	this->swingpercentage = 0;
+	this->swingdivision = 1000;
+}
+
+void Clock::setSwing(int swingdivision, int swingpercentage)
+{
+	this->swingpercentage = (swingpercentage < -100) ? -100 : (swingpercentage > 100) ? 100 : swingpercentage;
+	this->swingdivision = swingdivision;
 }
 
 FixedClock::FixedClock(int tempo, unsigned char beats_per_measure)
@@ -87,12 +96,56 @@ void FixedClock::timer(unsigned long t)
 		IOUtils::displayBeat(this->beat, this);				
 		this->beat = (this->beat + 1) % this->beats_per_measure;		
 	}
-	
+		
 	for (int i = 0; i < this->devices.size(); i++)
 	{	
-		if (t % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
+		if ((this->swingpercentage == 0) || (this->devices[i]->getclockdivision() > this->swingdivision))
+		{	
+			/* Either the swing percentage is 0 or the clock division is greater than the swing division */
+			if (t % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
+			{
+				Serial.println("straight beat " + String(t));
+				Serial.println("period " + String(this->period));
+				Serial.println("clock div " + String(this->devices[i]->getclockdivision()));
+				this->devices[i]->reset();
+			}
+		}
+		else
 		{
-			this->devices[i]->reset();
+			//TODO: Optimize a little
+			
+			/* There is a swingpercentage, and the clock division is smaller than the swing division */			
+
+			/* Calculate all the times for swinging */
+			int swingfactor = (this->swingpercentage == 0) ? 1000 : 1000 - ((333 * this->swingpercentage) / 100);
+			int swingfactor2 = (this->swingpercentage == 0) ? 1000 : 1000 + ((333 * this->swingpercentage) / 100);
+			int t_measure = t % this->period;
+
+			if (t % (this->swingdivision * 2) < this->swingdivision)
+			{
+				/* We're in the front half of the swing */				
+				int t_swung = (t_measure * swingfactor) / 1000;
+
+				if (t_swung % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
+				{
+					Serial.println("swung beat " + String(t_swung));					
+					Serial.println("woulda been " + String(t_measure));					
+					this->devices[i]->reset();
+				}				
+			}
+			else
+			{
+				/* We're in the back half of the swing */
+				int t_firsthalf = ((this->swingdivision * swingfactor) / 1000);
+				int t_swung2 = t_firsthalf + ((t_measure * swingfactor2) / 1000);
+
+				if (t_swung2 % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
+				{
+					Serial.println("swung back beat " + String(t_swung2));					
+					Serial.println("woulda been " + String(t_measure));					
+					this->devices[i]->reset();
+				}				 
+			}
 		}
 		
 		this->devices[i]->timer(t);

@@ -73,11 +73,14 @@ class nw2s::Clock : public nw2s::TimeBasedDevice
 	public:
 		virtual void timer(unsigned long t) = 0;
  		void registerdevice(BeatDevice* device);
+		void setSwing(int swingdivision, int swingpercentage);
 		
 	protected:
 		unsigned char beats_per_measure;
 		vector<BeatDevice*> devices;
 		int beat;
+		int swingpercentage;
+		int swingdivision;
 		Clock();
 };
 

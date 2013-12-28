@@ -38,6 +38,7 @@ namespace nw2s
 	static const SequenceNote HOLD = {0, 0};
 	
 	typedef std::vector<SequenceNote> NoteSequenceData;
+	typedef std::vector<int> TriggerSequenceData;
 
 	class Sequencer;
 	class NoteSequencer;
@@ -46,6 +47,7 @@ namespace nw2s
 	class CVNoteSequencer;
 	class CVSequencer;
 	class MorphingNoteSequencer;
+	class TriggerSequencer;
 	
 	class TimeBasedDevice;
 }
@@ -67,6 +69,21 @@ class nw2s::Sequencer : public nw2s::BeatDevice
 		Sequencer();
 };
 
+
+class nw2s::TriggerSequencer : public nw2s::Sequencer
+{
+	public: 
+		static TriggerSequencer* create(std::vector<int>* triggers, int clockdivision, PinDigitalOut output);
+		virtual void timer(unsigned long t);
+		virtual void reset();
+		
+	private:
+		TriggerSequencer(std::vector<int>* triggers, int clockdivision, PinDigitalOut output);
+		PinDigitalOut output;
+		std::vector<int>* triggers;
+		volatile int sequence_index;
+		volatile bool state;
+	};
 
 class nw2s::NoteSequencer : public nw2s::Sequencer
 {

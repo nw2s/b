@@ -68,7 +68,7 @@ AnalogOut::AnalogOut(PinAnalogOut pin)
 	    SPI.setBitOrder(MSBFIRST);
 	    SPI.setClockDivider(42);
 	    SPI.begin();
-		//this->spidac.setGain1X_AB();			
+		this->spidac.setGain1X_AB();			
 		
 	}
 
@@ -93,9 +93,7 @@ void AnalogOut::outputNoteCV(ScaleNote note)
 #ifdef _SAM3XA_
 
 	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
-	{		
-		Serial.println("here " + String(note.cv));
-		
+	{				
 		if (this->spidac_index == 0)
 		{
 			this->spidac.setValue_A(note.cv);
@@ -229,12 +227,16 @@ void IOUtils::setupPins()
 {
 #ifdef _SAM3XA_
 
-	for (int pin = 22; pin <= 29; pin++)
+	Serial.println("Initializing...");
+	
+	Serial.println("digital output pins");
+	for (int pin = 22; pin <= 37; pin++)
 	{
 		pinMode(pin, OUTPUT);
 		digitalWrite(pin, LOW);	
 	}
 
+	Serial.println("beatclock pins");
 	for (int pin = 41; pin <= 45; pin++)
 	{
 		/* Set up the beatclock pins low */
@@ -242,6 +244,7 @@ void IOUtils::setupPins()
 		digitalWrite(pin, LOW);
 	}
 
+	Serial.println("DAC CS pins");
 	for (int pin = 2; pin <= 11; pin++)
 	{
 		/* Set up the DAC ~CS pins as high */
@@ -250,7 +253,10 @@ void IOUtils::setupPins()
 	}
 
 	/* Beat display LE */
-	digitalWrite(47, LOW);
+	Serial.println("enable beat display");
+	digitalWrite(47, LOW);	
+
+
 #endif
 }
 
@@ -269,6 +275,8 @@ void IOUtils::displayBeat(int beat, void* clockinstance)
 	{
 		if (clockinstance != IOUtils::clockinstance) return;
 	}
+
+	beat = 16 - beat;
 
 	digitalWrite(45, LOW);
 	digitalWrite(41, (1 & beat) ? HIGH : LOW);

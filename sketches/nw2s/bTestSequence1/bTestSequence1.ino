@@ -37,7 +37,7 @@ void setup()
 
 	EventManager::initialize();
 
-	FixedClock* fixedclock = FixedClock::create(20, 16);
+	FixedClock* fixedclock = FixedClock::create(120, 16);
 
 	SequenceNote notelist3[6] = { {0,1}, {1,1}, {2,1}, {3,1}, {4,1}, {5,1} };
 	std::vector<SequenceNote>* notes3 = new vector<SequenceNote>(notelist3, notelist3 + 6);
@@ -48,33 +48,33 @@ void setup()
 	NoteSequencer* s04 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_03, false);
 	NoteSequencer* s05 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_04, false);
 	NoteSequencer* s06 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_05, false);
-	// NoteSequencer* s07 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_06, false);
-	// NoteSequencer* s08 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_07, false);
-	// NoteSequencer* s09 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_08, false);
-	// NoteSequencer* s10 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_09, false);
-	// NoteSequencer* s11 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_10, false);
-	// NoteSequencer* s12 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_11, false);
-	// NoteSequencer* s13 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_12, false);
-	// NoteSequencer* s14 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_13, false);
-	// NoteSequencer* s15 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_14, false);
-	// NoteSequencer* s16 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_15, false);
-	// 
+	NoteSequencer* s07 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_06, false);
+	NoteSequencer* s08 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_07, false);
+	NoteSequencer* s09 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_08, false);
+	NoteSequencer* s10 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_09, false);
+	NoteSequencer* s11 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_10, false);
+	NoteSequencer* s12 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_11, false);
+	NoteSequencer* s13 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_12, false);
+	NoteSequencer* s14 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_13, false);
+	NoteSequencer* s15 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_14, false);
+	NoteSequencer* s16 = NoteSequencer::create(notes3, C, MAJOR, DIV_QUARTER, DUE_SPI_4822_15, false);
+	
 	fixedclock->registerdevice(s01);
 	fixedclock->registerdevice(s02);
 	fixedclock->registerdevice(s03);
 	fixedclock->registerdevice(s04);
 	fixedclock->registerdevice(s05);
 	fixedclock->registerdevice(s06);
-	// fixedclock->registerdevice(s07);
-	// fixedclock->registerdevice(s08);
-	// fixedclock->registerdevice(s09);
-	// fixedclock->registerdevice(s10);
-	// fixedclock->registerdevice(s11);
-	// fixedclock->registerdevice(s12);
-	// fixedclock->registerdevice(s13);
-	// fixedclock->registerdevice(s14);
-	// fixedclock->registerdevice(s15);
-	// fixedclock->registerdevice(s16);
+	fixedclock->registerdevice(s07);
+	fixedclock->registerdevice(s08);
+	fixedclock->registerdevice(s09);
+	fixedclock->registerdevice(s10);
+	fixedclock->registerdevice(s11);
+	fixedclock->registerdevice(s12);
+	fixedclock->registerdevice(s13);
+	fixedclock->registerdevice(s14);
+	fixedclock->registerdevice(s15);
+	fixedclock->registerdevice(s16);
 
 	EventManager::registerdevice(fixedclock);
 }
