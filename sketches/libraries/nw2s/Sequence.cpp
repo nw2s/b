@@ -102,27 +102,24 @@ TriggerSequencer::TriggerSequencer(vector<int>* triggers, int clockdivision, Pin
 	this->clock_division = clockdivision;
 	this->sequence_index = 0;
 	this->state = false;
-	this->output = pin;
+	this->trigger = Trigger::create(pin, clockdivision);
 	digitalWrite(pin, LOW);	
 }
 
 void TriggerSequencer::timer(unsigned long t)
 {
-	if (this->state)
-	{
-		digitalWrite(this->output, LOW);
-		this->state = false;
-	}
+	this->trigger->timer(t);
 }
 
 void TriggerSequencer::reset()
-{
+{	
 	this->sequence_index = ++(this->sequence_index) % this->triggers->size();
-	
-	if (&(this->triggers[this->sequence_index]) != 0)
+
+	// Serial.println("- " + String(this->triggers->size()) + " " + String(this->sequence_index) + " " + String((*this->triggers)[this->sequence_index]));
+
+	if ((*this->triggers)[this->sequence_index] != 0)
 	{
-		this->state = true;
-		digitalWrite(this->output, HIGH);
+		this->trigger->reset();
 	}	
 }
 

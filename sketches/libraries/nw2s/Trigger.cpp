@@ -54,14 +54,17 @@ void Trigger::timer(unsigned long t)
 	/* If the state is low, nothing else to do */
 	if (this->state == LOW) return;
 	
-	if (this->t_start == 0) this->t_start = t;
-	
-	unsigned int t_trig = t - t_start;
-	
-	if (t_trig > TRIGGER_TIME)
+	if (this->t_start == 0)
 	{
-		this->state = LOW;
-		digitalWrite(this->output, LOW);
+		this->t_start = t;
+	}
+	else
+	{
+		if ((this->state == HIGH) && (t - this->t_start > TRIGGER_TIME))
+		{
+			this->state = LOW;
+			digitalWrite(this->output, LOW);
+		}	
 	}	
 }
 

@@ -26,6 +26,7 @@
 #include "Gate.h"
 #include "Envelope.h"
 #include "Clock.h"
+#include "Trigger.h"
 
 namespace nw2s
 {
@@ -79,7 +80,7 @@ class nw2s::TriggerSequencer : public nw2s::Sequencer
 		
 	private:
 		TriggerSequencer(std::vector<int>* triggers, int clockdivision, PinDigitalOut output);
-		PinDigitalOut output;
+		Trigger* trigger;
 		std::vector<int>* triggers;
 		volatile int sequence_index;
 		volatile bool state;

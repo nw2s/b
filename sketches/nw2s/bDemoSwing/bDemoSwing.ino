@@ -42,9 +42,14 @@ void setup()
 
 	EventManager::initialize();
 	
-	Clock* fixedclock = FixedClock::create(120, 16);
-	fixedclock->setSwing(DIV_EIGHTH, 100);
-	
+	// Clock* fixedclock = FixedClock::create(120, 16);
+	// fixedclock->setSwing(DIV_EIGHTH, 15);
+	// 
+	Clock* fixedclock2 = FixedClock::create(120, 16);
+	fixedclock2->setSwing(DIV_EIGHTH, 10);
+
+	Clock* fixedclock3 = FixedClock::create(120, 16);
+
 	SequenceNote notelist[4] = { {2, 1}, {2, 5}, {2, 1}, {1, 4} };
 	
 	NoteSequenceData* notes = new NoteSequenceData(notelist, notelist + 4);
@@ -58,20 +63,39 @@ void setup()
 	int snarelist[4] = { 0, 1, 0, 1 };
 	int kicklist[4] = { 1, 0, 1, 0};
 	int hatlist[8] = { 1, 1, 1, 1, 1, 1, 1, 1 };
+	int hatlist2[16] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
 	TriggerSequenceData* snaretriggers = new TriggerSequenceData(snarelist, snarelist + 4);
-	TriggerSequenceData* kicktriggers = new TriggerSequenceData(kicklist, snarelist + 4);
-	TriggerSequenceData* hattriggers = new TriggerSequenceData(hatlist, snarelist + 8);
+	TriggerSequenceData* kicktriggers = new TriggerSequenceData(kicklist, kicklist + 4);
+	TriggerSequenceData* hattriggers = new TriggerSequenceData(hatlist, hatlist + 8);
+	TriggerSequenceData* hattriggers2 = new TriggerSequenceData(hatlist2, hatlist2 + 16);
 
-	Sequencer* snaresequencer = TriggerSequencer::create(snaretriggers, DIV_QUARTER, DUE_OUT_D00);
-	Sequencer* kicksequencer = TriggerSequencer::create(kicktriggers, DIV_QUARTER, DUE_OUT_D01);
-	Sequencer* hatsequencer = TriggerSequencer::create(hattriggers, DIV_EIGHTH, DUE_OUT_D02);
+	TriggerSequenceData* hattriggers3 = new TriggerSequenceData(hatlist, hatlist + 8);
+	TriggerSequenceData* hattriggers4 = new TriggerSequenceData(hatlist2, hatlist2 + 16);
 
-	fixedclock->registerdevice(snaresequencer);
-	fixedclock->registerdevice(kicksequencer);
-	fixedclock->registerdevice(hatsequencer);
+	// Sequencer* snaresequencer = TriggerSequencer::create(snaretriggers, DIV_QUARTER, DUE_OUT_D00);
+	// Sequencer* kicksequencer = TriggerSequencer::create(kicktriggers, DIV_QUARTER, DUE_OUT_D01);
+	// Sequencer* hatsequencer = TriggerSequencer::create(hattriggers, DIV_EIGHTH, DUE_OUT_D02);
+	// Sequencer* hatsequencer2 = TriggerSequencer::create(hattriggers2, DIV_SIXTEENTH, DUE_OUT_D03);
+	// 
+	Sequencer* hatsequencer3 = TriggerSequencer::create(hattriggers3, DIV_EIGHTH, DUE_OUT_D04);
+	// Sequencer* hatsequencer4 = TriggerSequencer::create(hattriggers4, DIV_SIXTEENTH, DUE_OUT_D05);
 	
-	EventManager::registerdevice(fixedclock);
+	Sequencer* hatsequencer5 = TriggerSequencer::create(hattriggers, DIV_EIGHTH, DUE_OUT_D06);
+	// Sequencer* hatsequencer6 = TriggerSequencer::create(hattriggers2, DIV_SIXTEENTH, DUE_OUT_D07);
+
+	// fixedclock->registerdevice(snaresequencer);
+	// fixedclock->registerdevice(kicksequencer);
+	// fixedclock->registerdevice(hatsequencer);
+	// fixedclock->registerdevice(hatsequencer2);
+	fixedclock2->registerdevice(hatsequencer3);
+	// fixedclock2->registerdevice(hatsequencer4);
+	fixedclock3->registerdevice(hatsequencer5);
+	// fixedclock3->registerdevice(hatsequencer6);
+	
+	// EventManager::registerdevice(fixedclock);
+	EventManager::registerdevice(fixedclock2);
+	EventManager::registerdevice(fixedclock3);
 }
 
 void loop() 

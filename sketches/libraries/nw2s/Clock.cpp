@@ -104,15 +104,12 @@ void FixedClock::timer(unsigned long t)
 			/* Either the swing percentage is 0 or the clock division is greater than the swing division */
 			if (t % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
 			{
-				Serial.println("straight beat " + String(t));
-				Serial.println("period " + String(this->period));
-				Serial.println("clock div " + String(this->devices[i]->getclockdivision()));
 				this->devices[i]->reset();
 			}
 		}
 		else
 		{
-			//TODO: Optimize a little
+			//TODO: Optimize a LOT and make work.
 			
 			/* There is a swingpercentage, and the clock division is smaller than the swing division */			
 
@@ -128,8 +125,6 @@ void FixedClock::timer(unsigned long t)
 
 				if (t_swung % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
 				{
-					Serial.println("swung beat " + String(t_swung));					
-					Serial.println("woulda been " + String(t_measure));					
 					this->devices[i]->reset();
 				}				
 			}
@@ -141,8 +136,6 @@ void FixedClock::timer(unsigned long t)
 
 				if (t_swung2 % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
 				{
-					Serial.println("swung back beat " + String(t_swung2));					
-					Serial.println("woulda been " + String(t_measure));					
 					this->devices[i]->reset();
 				}				 
 			}

@@ -28,7 +28,7 @@ namespace nw2s
 {		
 	class Trigger;
 
-	const int TRIGGER_TIME = 20;
+	const int TRIGGER_TIME = 25;
 }
 
 class nw2s::Trigger : public nw2s::BeatDevice

@@ -77,7 +77,6 @@ void Looper::timer_handler()
 	
  	dacc_set_channel_selection(DACC_INTERFACE, this->dac);
 	dacc_write_conversion_data(DACC_INTERFACE, signalData->getSample(currentSample));
-	//analogWrite(this->pin, this->signalData->getSample(currentSample));
 	this->currentSample++;
 }
 
