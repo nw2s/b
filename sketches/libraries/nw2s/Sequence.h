@@ -49,6 +49,7 @@ namespace nw2s
 	class CVSequencer;
 	class MorphingNoteSequencer;
 	class TriggerSequencer;
+	class ProbabilityTriggerSequencer;
 	
 	class TimeBasedDevice;
 }
@@ -78,13 +79,25 @@ class nw2s::TriggerSequencer : public nw2s::Sequencer
 		virtual void timer(unsigned long t);
 		virtual void reset();
 		
-	private:
+	protected:
 		TriggerSequencer(std::vector<int>* triggers, int clockdivision, PinDigitalOut output);
 		Trigger* trigger;
 		std::vector<int>* triggers;
 		volatile int sequence_index;
 		volatile bool state;
-	};
+};
+
+class nw2s::ProbabilityTriggerSequencer : public nw2s::TriggerSequencer
+{
+	public:
+		static ProbabilityTriggerSequencer* create(std::vector<int>* triggers, int clockdivision, PinDigitalOut output);
+		virtual void reset();
+		void setProbabilityModifier(PinAnalogIn pin);
+	
+	private:
+		PinAnalogIn modifierpin;
+		ProbabilityTriggerSequencer(std::vector<int>* triggers, int clockdivision, PinDigitalOut output);
+};
 
 class nw2s::NoteSequencer : public nw2s::Sequencer
 {

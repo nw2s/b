@@ -26,7 +26,12 @@
 #include <SD.h>
 #include <Loop.h>
 
+#include <Wire.h>
+#include <Adafruit_PWMServoDriver.h>
+
 using namespace nw2s;
+
+Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x50);
 
 
 void setup() 
@@ -34,27 +39,44 @@ void setup()
 	Serial.begin(19200);
 	Serial.print("\n\nStarting...\n");
 
-	EventManager::initialize();
+	pwm.begin();
+	pwm.setPWMFreq(100); 
 
-	/* Setup the mechanical noise as a free running loop */
-	SignalData* mechanicalnoise = SignalData::fromSDFile("loops/mech01.raw");
-	Looper* looper2 = Looper::create(DUE_DAC0, mechanicalnoise);
+// #ifdef __SAM3X8E__
+// 	 uint8_t TWBR = 12;
+// #endif
+// 
+// 	uint8_t twbrbackup = TWBR;
+// 	TWBR = 12; // upgrade to 400KHz!
 
-
-	/* Set up the drum loop as a clocked loop. It will reset every two beats */
-	FixedClock* fixedclock = FixedClock::create(128, 16);
-	
-	SignalData* drumloop = SignalData::fromSDFile("loops/loop01.raw");
-	ClockedLooper* looper1 = ClockedLooper::create(DUE_DAC1, drumloop, 2, DIV_QUARTER);
-	
-	fixedclock->registerdevice(looper1);
-	
-	EventManager::registerdevice(fixedclock);
+	// EventManager::initialize();
+	// 
+	// /* Setup the mechanical noise as a free running loop */
+	// SignalData* mechanicalnoise = SignalData::fromSDFile("loops/mech01.raw");
+	// Looper* looper2 = Looper::create(DUE_DAC0, mechanicalnoise);
+	// 
+	// 
+	// /* Set up the drum loop as a clocked loop. It will reset every two beats */
+	// FixedClock* fixedclock = FixedClock::create(128, 16);
+	// 
+	// SignalData* drumloop = SignalData::fromSDFile("loops/loop01.raw");
+	// ClockedLooper* looper1 = ClockedLooper::create(DUE_DAC1, drumloop, 2, DIV_QUARTER);
+	// 
+	// fixedclock->registerdevice(looper1);
+	// 
+	// EventManager::registerdevice(fixedclock);
 }
 
 void loop() 
 {
-	EventManager::loop();	
+	// EventManager::loop();	
+	for (uint16_t i=0; i<4096; i += 8) 
+	{
+    	for (uint8_t pwmnum=0; pwmnum < 16; pwmnum++) 
+		{
+      		pwm.setPWM(pwmnum, 0, (i + (4096/16)*pwmnum) % 4096 );
+    	}
+  	}
 }
 
 

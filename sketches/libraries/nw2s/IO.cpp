@@ -256,6 +256,12 @@ void IOUtils::setupPins()
 	Serial.println("enable beat display");
 	digitalWrite(47, LOW);	
 
+	/* Analog Read Resolution */
+	Serial.println("analog read resolution: 12");
+	analogReadResolution(12);
+
+
+	Serial.println("done setting up.\n\n\n\n");
 
 #endif
 }

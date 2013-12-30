@@ -189,7 +189,8 @@ void VariableClock::timer(unsigned long t)
 
 void VariableClock::update_tempo(unsigned long t)
 {
-	int tempo = ((((unsigned long)this->maxtempo - (unsigned long)this->mintempo) * ((unsigned long)analogRead(this->input)) / 1023UL)) + this->mintempo;
+	//TODO: Need to normalize the max analog value somewhere!
+	int tempo = ((((unsigned long)this->maxtempo - (unsigned long)this->mintempo) * ((unsigned long)analogRead(this->input)) / 3300UL)) + this->mintempo;
  	this->period = 60000UL / tempo;
 
 	this->next_clock_t = (t + this->period);

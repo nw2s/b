@@ -25,6 +25,7 @@
 #include "EventManager.h"
 #include "Sequence.h"
 #include <math.h>
+#include "Entropy.h"
 
 
 using namespace std;
@@ -33,6 +34,11 @@ using namespace nw2s;
 TriggerSequencer* TriggerSequencer::create(vector<int>* triggers, int clockdivision, PinDigitalOut output)
 {
 	return new TriggerSequencer(triggers, clockdivision, output);
+}
+
+ProbabilityTriggerSequencer* ProbabilityTriggerSequencer::create(vector<int>* triggers, int clockdivision, PinDigitalOut output)
+{
+	return new ProbabilityTriggerSequencer(triggers, clockdivision, output);
 }
 
 NoteSequencer* NoteSequencer::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq)
@@ -115,12 +121,64 @@ void TriggerSequencer::reset()
 {	
 	this->sequence_index = ++(this->sequence_index) % this->triggers->size();
 
-	// Serial.println("- " + String(this->triggers->size()) + " " + String(this->sequence_index) + " " + String((*this->triggers)[this->sequence_index]));
-
 	if ((*this->triggers)[this->sequence_index] != 0)
 	{
 		this->trigger->reset();
 	}	
+}
+
+ProbabilityTriggerSequencer::ProbabilityTriggerSequencer(vector<int>* triggers, int clockdivision, PinDigitalOut pin) : nw2s::TriggerSequencer(triggers, clockdivision, pin)
+{
+	this->modifierpin = DUE_IN_A_NONE;
+}
+
+void ProbabilityTriggerSequencer::setProbabilityModifier(PinAnalogIn pin)
+{
+	this->modifierpin = pin;
+}
+
+void ProbabilityTriggerSequencer::reset()
+{	
+	this->sequence_index = ++(this->sequence_index) % this->triggers->size();
+
+	int currentvalue = (*this->triggers)[this->sequence_index];
+
+	if (currentvalue != 0)
+	{		
+		int rnd = Entropy::getValue(100);
+
+		if (this->modifierpin == DUE_IN_A_NONE)
+		{		
+			Serial.println("rand: " + String(rnd) + " val: " + String(currentvalue) + " " + String(currentvalue >= rnd));
+		
+			if (currentvalue >= rnd)
+			{
+				this->trigger->reset();
+			}	
+		}
+		else
+		{
+			int rawval = analogRead(modifierpin);
+			int factor = 100;
+		
+			/* Scale the factor based on 0-100 and 100-2000 */
+			if (rawval < 1700)
+			{
+				factor = (rawval * 100) / 1700;
+			}
+			else if (rawval > 1800)
+			{
+				factor = 100 + ((rawval * 1900UL) / 1700);
+			}
+	
+			//Serial.println("raw: " + String(rawval) + " rand: " + String(rnd) + " val: " + String(currentvalue) + " factor: " + String(factor) + " val2: " + String((currentvalue * factor) / 100));
+
+			if (((currentvalue * factor) / 100) >= rnd)
+			{
+				this->trigger->reset();
+			}	
+		}
+	}
 }
 
 

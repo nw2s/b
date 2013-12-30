@@ -113,6 +113,8 @@ namespace nw2s
 		DUE_IN_A09 = A9,
 		DUE_IN_A10 = A10,
 		DUE_IN_A11 = A11,
+		
+		DUE_IN_A_NONE = -1,
 	};
 
 
