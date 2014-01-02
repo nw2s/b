@@ -18,11 +18,12 @@
 
 */
 
-
-
+#include <Arduino.h>
+#include <SPI.h>
+#include <Wire.h>
+#include "PCA9685.h"
 #include "mcp4822.h"
 #include "IO.h"
-#include <SPI.h>
 
 using namespace nw2s;
 
@@ -31,6 +32,7 @@ AnalogOut* AnalogOut::create(PinAnalogOut out)
 	return new AnalogOut(out);
 }
 
+PCA9685 AnalogOut::ledDriver;
 
 AnalogOut::AnalogOut(PinAnalogOut pin)
 {
@@ -68,8 +70,60 @@ AnalogOut::AnalogOut(PinAnalogOut pin)
 	    SPI.setBitOrder(MSBFIRST);
 	    SPI.setClockDivider(42);
 	    SPI.begin();
-		this->spidac.setGain1X_AB();			
+		this->spidac.setGain1X_AB();	
 		
+		/* Calculate the LED pin on the PCA9685 driver */
+		switch(pin)
+		{
+			case DUE_SPI_4822_00:
+				this->ledpin = 0;
+				break;
+			case DUE_SPI_4822_01:
+				this->ledpin = 1;
+				break;
+			case DUE_SPI_4822_02:
+				this->ledpin = 2;
+				break;
+			case DUE_SPI_4822_03:
+				this->ledpin = 3;
+				break;
+			case DUE_SPI_4822_04:
+				this->ledpin = 4;
+				break;
+			case DUE_SPI_4822_05:
+				this->ledpin = 5;
+				break;
+			case DUE_SPI_4822_06:
+				this->ledpin = 6;
+				break;
+			case DUE_SPI_4822_07:
+				this->ledpin = 7;
+				break;
+			case DUE_SPI_4822_08:
+				this->ledpin = 8;
+				break;
+			case DUE_SPI_4822_09:
+				this->ledpin = 9;
+				break;
+			case DUE_SPI_4822_10:
+				this->ledpin = 10;
+				break;
+			case DUE_SPI_4822_11:
+				this->ledpin = 11;
+				break;
+			case DUE_SPI_4822_12:
+				this->ledpin = 12;
+				break;
+			case DUE_SPI_4822_13:
+				this->ledpin = 13;
+				break;
+			case DUE_SPI_4822_14:
+				this->ledpin = 14;
+				break;
+			case DUE_SPI_4822_15:
+				this->ledpin = 15;
+				break;
+		}
 	}
 
 #endif
@@ -93,7 +147,9 @@ void AnalogOut::outputNoteCV(ScaleNote note)
 #ifdef _SAM3XA_
 
 	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
-	{				
+	{
+		AnalogOut::ledDriver.setLEDDimmed(this->ledpin, note.cv);
+						
 		if (this->spidac_index == 0)
 		{
 			this->spidac.setValue_A(note.cv);
@@ -127,6 +183,8 @@ void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew)
 #ifdef _SAM3XA_
 
 	int v = slew->calculate_value(note.cv);
+
+	AnalogOut::ledDriver.setLEDDimmed(this->ledpin, v);
 
 	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
 	{		
@@ -166,6 +224,8 @@ void AnalogOut::outputCV(int cv)
 
 	int dacval = (cv * 4000UL) / 5000;
 
+	AnalogOut::ledDriver.setLEDDimmed(this->ledpin, dacval);
+
 	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
 	{
 		if (this->spidac_index == 0)
@@ -190,6 +250,8 @@ void AnalogOut::outputSlewedCV(int cv, Slew* slew)
 
 	int slewval = slew->calculate_value(cv);
 	int dacval = (slewval * 240UL) / 5000;
+
+	AnalogOut::ledDriver.setLEDDimmed(this->ledpin, dacval);
 
 	if (pin == ARDCORE_DAC)
 	{
@@ -243,6 +305,8 @@ void IOUtils::setupPins()
 		pinMode(pin, OUTPUT);
 		digitalWrite(pin, LOW);
 	}
+	
+	
 
 	Serial.println("DAC CS pins");
 	for (int pin = 2; pin <= 11; pin++)
@@ -260,7 +324,42 @@ void IOUtils::setupPins()
 	Serial.println("analog read resolution: 12");
 	analogReadResolution(12);
 
+	/* Setup the I2C bus and LED driver */
+	Wire1.begin();
+	AnalogOut::ledDriver.begin(B001000);
+	bool ledstatus = AnalogOut::ledDriver.init();
+	Serial.println("LED driver status: " + String(ledstatus));
 
+	/* Turn then all off */
+	for (int i = 0; i < 16; i++) AnalogOut::ledDriver.setLEDOff(i);
+
+	/* And spin through the LEDs once just to see them */
+	for (int i = 0; i < 16; i++) 
+	{
+		AnalogOut::ledDriver.setLEDOn(i);
+		digitalWrite(22 + i, HIGH);
+
+		digitalWrite(45, LOW);
+		digitalWrite(41, (1 & (16 - i)) ? HIGH : LOW);
+		digitalWrite(42, (2 & (16 - i)) ? HIGH : LOW);
+		digitalWrite(44, (4 & (16 - i)) ? HIGH : LOW);
+		digitalWrite(43, (8 & (16 - i)) ? HIGH : LOW);
+		digitalWrite(45, HIGH);
+
+		delay(10);
+
+		AnalogOut::ledDriver.setLEDOff(i);
+		digitalWrite(22 + i, LOW);
+	}
+
+	/* Then reset clock to 1 */	
+	digitalWrite(45, LOW);
+	digitalWrite(41, LOW);
+	digitalWrite(42, LOW);
+	digitalWrite(44, LOW);
+	digitalWrite(43, LOW);
+	digitalWrite(45, HIGH);
+ 
 	Serial.println("done setting up.\n\n\n\n");
 
 #endif

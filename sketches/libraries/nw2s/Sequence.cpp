@@ -161,6 +161,7 @@ void ProbabilityTriggerSequencer::reset()
 			int rawval = analogRead(modifierpin);
 			int factor = 100;
 		
+			//TODO: encapsulate scaling
 			/* Scale the factor based on 0-100 and 100-2000 */
 			if (rawval < 1700)
 			{

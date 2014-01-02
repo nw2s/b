@@ -24,6 +24,8 @@
 #include "Key.h"
 #include "Slew.h"
 #include "mcp4822.h"
+#include "PCA9685.h"
+#include <Wire.h>
 #include <Arduino.h>
 
 namespace nw2s
@@ -125,6 +127,7 @@ namespace nw2s
 	{
 		ANALOG_OUT_NONE = -2,
 		
+		/* Yes, the hardware didn't quite line up correctly */
 		DUE_SPI_4822_14 = 1000,
 		DUE_SPI_4822_15 = 1001,
 		DUE_SPI_4822_12 = 1002,
@@ -169,6 +172,7 @@ namespace nw2s
 class nw2s::AnalogOut
 {
 	public:
+		static PCA9685 ledDriver;
 		static nw2s::AnalogOut* create(PinAnalogOut pin);
 		void outputNoteCV(ScaleNote note);
 		void outputSlewedNoteCV(ScaleNote note, Slew* slew);
@@ -183,6 +187,7 @@ class nw2s::AnalogOut
 		MCP4822 spidac;
 		int spidac_index;
 		int csvalue;
+		int ledpin;
 #endif
 
 };

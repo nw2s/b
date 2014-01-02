@@ -27,6 +27,7 @@
 #include <IO.h>
 #include <SPI.h>
 #include <SD.h>
+#include <Wire.h>
 
 using namespace nw2s;
 
