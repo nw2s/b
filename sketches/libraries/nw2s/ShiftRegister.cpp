@@ -55,6 +55,13 @@ void RandomLoopingShiftRegister::setCVOut(PinAnalogOut pinout)
 	this->cvout = AnalogOut::create(pinout);
 }
 
+void RandomLoopingShiftRegister::setDelayedCVOut(PinAnalogOut pinout, int ticks)
+{
+	this->delayedcvout = AnalogOut::create(pinout);
+	
+	for (int i = 0; i < ticks; i++) this->cvdelayline.push_back(0);
+}
+
 void RandomLoopingShiftRegister::setTriggerOut(int position, PinDigitalOut pinout)
 {
 	this->trigger[position - 1] = Trigger::create(pinout, 0);
@@ -111,14 +118,25 @@ void RandomLoopingShiftRegister::reset()
 	{
 		if ((this->trigger[i] != NULL) && this->shiftregister[i]) this->trigger[i]->reset();
 		if ((this->gate[i] != NULL) && this->shiftregister[i]) this->gate[i]->reset();
-	}	
+	}
+	
+	/* Delay Lines */
+	if (this->cvdelayline.size() > 0)
+	{
+		for (int i = this->cvdelayline.size() - 1; i > 0; i--)
+		{
+			this->cvdelayline[i] = this->cvdelayline[i - 1];
+		}
+		
+		this->cvdelayline[0] = cv;
+		
+		this->delayedcvout->outputCV(this->cvdelayline.back());
+	}
 }
 
 int RandomLoopingShiftRegister::getCVfromShiftRegister()
 {
 	int val = 0;
-	
-	Serial.print("binary: ");
 	
 	for (int i = 0; i < 12; i++)
 	{
@@ -126,16 +144,12 @@ int RandomLoopingShiftRegister::getCVfromShiftRegister()
 		{
 			val = val << 1;
 			val |= this->shiftregister[i];
-			Serial.print(String(this->shiftregister[i]));
 		}
 		else
 		{
 			val = val << 1;
-			Serial.print("0");
 		}
 	}
-
-	Serial.println(" " + String(val));
 	
 	return val;
 }

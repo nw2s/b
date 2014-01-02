@@ -39,7 +39,7 @@ class nw2s::RandomLoopingShiftRegister : public nw2s::BeatDevice
 		virtual void timer(unsigned long t);
 		virtual void reset();
 		void setCVOut(PinAnalogOut pinout);
-		// void setDelayedCVOutput(PinAnalogOut pinout, int ticks);
+		void setDelayedCVOut(PinAnalogOut pinout, int ticks);
 		// void setKey(Key key);
 		// void setWriteZero(PinDigitalIn pinin);
 		// void setWriteOne(PinDigitalIn pinin);
@@ -65,10 +65,10 @@ class nw2s::RandomLoopingShiftRegister : public nw2s::BeatDevice
 		PinDigitalIn writezero;
 		AnalogOut* cvout;
 		AnalogOut* noteout;
-		AnalogOut* delatedcvout;
+		AnalogOut* delayedcvout;
 		AnalogOut* delayednoteout;
 		// int notedelay;
-		// int cvdelay;
+		std::vector<int> cvdelayline;
 		// Key key;
 		Gate* gate[8];
 		Trigger* trigger[8];

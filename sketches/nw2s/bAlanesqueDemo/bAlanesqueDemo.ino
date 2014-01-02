@@ -45,6 +45,7 @@ void setup()
 	RandomLoopingShiftRegister* shiftregister = RandomLoopingShiftRegister::create(16, DUE_IN_A01, DIV_QUARTER);
 	
 	shiftregister->setCVOut(DUE_SPI_4822_00);
+	shiftregister->setDelayedCVOut(DUE_SPI_4822_01, 2);
 	
 	shiftregister->setTriggerOut(1, DUE_OUT_D00);
 	shiftregister->setTriggerOut(2, DUE_OUT_D01);
