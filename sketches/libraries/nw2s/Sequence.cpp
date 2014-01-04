@@ -130,6 +130,8 @@ void TriggerSequencer::reset()
 ProbabilityTriggerSequencer::ProbabilityTriggerSequencer(vector<int>* triggers, int clockdivision, PinDigitalOut pin) : nw2s::TriggerSequencer(triggers, clockdivision, pin)
 {
 	this->modifierpin = DUE_IN_A_NONE;
+	this->sequence_index = 0;
+	this->resetnext = false;
 }
 
 void ProbabilityTriggerSequencer::setProbabilityModifier(PinAnalogIn pin)
@@ -137,8 +139,8 @@ void ProbabilityTriggerSequencer::setProbabilityModifier(PinAnalogIn pin)
 	this->modifierpin = pin;
 }
 
-void ProbabilityTriggerSequencer::reset()
-{	
+void ProbabilityTriggerSequencer::calculate()
+{
 	this->sequence_index = ++(this->sequence_index) % this->triggers->size();
 
 	int currentvalue = (*this->triggers)[this->sequence_index];
@@ -148,13 +150,8 @@ void ProbabilityTriggerSequencer::reset()
 		int rnd = Entropy::getValue(100);
 
 		if (this->modifierpin == DUE_IN_A_NONE)
-		{		
-			Serial.println("rand: " + String(rnd) + " val: " + String(currentvalue) + " " + String(currentvalue >= rnd));
-		
-			if (currentvalue >= rnd)
-			{
-				this->trigger->reset();
-			}	
+		{
+			this->resetnext = currentvalue >= rnd;		
 		}
 		else
 		{
@@ -171,13 +168,15 @@ void ProbabilityTriggerSequencer::reset()
 			{
 				factor = 100 + ((rawval * 1900UL) / 1700);
 			}
-	
-			if (((currentvalue * factor) / 100) >= rnd)
-			{
-				this->trigger->reset();
-			}	
+			
+			this->resetnext = ((currentvalue * factor) / 100) >= rnd;
 		}
-	}
+	}	
+}
+
+void ProbabilityTriggerSequencer::reset()
+{	
+	if (this->resetnext) this->trigger->reset();
 }
 
 

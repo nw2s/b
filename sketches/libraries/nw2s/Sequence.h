@@ -92,9 +92,11 @@ class nw2s::ProbabilityTriggerSequencer : public nw2s::TriggerSequencer
 	public:
 		static ProbabilityTriggerSequencer* create(std::vector<int>* triggers, int clockdivision, PinDigitalOut output);
 		virtual void reset();
+		virtual void calculate();
 		void setProbabilityModifier(PinAnalogIn pin);
 	
 	private:
+		bool resetnext;
 		PinAnalogIn modifierpin;
 		ProbabilityTriggerSequencer(std::vector<int>* triggers, int clockdivision, PinDigitalOut output);
 };
