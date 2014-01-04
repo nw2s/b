@@ -197,7 +197,7 @@ class nw2s::IOUtils
 {
 	public:
 		static void* clockinstance;
-		
+		static bool enableLED;
 		static void displayBeat(int beat, void* clockinstance);
 		static void setupPins();
 };

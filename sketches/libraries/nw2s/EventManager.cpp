@@ -43,18 +43,17 @@ void EventManager::loop()
 	unsigned long current_time = millis();
 	
 	if (t != current_time)
-	{
+	{ 		
 		t = current_time;
 				
 		for (int i = 0; i < EventManager::timedevices.size(); i++)
 		{
-			TimeBasedDevice *device = EventManager::timedevices[i];
 			EventManager::timedevices[i]->timer(EventManager::t);	
 		}
 	}
 }
 
-void EventManager::registerdevice(TimeBasedDevice *device)
+void EventManager::registerDevice(TimeBasedDevice *device)
 {
 	timedevices.push_back(device);
 }

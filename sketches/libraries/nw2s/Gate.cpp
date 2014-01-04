@@ -43,7 +43,6 @@ void Gate::timer(unsigned long t)
 {
 	if ((this->state == false) && (this->last_clock_t == 0))
 	{
-		//Serial.print("\ngate high");
 		this->state = true;
 		digitalWrite(this->pin, HIGH);
 		
@@ -53,8 +52,6 @@ void Gate::timer(unsigned long t)
 	{
 		this->state = false;
 		digitalWrite(this->pin, LOW);
-		Serial.print("\n" + String(this->last_clock_t));
-		Serial.print("\t" + String(t));
 	}	
 }
 

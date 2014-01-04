@@ -42,7 +42,7 @@ class nw2s::EventManager
 {
 	public:
 		static void initialize();
- 		static void registerdevice(TimeBasedDevice* device);
+ 		static void registerDevice(TimeBasedDevice* device);
 		static void loop();
 	
 	private:

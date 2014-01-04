@@ -148,7 +148,7 @@ void AnalogOut::outputNoteCV(ScaleNote note)
 
 	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
 	{
-		AnalogOut::ledDriver.setLEDDimmed(this->ledpin, note.cv);
+		if (IOUtils::enableLED) AnalogOut::ledDriver.setLEDDimmed(this->ledpin, note.cv);
 						
 		if (this->spidac_index == 0)
 		{
@@ -184,7 +184,7 @@ void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew)
 
 	int v = slew->calculate_value(note.cv);
 
-	AnalogOut::ledDriver.setLEDDimmed(this->ledpin, v);
+	if (IOUtils::enableLED) AnalogOut::ledDriver.setLEDDimmed(this->ledpin, v);
 
 	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
 	{		
@@ -224,7 +224,7 @@ void AnalogOut::outputCV(int cv)
 
 	int dacval = (cv * 4000UL) / 5000;
 
-	AnalogOut::ledDriver.setLEDDimmed(this->ledpin, dacval);
+	if (IOUtils::enableLED) AnalogOut::ledDriver.setLEDDimmed(this->ledpin, dacval);
 
 	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
 	{
@@ -251,8 +251,6 @@ void AnalogOut::outputSlewedCV(int cv, Slew* slew)
 	int slewval = slew->calculate_value(cv);
 	int dacval = (slewval * 240UL) / 5000;
 
-	AnalogOut::ledDriver.setLEDDimmed(this->ledpin, dacval);
-
 	if (pin == ARDCORE_DAC)
 	{
 		byte v = dacval;
@@ -267,6 +265,8 @@ void AnalogOut::outputSlewedCV(int cv, Slew* slew)
 
 	int slewval = slew->calculate_value(cv);
 	int dacval = (slewval * 4000UL) / 5000;
+
+	if (IOUtils::enableLED) AnalogOut::ledDriver.setLEDDimmed(this->ledpin, dacval);
 
 	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
 	{
@@ -327,8 +327,8 @@ void IOUtils::setupPins()
 	/* Setup the I2C bus and LED driver */
 	Wire1.begin();
 	AnalogOut::ledDriver.begin(B001000);
-	bool ledstatus = AnalogOut::ledDriver.init();
-	Serial.println("LED driver status: " + String(ledstatus));
+	IOUtils::enableLED = AnalogOut::ledDriver.init();
+	Serial.println("LED driver status: " + String(IOUtils::enableLED));
 
 	/* Turn then all off */
 	for (int i = 0; i < 16; i++) AnalogOut::ledDriver.setLEDOff(i);
@@ -336,7 +336,7 @@ void IOUtils::setupPins()
 	/* And spin through the LEDs once just to see them */
 	for (int i = 0; i < 16; i++) 
 	{
-		AnalogOut::ledDriver.setLEDOn(i);
+		// AnalogOut::ledDriver.setLEDOn(i);
 		digitalWrite(22 + i, HIGH);
 
 		digitalWrite(45, LOW);
@@ -348,7 +348,7 @@ void IOUtils::setupPins()
 
 		delay(10);
 
-		AnalogOut::ledDriver.setLEDOff(i);
+		// AnalogOut::ledDriver.setLEDOff(i);
 		digitalWrite(22 + i, LOW);
 	}
 
@@ -366,6 +366,7 @@ void IOUtils::setupPins()
 }
 
 void* IOUtils::clockinstance = NULL;
+bool IOUtils::enableLED = false;
 
 void IOUtils::displayBeat(int beat, void* clockinstance)
 {

@@ -234,6 +234,8 @@ class nw2s::Key
 		ScaleNote getNote(int octave, int degree);
 		ScaleNote getRandomNote();
 		ScaleNote getRandomNote(int min, int max);
+		ScaleNote quantizeInput(int cv);
+		ScaleNote quantizeOutput(int cv);
 
 	private:
 		ScaleType scaletype;			

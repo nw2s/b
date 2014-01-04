@@ -40,31 +40,44 @@ void setup()
 	EventManager::initialize();
 
 	/* Setup a variable clock */
-	Clock* vclock = VariableClock::create(60, 240, DUE_IN_A00, 16);
+	Clock* vclock = VariableClock::create(20, 240, DUE_IN_A00, 16);
 
-	RandomLoopingShiftRegister* shiftregister = RandomLoopingShiftRegister::create(16, DUE_IN_A01, DIV_QUARTER);
+	RandomLoopingShiftRegister* shiftregister = RandomLoopingShiftRegister::create(16, DUE_IN_A01, DIV_SIXTEENTH);
 	
 	shiftregister->setCVOut(DUE_SPI_4822_00);
-	shiftregister->setDelayedCVOut(DUE_SPI_4822_01, 2);
-	
-	shiftregister->setTriggerOut(1, DUE_OUT_D00);
-	shiftregister->setTriggerOut(2, DUE_OUT_D01);
-	shiftregister->setTriggerOut(3, DUE_OUT_D02);
-	shiftregister->setTriggerOut(4, DUE_OUT_D03);
-	shiftregister->setTriggerOut(5, DUE_OUT_D04);
-	shiftregister->setTriggerOut(6, DUE_OUT_D05);
-	shiftregister->setTriggerOut(7, DUE_OUT_D06);
-	shiftregister->setTriggerOut(8, DUE_OUT_D07);
+	shiftregister->setDelayedCVOut(DUE_SPI_4822_08, 2);
 
-	shiftregister->setGateOut(1, DUE_OUT_D08, 250);
-	shiftregister->setGateOut(2, DUE_OUT_D09, 250);
-	shiftregister->setGateOut(3, DUE_OUT_D10, 250);
-	shiftregister->setGateOut(4, DUE_OUT_D11, 250);
-
+	shiftregister->setKey(C, MAJOR);
+	shiftregister->setNoteOut(DUE_SPI_4822_01);
+	shiftregister->setDelayedNoteOut(DUE_SPI_4822_09, 1);
 	
-	vclock->registerdevice(shiftregister);
+	shiftregister->setGateOut(1, DUE_OUT_D00, 250);
+	shiftregister->setGateOut(2, DUE_OUT_D08, 250);
+	shiftregister->setGateOut(3, DUE_OUT_D01, 250);
+	shiftregister->setGateOut(4, DUE_OUT_D09, 250);
+	shiftregister->setGateOut(5, DUE_OUT_D02, 250);
+	shiftregister->setGateOut(6, DUE_OUT_D10, 250);
+	shiftregister->setGateOut(7, DUE_OUT_D03, 250);
+	shiftregister->setGateOut(8, DUE_OUT_D11, 250);
 	
-	EventManager::registerdevice(vclock);
+	shiftregister->setTriggerOut(1, DUE_OUT_D04);
+	shiftregister->setTriggerOut(2, DUE_OUT_D12);
+	shiftregister->setTriggerOut(3, DUE_OUT_D05);
+	shiftregister->setTriggerOut(4, DUE_OUT_D13);
+	
+	shiftregister->setLogicalOrTrigger(DUE_OUT_D06, 1, 2, 4, 8);
+	shiftregister->setLogicalAndTrigger(DUE_OUT_D14, 1, 2, 4, 8);
+	shiftregister->setLogicalOrGate(DUE_OUT_D07, 500, 2, 7);
+	shiftregister->setLogicalAndGate(DUE_OUT_D15, 500, 5, 8);
+	
+	shiftregister->setSequencerInputs(DUE_IN_A02, DUE_IN_A03, DUE_IN_A04, DUE_IN_A05, DUE_IN_A08, DUE_IN_A09, DUE_IN_A10, DUE_IN_A11);
+	shiftregister->setSequencerScaleInput(DUE_IN_A06);
+	shiftregister->setSequencerCVOut(DUE_SPI_4822_07);
+	shiftregister->setSequencerNoteOut(DUE_SPI_4822_15);
+	
+	vclock->registerDevice(shiftregister);
+	
+	EventManager::registerDevice(vclock);
 }
 
 void loop() 

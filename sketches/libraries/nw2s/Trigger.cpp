@@ -46,7 +46,7 @@ void Trigger::reset()
 	/* Reset turns the trigger on */
 	this->t_start = 0;
 	this->state = HIGH;
-	digitalWrite(this->output, HIGH);
+	digitalWrite(this->output, HIGH);	
 }
 
 void Trigger::timer(unsigned long t)

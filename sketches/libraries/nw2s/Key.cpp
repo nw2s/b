@@ -131,4 +131,27 @@ void Key::initScaleNotes(int notesperoctave, int noteindexes[])
 	}
 }
 
+ScaleNote Key::quantizeOutput(int cv)
+{
+	/* Output quantizing is done when we're going from 0-4096 */
+	for (int i = this->notes.size() - 1; i >= 0; i--)
+	{
+		//TODO: giving it a few bits of slop - good idea?
+		if (cv >= this->notes[i].cv - 10) return this->notes[i];
+	}
+
+	return this->notes[0];
+}
+
+ScaleNote Key::quantizeInput(int cv)
+{
+	/* Output quantizing is done when we're going from 0-4096 */
+	for (int i = this->notes.size() - 1; i >= 0; i--)
+	{
+		//TODO: giving it a few bits of slop - good idea?
+		if (cv >= this->notes[i].cvin - 10) return this->notes[i];
+	}
+
+	return this->notes[0];
+}
 

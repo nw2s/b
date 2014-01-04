@@ -52,9 +52,9 @@ namespace nw2s
 	class Clock;
 	class FixedClock;
 	class VariableClock;
-	class SlaveClock;
 	class RandomTempoClock;
-	class RandomDropoutClock;
+	// class SlaveClock;
+	// class RandomDropoutClock;
 }
 
 class nw2s::BeatDevice : public TimeBasedDevice
@@ -62,26 +62,39 @@ class nw2s::BeatDevice : public TimeBasedDevice
 	public:
 		virtual int getclockdivision();
 		virtual void reset() = 0;
+		virtual void calculate();
+		void setNextTime(unsigned long t);
+		unsigned long getNextTime();
 		
 	protected:
 		int clock_division;
 		BeatDevice();
+		
+	private:
+		unsigned long next_time;
 };
 
 class nw2s::Clock : public nw2s::TimeBasedDevice
 {
 	public:
-		virtual void timer(unsigned long t) = 0;
- 		void registerdevice(BeatDevice* device);
+		virtual void timer(unsigned long t);
+ 		void registerDevice(BeatDevice* device);
 		void setSwing(int swingdivision, int swingpercentage);
 		
 	protected:
+		volatile int period;
+		volatile unsigned long last_clock_t;
+		volatile unsigned long next_clock_t;
 		unsigned char beats_per_measure;
 		vector<BeatDevice*> devices;
 		int beat;
 		int swingpercentage;
 		int swingdivision;
+
 		Clock();
+		
+	private:
+		virtual void updateTempo(unsigned long t);
 };
 
 class nw2s::FixedClock : public Clock
@@ -100,36 +113,14 @@ class nw2s::VariableClock : public Clock
 {
 	public:
 		static VariableClock* create(int mintempo, int maxtempo, PinAnalogIn input, unsigned char beats_per_measure);
-		virtual void timer(unsigned long t);
 
 	private:
 		int mintempo;
 		int maxtempo;
 		int input;
-		volatile int period;
-		volatile unsigned long last_clock_t;
-		volatile unsigned long next_clock_t;
 
 		VariableClock(int mintempo, int maxtempo, PinAnalogIn input, unsigned char beats_per_measure);
-		void update_tempo(unsigned long t);
-};
-
-class nw2s::SlaveClock : public Clock
-{
-	public:
-		static SlaveClock* create(PinDigitalIn input, unsigned char beats_per_measure);
-		virtual void timer(unsigned long t);
-	
-	private:
-		static volatile bool trigger;
-		static volatile unsigned long t;
-		static volatile int period;
-		static PinDigitalIn input;
-		static volatile unsigned long last_clock_t;
-		static volatile unsigned long next_clock_t;
-
-		SlaveClock(PinDigitalIn input, unsigned char beats_per_measure);
-		static void isr();
+		virtual void updateTempo(unsigned long t);
 };
 
 class nw2s::RandomTempoClock : public Clock
@@ -141,26 +132,41 @@ class nw2s::RandomTempoClock : public Clock
 	private:
 		int mintempo;
 		int maxtempo;
-		volatile int period;
-		volatile unsigned long last_clock_t;
-		volatile unsigned long next_clock_t;
 
 		RandomTempoClock(int mintempo, int maxtempo, unsigned char beats_per_measure);
-		void update_tempo(unsigned long t);
+		virtual void updateTempo(unsigned long t);
 };
 
 
-class nw2s::RandomDropoutClock : public FixedClock
-{
-	public:
-		static RandomDropoutClock* create(int tempo, unsigned char beats_per_measure, int chaos);
-		virtual void timer(unsigned long t);
-
-	private:
-		int chaos;
-		
-		RandomDropoutClock(int tempo, unsigned char beats_per_measure, int chaos);		
-};
+// class nw2s::RandomDropoutClock : public FixedClock
+// {
+// 	public:
+// 		static RandomDropoutClock* create(int tempo, unsigned char beats_per_measure, int chaos);
+// 		virtual void timer(unsigned long t);
+// 
+// 	private:
+// 		int chaos;
+// 		
+// 		RandomDropoutClock(int tempo, unsigned char beats_per_measure, int chaos);		
+// };
+//
+// class nw2s::SlaveClock : public Clock
+// {
+// 	public:
+// 		static SlaveClock* create(PinDigitalIn input, unsigned char beats_per_measure);
+// 		virtual void timer(unsigned long t);
+// 	
+// 	private:
+// 		static volatile bool trigger;
+// 		static volatile unsigned long t;
+// 		static volatile int period;
+// 		static PinDigitalIn input;
+// 		static volatile unsigned long last_clock_t;
+// 		static volatile unsigned long next_clock_t;
+// 
+// 		SlaveClock(PinDigitalIn input, unsigned char beats_per_measure);
+// 		static void isr();
+// };
 
 #endif
 

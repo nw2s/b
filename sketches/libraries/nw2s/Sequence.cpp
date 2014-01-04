@@ -172,8 +172,6 @@ void ProbabilityTriggerSequencer::reset()
 				factor = 100 + ((rawval * 1900UL) / 1700);
 			}
 	
-			//Serial.println("raw: " + String(rawval) + " rand: " + String(rnd) + " val: " + String(currentvalue) + " factor: " + String(factor) + " val2: " + String((currentvalue * factor) / 100));
-
 			if (((currentvalue * factor) / 100) >= rnd)
 			{
 				this->trigger->reset();
