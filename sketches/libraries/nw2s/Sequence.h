@@ -141,7 +141,7 @@ class nw2s::RandomNoteSequencer : public nw2s::Sequencer
 class nw2s::CVNoteSequencer : public nw2s::Sequencer
 {
 	public:
-		static CVNoteSequencer* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input);
+		static CVNoteSequencer* create(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input);
 		virtual void timer(unsigned long t);
 		virtual void reset();
 	
@@ -153,7 +153,7 @@ class nw2s::CVNoteSequencer : public nw2s::Sequencer
 		PinAnalogIn cv_in;
 		unsigned long last_note_t;
 		
-		CVNoteSequencer(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input);
+		CVNoteSequencer(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input);
 };
 
 class  nw2s::CVSequencer : public Sequencer

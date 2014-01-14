@@ -56,7 +56,7 @@ RandomNoteSequencer* RandomNoteSequencer::create(NoteName key, ScaleType scale, 
 	return new RandomNoteSequencer(key, scale, clockdivision, output);
 }
 
-CVNoteSequencer* CVNoteSequencer::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input)
+CVNoteSequencer* CVNoteSequencer::create(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input)
 {
 	return new CVNoteSequencer(notes, key, scale, output, input);
 }
@@ -251,7 +251,7 @@ void RandomNoteSequencer::reset()
 	if (this->envelope != NULL) this->envelope->reset();
 }
 
-CVNoteSequencer::CVNoteSequencer(vector<SequenceNote>* notes, NoteName key, ScaleType scale, PinAnalogOut pin, PinAnalogIn input)
+CVNoteSequencer::CVNoteSequencer(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut pin, PinAnalogIn input)
 {	
 	this->key = new Key(scale, key);
 	this->output = output;
@@ -281,10 +281,12 @@ void CVNoteSequencer::timer(unsigned long t)
 
 	if ((this->slew == NULL) && (t % 50 == 0)) 
 	{
+		//TODO: Optimize even more
 		/* Save some cycles, only do this every 50ms */
 	
 		/* Read the input and calculate the position in the sequence */
-		unsigned long noteindex = (((analogRead(cv_in) * 1000UL) / 1023UL) * this->notes->size()) / 1000UL;
+		//TODO: This is buggy - fix!
+		unsigned long noteindex = (((analogRead(cv_in) * 1000UL) / 3700UL) * this->notes->size()) / 1000UL;
 	
 		/* If the note is still the same, just be done */
 		if (this->sequence_index == noteindex) return;
@@ -304,7 +306,7 @@ void CVNoteSequencer::timer(unsigned long t)
 	else if (this->slew != NULL)
 	{		
 		/* Read the input and calculate the position in the sequence */
-		int noteindex = (((analogRead(cv_in) * 1000UL) / 1023UL) * this->notes->size()) / 1000UL;
+		int noteindex = (((analogRead(cv_in) * 1000UL) / 3600UL) * this->notes->size()) / 1000UL;
 	
 		if (this->sequence_index != noteindex)
 		{
