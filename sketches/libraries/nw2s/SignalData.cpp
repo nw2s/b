@@ -71,6 +71,18 @@ SignalData* SignalData::fromSDFile(char *filepath)
 	} 
 }
 
+SignalData* SignalData::fromArray(unsigned short int* source, long size)
+{
+ 	unsigned short int *data = new unsigned short int[size];
+
+	for (int i = 0; i < size; i++)
+	{
+		data[i] = source[i];
+	}
+	
+	return new SignalData(data, size);
+}
+
 SignalData::SignalData(short unsigned int *data, long size)
 {
 	this->data = data;

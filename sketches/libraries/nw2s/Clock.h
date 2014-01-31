@@ -101,7 +101,6 @@ class nw2s::FixedClock : public Clock
 {
 	public:
 		static FixedClock* create(int tempo, unsigned char beats_per_measure);
-		virtual void timer(unsigned long t);
 		
 	protected:
 		int period;

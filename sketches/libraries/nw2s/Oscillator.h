@@ -24,14 +24,17 @@
 #include "IO.h"
 #include "AudioDevice.h"
 #include "EventManager.h"
+#include "SignalData.h"
 
 namespace nw2s
 {
 	class Oscillator;
 	class VCO;
 	class Saw;
+	class Sin;
 	class DiscreteNoise;
 	class AliasingFilter;
+	class VCSamplingFrequencyOscillator;
 }
 
 class nw2s::Oscillator : public AudioDevice 
@@ -44,6 +47,7 @@ class nw2s::Oscillator : public AudioDevice
 		int channel;
 		int dac;
 		
+		void timer_start();
 		virtual void timer_handler();
 		virtual int getSample() = 0;
 		virtual void nextSample() = 0;
@@ -51,29 +55,41 @@ class nw2s::Oscillator : public AudioDevice
 		Oscillator(PinAudioOut pinout);
 };
 
-class nw2s::VCO : public Oscillator, public TimeBasedDevice
+class nw2s::VCSamplingFrequencyOscillator : public Oscillator, public TimeBasedDevice
 {
 	public:
+		static VCSamplingFrequencyOscillator* create(PinAudioOut pinout, PinAnalogIn pinin);
 		virtual void timer(unsigned long t);
-			
+
 	protected:
-		int frequency;  // actually it's frequency * 100
-		int samplespercycle;
-		int phaseindex;
-
 		PinAnalogIn pinin;		
-
-		VCO(PinAudioOut pinout, PinAnalogIn pinin);
+		int phaseindex;
+		int decimationlevel;
+		int nextdecimationlevel;
+		int interruptrate;
+		int nextinterruptrate;
+		int* source;
+		
 		virtual int getSample();
 		virtual void nextSample();
-		virtual int nextVCOSample() = 0;
+		SignalData* decimate(unsigned int* source, int size, int sourcescale, int targetsize);
 		
+		VCSamplingFrequencyOscillator(PinAudioOut pinout, PinAnalogIn pinin);
+
 	private:
 		int sample;
-		
+		SignalData* wave;	// 600 Samples
+		SignalData* wave2;	// 300 Samples
+		SignalData* wave3;	// 150 Samples
+		SignalData* wave4;	// 75 Samples
+		SignalData* wave5;	// 25 Samples
+		SignalData* wave6;	// 15 Samples
+		SignalData* wave7;	// 5 Samples
+
 };
 
-class nw2s::Saw : public VCO
+
+class nw2s::Saw : public VCSamplingFrequencyOscillator
 {
 	public:
 		static Saw* create(PinAudioOut pinout, PinAnalogIn pinin);
@@ -81,6 +97,29 @@ class nw2s::Saw : public VCO
 	private:
 		Saw(PinAudioOut pinout, PinAnalogIn pinin);
 		virtual int nextVCOSample();
+};
+
+
+class nw2s::VCO : public Oscillator, public TimeBasedDevice
+{
+        public:
+                virtual void timer(unsigned long t);
+                        
+        protected:
+                int frequency;  // actually it's frequency * 100
+                int samplespercycle;
+                int phaseindex;
+
+                PinAnalogIn pinin;                
+
+                VCO(PinAudioOut pinout, PinAnalogIn pinin);
+                virtual int getSample();
+                virtual void nextSample();
+                virtual int nextVCOSample() = 0;
+                
+        private:
+                int sample;
+                
 };
 
 class nw2s::DiscreteNoise : public VCO
@@ -94,6 +133,16 @@ class nw2s::DiscreteNoise : public VCO
 		DiscreteNoise(PinAudioOut pinout, PinAnalogIn pinin);
 		virtual int nextVCOSample();
 };
+
+// class nw2s::Sin : public VCO
+// {
+// 	public:
+// 		static Sin* create(PinAudioOut pinout, PinAnalogIn pinin);
+// 	
+// 	private:			
+// 		Sin(PinAudioOut pinout, PinAnalogIn pinin);
+// 		virtual int nextVCOSample();
+// };
 
 
 #endif

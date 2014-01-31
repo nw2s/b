@@ -63,11 +63,11 @@ void setup()
 	kicksequencer->setProbabilityModifier(DUE_IN_A02);
 	hatsequencer->setProbabilityModifier(DUE_IN_A03);	
 	
-	vclock->registerdevice(snaresequencer);
-	vclock->registerdevice(kicksequencer);
-	vclock->registerdevice(hatsequencer);
+	vclock->registerDevice(snaresequencer);
+	vclock->registerDevice(kicksequencer);
+	vclock->registerDevice(hatsequencer);
 	
-	EventManager::registerdevice(vclock);
+	EventManager::registerDevice(vclock);
 }
 
 void loop() 

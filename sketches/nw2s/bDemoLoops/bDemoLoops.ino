@@ -25,6 +25,7 @@
 #include <SignalData.h>
 #include <SD.h>
 #include <Loop.h>
+#include <Wire.h>
 
 using namespace nw2s;
 
@@ -47,9 +48,9 @@ void setup()
 	SignalData* drumloop = SignalData::fromSDFile("loops/loop01.raw");
 	ClockedLooper* looper1 = ClockedLooper::create(DUE_DAC1, drumloop, 2, DIV_QUARTER);
 	
-	fixedclock->registerdevice(looper1);
+	fixedclock->registerDevice(looper1);
 	
-	EventManager::registerdevice(fixedclock);
+	EventManager::registerDevice(fixedclock);
 }
 
 void loop() 

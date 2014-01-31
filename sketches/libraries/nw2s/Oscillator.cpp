@@ -21,6 +21,7 @@
 #include "Oscillator.h"
 #include "Key.h"
 #include "Entropy.h"
+#include "SignalData.h"
 
 
 
@@ -29,6 +30,11 @@ using namespace nw2s;
 Saw* Saw::create(PinAudioOut pinout, PinAnalogIn pinin)
 {
 	return new Saw(pinout, pinin);
+}
+
+VCSamplingFrequencyOscillator* VCSamplingFrequencyOscillator::create(PinAudioOut pinout, PinAnalogIn pinin)
+{
+	return new VCSamplingFrequencyOscillator(pinout, pinin);
 }
 
 DiscreteNoise* DiscreteNoise::create(PinAudioOut pinout, PinAnalogIn pinin)
@@ -40,7 +46,10 @@ DiscreteNoise* DiscreteNoise::create(PinAudioOut pinout, PinAnalogIn pinin)
 Oscillator::Oscillator(PinAudioOut pinout)
 {
 	this->pinout = pinout;
+}
 
+void Oscillator::timer_start()
+{
 	/* The event handler needs static references to these devices */
 	if (pinout == DUE_DAC0) AudioDevice::device0 = this;
 	if (pinout == DUE_DAC1) AudioDevice::device1 = this;
@@ -77,7 +86,171 @@ void Oscillator::timer_handler()
  	dacc_set_channel_selection(DACC_INTERFACE, this->dac);
 	dacc_write_conversion_data(DACC_INTERFACE, sample);
 
-	this->nextSample();	
+	this->nextSample();		
+}
+
+VCSamplingFrequencyOscillator::VCSamplingFrequencyOscillator(PinAudioOut pinout, PinAnalogIn pinin) : Oscillator(pinout)
+{
+	this->pinin = pinin;
+	this->sample = 2000;
+	this->phaseindex = 0;
+	this->decimationlevel = 0;
+	this->interruptrate = 1050;
+	this->nextinterruptrate = 1050;
+		
+	short unsigned int w[600];	
+	unsigned int source[600];
+	
+	/* Initialize 1:1 array */
+	for (int i = 0; i < 600; i++)
+	{
+		w[i] = SIGNAL_VOX[i] / 100;
+		source[i] = SIGNAL_VOX[i];
+	}
+	
+	this->wave = SignalData::fromArray(w, 600);
+	this->wave2 = decimate(source, 600, 100, 300); 
+	this->wave3 = decimate(source, 600, 100, 150);
+	this->wave4 = decimate(source, 600, 100, 75);
+	this->wave5 = decimate(source, 600, 100, 25);
+	this->wave6 = decimate(source, 600, 100, 15);	
+	this->wave7 = decimate(source, 600, 100, 5);
+		
+	this->timer_start();
+}
+
+SignalData* VCSamplingFrequencyOscillator::decimate(unsigned int* source, int size, int sourcescale, int targetsize)
+{
+	/* NOTE: targetsize must be a factor of size!!!! */
+	int factor = size / targetsize;
+	unsigned short int destination[targetsize];
+	
+	for (int i = 0; i < targetsize; i++)
+	{
+		long accumulator = 0;
+		int j = i * factor;
+		
+		for (int offset = 0; offset < factor; offset++)
+		{
+			accumulator += source[j + offset];
+		}
+		
+		destination[i] = accumulator / (factor * sourcescale);
+	}
+	
+	return SignalData::fromArray(destination, targetsize);
+}
+
+
+int VCSamplingFrequencyOscillator::getSample()
+{
+	return this->sample;
+}
+
+void VCSamplingFrequencyOscillator::nextSample()
+{
+	if ((this->phaseindex == 0) && (this->nextinterruptrate != this->interruptrate))
+	{
+		/* our interrupt rate changed and we're at a zero point, so update */
+		this->interruptrate = this->nextinterruptrate;
+		this->decimationlevel = this->nextdecimationlevel;
+		
+	  	TC_SetRC(TC1, this->channel, this->nextinterruptrate); // sets 10Khz interrupt rate	
+	}
+	
+	if (this->decimationlevel == 0)
+	{
+		this->phaseindex = (this->phaseindex + 1) % 600;
+		this->sample = this->wave->getSample(this->phaseindex);
+	}
+	else if (this->decimationlevel == 1)
+	{
+		this->phaseindex = (this->phaseindex + 1) % 300;
+		this->sample = this->wave2->getSample(this->phaseindex);
+	}
+	else if (this->decimationlevel == 2)
+	{
+		this->phaseindex = (this->phaseindex + 1) % 150;
+		this->sample = this->wave3->getSample(this->phaseindex);
+	}
+	else if (this->decimationlevel == 3)
+	{
+		this->phaseindex = (this->phaseindex + 1) % 75;
+		this->sample = this->wave4->getSample(this->phaseindex);
+	}	
+	else if (this->decimationlevel == 4)
+	{
+		this->phaseindex = (this->phaseindex + 1) % 25;
+		this->sample = this->wave5->getSample(this->phaseindex);
+	}	
+	else if (this->decimationlevel == 5)
+	{
+		this->phaseindex = (this->phaseindex + 1) % 15;
+		this->sample = this->wave6->getSample(this->phaseindex);
+	}	
+	else if (this->decimationlevel == 6)
+	{
+		this->phaseindex = (this->phaseindex + 1) % 5;
+		this->sample = this->wave7->getSample(this->phaseindex);
+	}	
+}
+
+void VCSamplingFrequencyOscillator::timer(unsigned long t)
+{
+	if (t % 5 == 0)
+	{
+		/* Read the analog in and get a frequency */
+		// int value = analogRead(pinin);
+		// value = (value < 0) ? 0 : (value > 4000) ? 4000 : value;
+		// 	
+		// value = value >> 2;
+		// value = value << 2;
+	
+		/* Testing a sweep */
+		int value = (t / 10) % 4000; 
+	
+		/* Convert the input value to a frequency (x100) via lookup */
+		int frequency100 = CVFREQUENCY[value];
+	
+		/* We want to use progressively decimated waves as the frequency goes up */
+		if (frequency100 < 3300)
+		{
+			this->nextdecimationlevel = 0;
+			this->nextinterruptrate = 10500000 / (frequency100 * 6);
+		}
+		else if (frequency100 < 6600)
+		{
+			this->nextdecimationlevel = 1;
+			this->nextinterruptrate = 10500000 / (frequency100 * 3);
+		}
+		else if (frequency100 < 20000)
+		{
+			this->nextdecimationlevel = 2;
+			this->nextinterruptrate = 10500000 / ((frequency100 / 10) * 15);
+		}
+		else if (frequency100 < 53300)
+		{
+			this->nextdecimationlevel = 3;
+			this->nextinterruptrate = 10500000 / ((frequency100 / 100) * 75);
+		}
+		else if (frequency100 < 160000)
+		{
+			this->nextdecimationlevel = 4;
+			this->nextinterruptrate = 10500000 / (frequency100 / 4);
+		}
+		else if (frequency100 < 266600)
+		{
+			this->nextdecimationlevel = 5;
+			this->nextinterruptrate = 10500000 / ((frequency100 / 100) * 15);
+		}
+		else
+		{
+			this->nextdecimationlevel = 6;
+			this->nextinterruptrate = 10500000 / (frequency100 / 20);
+		}
+				
+		//Serial.println(String(value) + " " + String(frequency100 / 100) + " " + String(this->nextinterruptrate));
+	}
 }
 
 VCO::VCO(PinAudioOut pinout, PinAnalogIn pinin) : Oscillator(pinout)
@@ -121,16 +294,24 @@ int VCO::getSample()
 }
 
 
-Saw::Saw(PinAudioOut pinout, PinAnalogIn pinin) : VCO(pinout, pinin)
+Saw::Saw(PinAudioOut pinout, PinAnalogIn pinin) : VCSamplingFrequencyOscillator(pinout, pinin) 
 {
 }
 
-int Saw::nextVCOSample()
-{
-	/* Saw is a simple osc. Current value is the same as the phase index normalized to output scale. */
-
-	return (400000 / (this->samplespercycle * 100)) * this->phaseindex;
-}
+// Sin::Sin(PinAudioOut pinout, PinAnalogIn pinin) : VCO(pinout, pinin)
+// {
+// }
+// 
+// int Sin::nextVCOSample()
+// {
+// 	if (this->phaseindex == 0)
+// 	{
+// 		/* Get a new random value */
+// 		this->currentvalue = Entropy::getValue(0, 4000);
+// 	}
+// 		
+// 	return this->currentvalue;
+// }
 
 DiscreteNoise::DiscreteNoise(PinAudioOut pinout, PinAnalogIn pinin) : VCO(pinout, pinin)
 {

@@ -49,11 +49,14 @@ void setup()
 
 	EventManager::initialize();
 
-	VCO* saw1 = Saw::create(DUE_DAC0, DUE_IN_A00);
-	VCO* saw2 = Saw::create(DUE_DAC1, DUE_IN_A01);
+	// VCO* saw1 = Saw::create(DUE_DAC0, DUE_IN_A00);
+	// VCO* saw2 = Saw::create(DUE_DAC1, DUE_IN_A01);
+
+	//VCSamplingFrequencyOscillator* osc1 = VCSamplingFrequencyOscillator::create(DUE_DAC0, DUE_IN_A00);
+	VCSamplingFrequencyOscillator* osc2 = VCSamplingFrequencyOscillator::create(DUE_DAC1, DUE_IN_A01);
 		
-	EventManager::registerDevice(saw1);
-	EventManager::registerDevice(saw2);
+	//EventManager::registerDevice(osc1);
+	EventManager::registerDevice(osc2);
 }
 
 void loop() 

@@ -18,12 +18,16 @@
 
 */
 
+#include <Key.h>
 #include <EventManager.h>
+#include <IO.h>
 #include <Trigger.h>
 #include <Clock.h>
+#include <Slew.h>
 #include <Sequence.h>
-#include <IO.h>
 #include <SPI.h>
+#include <SD.h>
+#include <Wire.h>
 
 using namespace nw2s;
 
@@ -37,7 +41,7 @@ void setup()
 
 	/* Fixed clock running at 75BPM on an Ardcore D0 */
 	FixedClock* fixedclock = FixedClock::create(75, 8);
-	EventManager::registerdevice(fixedclock);
+	EventManager::registerDevice(fixedclock);
 
 	/* Set up the note data for the sequence */
 	SequenceNote notelist[34] = { {1,1}, {1,3}, {1,5}, {1,1}, {1,3}, {1,5}, {1,1}, {1,5}, 
@@ -56,7 +60,7 @@ void setup()
 	sequencer->setslew(DecaySlew::create(0.90));
 	sequencer->seteg(ADSR::create(20, 40, 254, 1250, 1200, false, DUE_SPI_4822_03));
 
-	fixedclock->registerdevice(sequencer);
+	fixedclock->registerDevice(sequencer);
 }
 
 void loop() 
