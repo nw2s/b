@@ -55,8 +55,8 @@ void setup()
 	int hatlist[16] =         { 85,  25,  85,  25,  85,  25,  85,  50,  25,  85,  25,  85,  25,  85,  25,  85 };
 	int hatvelocities[16] =   { 100, 250, 100, 250, 100, 250, 100, 200, 250, 100, 250, 100, 250, 100, 200, 100 };
 	
-	int crashlist[16] =         { 10,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  10,  0,  10,  0,  0 };
-	int crashvelocities[16] =   { 100, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  100, 0,  100, 0,  0 };
+	int crashlist[16] =         { 10 };
+	int crashvelocities[16] =   { 400 };
 	
 	TriggerSequenceData* snaretriggerdata = new TriggerSequenceData(snaretriggers, snaretriggers + 16);
 	TriggerSequenceData* snarevelocitydata = new TriggerSequenceData(snarevelocities, snarevelocities + 16);
@@ -64,13 +64,13 @@ void setup()
 	TriggerSequenceData* kickvelocitydata = new TriggerSequenceData(kickvelocities, kickvelocities + 16);
 	TriggerSequenceData* hattriggerdata = new TriggerSequenceData(hatlist, hatlist + 16);
 	TriggerSequenceData* hatvelocitydata = new TriggerSequenceData(hatvelocities, hatvelocities + 16);
-	TriggerSequenceData* crashtriggerdata = new TriggerSequenceData(crashlist, crashlist + 16);
-	TriggerSequenceData* crashvelocitydata = new TriggerSequenceData(crashvelocities, crashvelocities + 16);
+	TriggerSequenceData* crashtriggerdata = new TriggerSequenceData(crashlist, crashlist + 1);
+	TriggerSequenceData* crashvelocitydata = new TriggerSequenceData(crashvelocities, crashvelocities + 1);
 	
 	ProbabilityDrumTriggerSequencer* snaresequencer = ProbabilityDrumTriggerSequencer::create(snaretriggerdata, snarevelocitydata, 25, DIV_SIXTEENTH, DUE_SPI_4822_00);
-	ProbabilityDrumTriggerSequencer* kicksequencer = ProbabilityDrumTriggerSequencer::create(kicktriggerdata, kickvelocitydata, 10, DIV_SIXTEENTH, DUE_SPI_4822_01);
-	ProbabilityDrumTriggerSequencer* hatsequencer = ProbabilityDrumTriggerSequencer::create(hattriggerdata, hatvelocitydata, 25, DIV_SIXTEENTH, DUE_SPI_4822_02);
-	ProbabilityDrumTriggerSequencer* crashsequencer = ProbabilityDrumTriggerSequencer::create(crashtriggerdata, crashvelocitydata, 100, DIV_SIXTEENTH, DUE_SPI_4822_03);
+	ProbabilityDrumTriggerSequencer* kicksequencer = ProbabilityDrumTriggerSequencer::create(kicktriggerdata, kickvelocitydata, 10, DIV_SIXTEENTH, DUE_SPI_4822_05);
+	ProbabilityDrumTriggerSequencer* hatsequencer = ProbabilityDrumTriggerSequencer::create(hattriggerdata, hatvelocitydata, 50, DIV_SIXTEENTH, DUE_SPI_4822_02);
+	ProbabilityDrumTriggerSequencer* crashsequencer = ProbabilityDrumTriggerSequencer::create(crashtriggerdata, crashvelocitydata, 100, DIV_WHOLE, DUE_SPI_4822_03);
 	
 	snaresequencer->setProbabilityModifier(DUE_IN_A01);
 	kicksequencer->setProbabilityModifier(DUE_IN_A02);
