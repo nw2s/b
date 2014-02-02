@@ -36,9 +36,19 @@ TriggerSequencer* TriggerSequencer::create(vector<int>* triggers, int clockdivis
 	return new TriggerSequencer(triggers, clockdivision, output);
 }
 
+DrumTriggerSequencer* DrumTriggerSequencer::create(std::vector<int>* triggers, int clockdivision, PinAnalogOut output)
+{
+	return new DrumTriggerSequencer(triggers, clockdivision, output);
+}
+
 ProbabilityTriggerSequencer* ProbabilityTriggerSequencer::create(vector<int>* triggers, int clockdivision, PinDigitalOut output)
 {
 	return new ProbabilityTriggerSequencer(triggers, clockdivision, output);
+}
+
+ProbabilityDrumTriggerSequencer* ProbabilityDrumTriggerSequencer::create(vector<int>* triggers, vector<int>* velocities, int velocityrange, int clockdivision, PinAnalogOut output)
+{
+	return new ProbabilityDrumTriggerSequencer(triggers, velocities, velocityrange, clockdivision, output);
 }
 
 NoteSequencer* NoteSequencer::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq)
@@ -100,6 +110,7 @@ void Sequencer::seteg(Envelope* envelope)
 }
 
 
+
 TriggerSequencer::TriggerSequencer(vector<int>* triggers, int clockdivision, PinDigitalOut pin)
 {
 	this->triggers = new vector<int>();
@@ -126,6 +137,133 @@ void TriggerSequencer::reset()
 		this->trigger->reset();
 	}	
 }
+
+
+DrumTriggerSequencer::DrumTriggerSequencer(vector<int>* triggers, int clockdivision, PinAnalogOut pin)
+{
+	this->triggers = new vector<int>();
+	copy(triggers->begin(), triggers->end(), back_inserter(*this->triggers));
+	
+	this->clock_division = clockdivision;
+	this->sequence_index = 0;
+	this->state = false;
+	this->trigger = DrumTrigger::create(pin, 850);
+}
+
+void DrumTriggerSequencer::timer(unsigned long t)
+{
+	this->trigger->timer(t);
+}
+
+void DrumTriggerSequencer::reset()
+{	
+	this->sequence_index = ++(this->sequence_index) % this->triggers->size();
+	
+	if ((*this->triggers)[this->sequence_index] != 0)
+	{
+		this->trigger->reset();
+	}	
+}
+
+
+ProbabilityDrumTriggerSequencer::ProbabilityDrumTriggerSequencer(std::vector<int>* triggers, std::vector<int>* velocities, int velocityrange, int clockdivision, PinAnalogOut output)
+{
+	this->triggers = new vector<int>();
+	copy(triggers->begin(), triggers->end(), back_inserter(*this->triggers));
+	
+	this->velocities = new vector<int>();
+	copy(velocities->begin(), velocities->end(), back_inserter(*this->velocities));
+	
+	this->clock_division = clockdivision;
+	this->sequence_index = 0;
+	this->state = false;
+	this->trigger = DrumTrigger::create(output, 850);
+	this->velocitymodifierpin = DUE_IN_A_NONE;
+	this->probabilitymodifierpin = DUE_IN_A_NONE;
+	this->velocityrange = velocityrange;
+	this->resetnext = false;
+}
+
+void ProbabilityDrumTriggerSequencer::setProbabilityModifier(PinAnalogIn pin)
+{
+	this->probabilitymodifierpin = pin;
+}
+
+void ProbabilityDrumTriggerSequencer::setVelocityModifier(PinAnalogIn pin)
+{
+	this->velocitymodifierpin = pin;
+}
+
+void ProbabilityDrumTriggerSequencer::calculate()
+{
+	this->sequence_index = ++(this->sequence_index) % this->triggers->size();
+	
+	int currentvalue = (*this->triggers)[this->sequence_index];
+	int currentvelocity = (*this->velocities)[this->sequence_index];
+	
+	if (currentvalue != 0)
+	{		
+		int rnd = Entropy::getValue(100);
+		
+		if (this->probabilitymodifierpin == DUE_IN_A_NONE)
+		{
+			this->resetnext = currentvalue >= rnd;	
+			this->nextvelocity = currentvelocity;
+			//TODO: randomize velocity here too, if required.
+		}
+		else
+		{
+			int rawval = analogRead(probabilitymodifierpin);
+			int factor = 100;
+					
+			//TODO: encapsulate scaling
+			/* Scale the factor based on 0-100 and 100-2000 */
+			if (rawval < 1700)
+			{
+				factor = (rawval * 100) / 1700;
+			}
+			else if (rawval > 1800)
+			{
+				factor = 100 + ((rawval * 1900UL) / 1700);
+			}
+			
+			this->resetnext = ((currentvalue * factor) / 100) >= rnd;
+			
+			if (this->resetnext)
+			{
+				//TODO: where do we scale velocities from 50 - 850???
+				//TODO: adjust velocity based on modifier pin
+				/* If we're triggering a hit next beat, calculate a velocity for it */
+				if (this->velocityrange != 0)
+				{
+					int valuerange = (currentvalue * this->velocityrange) / 100;
+					this->nextvelocity = Entropy::getValue(valuerange) - (valuerange / 2) + currentvelocity; 
+				}
+				else
+				{
+					this->nextvelocity = currentvelocity;
+				}
+			}
+		}
+	}	
+}
+
+void ProbabilityDrumTriggerSequencer::reset()
+{	
+	this->sequence_index = (this->sequence_index + 1) % this->triggers->size();
+	
+	if ((*this->triggers)[this->sequence_index] != 0)
+	{
+		this->trigger->reset();
+	}	
+}
+
+void ProbabilityDrumTriggerSequencer::timer(unsigned long t)
+{
+	this->trigger->timer(t);
+}
+
+
 
 ProbabilityTriggerSequencer::ProbabilityTriggerSequencer(vector<int>* triggers, int clockdivision, PinDigitalOut pin) : nw2s::TriggerSequencer(triggers, clockdivision, pin)
 {

@@ -27,6 +27,7 @@
 #include "Envelope.h"
 #include "Clock.h"
 #include "Trigger.h"
+#include "DrumTrigger.h"
 
 namespace nw2s
 {
@@ -49,7 +50,9 @@ namespace nw2s
 	class CVSequencer;
 	class MorphingNoteSequencer;
 	class TriggerSequencer;
+	class DrumTriggerSequencer;
 	class ProbabilityTriggerSequencer;
+	class ProbabilityDrumTriggerSequencer;
 	
 	class TimeBasedDevice;
 }
@@ -85,6 +88,45 @@ class nw2s::TriggerSequencer : public nw2s::Sequencer
 		std::vector<int>* triggers;
 		volatile int sequence_index;
 		volatile bool state;
+};
+
+class nw2s::DrumTriggerSequencer : public nw2s::Sequencer
+{
+	public: 
+		static DrumTriggerSequencer* create(std::vector<int>* triggers, int clockdivision, PinAnalogOut output);
+		virtual void timer(unsigned long t);
+		virtual void reset();
+		
+	protected:
+		DrumTriggerSequencer(std::vector<int>* triggers, int clockdivision, PinAnalogOut output);
+		DrumTrigger* trigger;
+		std::vector<int>* triggers;
+		volatile int sequence_index;
+		volatile bool state;
+};
+
+class nw2s::ProbabilityDrumTriggerSequencer : public nw2s::Sequencer
+{
+	public: 
+		static ProbabilityDrumTriggerSequencer* create(std::vector<int>* triggers, std::vector<int>* velocities, int velocityrange, int clockdivision, PinAnalogOut output);
+		virtual void timer(unsigned long t);
+		virtual void reset();
+		virtual void calculate();
+		void setProbabilityModifier(PinAnalogIn pin);
+		void setVelocityModifier(PinAnalogIn pin);
+		
+	private:
+		ProbabilityDrumTriggerSequencer(std::vector<int>* triggers, std::vector<int>* velocities, int velocityrange, int clockdivision, PinAnalogOut output);
+		DrumTrigger* trigger;
+		std::vector<int>* triggers;
+		std::vector<int>* velocities;
+		PinAnalogIn velocitymodifierpin;
+		PinAnalogIn probabilitymodifierpin;
+		int velocityrange;
+		int nextvelocity;
+		volatile int sequence_index;
+		volatile bool state;
+		bool resetnext;
 };
 
 class nw2s::ProbabilityTriggerSequencer : public nw2s::TriggerSequencer
