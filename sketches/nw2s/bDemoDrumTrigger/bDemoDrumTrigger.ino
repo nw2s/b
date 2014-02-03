@@ -46,7 +46,7 @@ void setup()
 	Clock* vclock = VariableClock::create(20, 240, DUE_IN_A00, 16);
 
 	/* Trigger Sequence */
-	int snaretriggers[16] =   { 0, 0, 1,  1,  75,  1,  1,  0, 0, 1,  20,  1,  75,  1, 1, 15 };
+	int snaretriggers[16] =   { 0, 0, 1,  0,  75,  0,  1,  0, 0, 1,  20,  0,  75,  1, 0, 15 };
 	int snarevelocities[16] = { 0, 0, 75, 75, 400, 75, 75, 0, 0, 75, 200, 75, 400, 1, 1, 75 };
 	
 	int kicklist[16] =        { 90,  1,  1,  5,  0, 1,  10,  1,  75,  1,  1,  1,  0, 1,  15,  1 };
@@ -55,8 +55,8 @@ void setup()
 	int hatlist[16] =         { 85,  25,  85,  25,  85,  25,  85,  50,  25,  85,  25,  85,  25,  85,  25,  85 };
 	int hatvelocities[16] =   { 100, 250, 100, 250, 100, 250, 100, 200, 250, 100, 250, 100, 250, 100, 200, 100 };
 	
-	int crashlist[16] =         { 10 };
-	int crashvelocities[16] =   { 400 };
+	int crashlist[16] =         { 10,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  };
+	int crashvelocities[16] =   { 400, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	
 	TriggerSequenceData* snaretriggerdata = new TriggerSequenceData(snaretriggers, snaretriggers + 16);
 	TriggerSequenceData* snarevelocitydata = new TriggerSequenceData(snarevelocities, snarevelocities + 16);
@@ -70,7 +70,7 @@ void setup()
 	ProbabilityDrumTriggerSequencer* snaresequencer = ProbabilityDrumTriggerSequencer::create(snaretriggerdata, snarevelocitydata, 25, DIV_SIXTEENTH, DUE_SPI_4822_00);
 	ProbabilityDrumTriggerSequencer* kicksequencer = ProbabilityDrumTriggerSequencer::create(kicktriggerdata, kickvelocitydata, 10, DIV_SIXTEENTH, DUE_SPI_4822_05);
 	ProbabilityDrumTriggerSequencer* hatsequencer = ProbabilityDrumTriggerSequencer::create(hattriggerdata, hatvelocitydata, 50, DIV_SIXTEENTH, DUE_SPI_4822_02);
-	ProbabilityDrumTriggerSequencer* crashsequencer = ProbabilityDrumTriggerSequencer::create(crashtriggerdata, crashvelocitydata, 100, DIV_WHOLE, DUE_SPI_4822_03);
+	ProbabilityDrumTriggerSequencer* crashsequencer = ProbabilityDrumTriggerSequencer::create(crashtriggerdata, crashvelocitydata, 100, DIV_SIXTEENTH, DUE_SPI_4822_03);
 	
 	snaresequencer->setProbabilityModifier(DUE_IN_A01);
 	kicksequencer->setProbabilityModifier(DUE_IN_A02);

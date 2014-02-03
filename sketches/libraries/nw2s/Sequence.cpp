@@ -207,7 +207,6 @@ void ProbabilityDrumTriggerSequencer::calculate()
 		
 		if (this->probabilitymodifierpin == DUE_IN_A_NONE)
 		{
-			//Serial.println(String(currentvalue) + " " + String(rnd) + " " + currentvelocity);
 			this->resetnext = currentvalue >= rnd;	
 			this->nextvelocity = currentvelocity;
 			//TODO: randomize velocity here too, if required.
@@ -244,12 +243,6 @@ void ProbabilityDrumTriggerSequencer::calculate()
 				{
 					this->nextvelocity = currentvelocity;
 				}
-
-				//Serial.println("yes  " + String(rawval) + " " + String(factor) + " " + String(currentvalue) + " " + String(rnd) + " " + String(currentvelocity) + " " + String(velocityrange) + " " + String(nextvelocity));				
-			}
-			else
-			{
-				//Serial.println("no   " + String(currentvalue) + " " + String(rnd) + " " + currentvelocity);				
 			}
 		}
 	}	
@@ -261,6 +254,7 @@ void ProbabilityDrumTriggerSequencer::reset()
 	{
 		this->trigger->setAmplitude(this->nextvelocity);
 		this->trigger->reset();
+		this->resetnext = false;
 	}	
 }
 

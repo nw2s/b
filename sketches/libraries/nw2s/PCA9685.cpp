@@ -49,7 +49,7 @@ void PCA9685::setLEDOff(int ledNumber) {
 
 void PCA9685::setLEDDimmed(int ledNumber, int amount) 
 {		
-	writeLED(ledNumber, 0, 10 + ((amount * 10) / 50));
+	writeLED(ledNumber, 0, 0 + ((amount * 10) / 50));
 }
 
 void PCA9685::writeLED(int ledNumber, word LED_ON, word LED_OFF) {	// LED_ON and LED_OFF are 12bit values (0-4095); ledNumber is 0-15

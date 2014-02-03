@@ -117,6 +117,8 @@ class nw2s::VariableClock : public Clock
 		int mintempo;
 		int maxtempo;
 		int input;
+		int pastvalues[4];
+		int valuepointer;
 
 		VariableClock(int mintempo, int maxtempo, PinAnalogIn input, unsigned char beats_per_measure);
 		virtual void updateTempo(unsigned long t);
