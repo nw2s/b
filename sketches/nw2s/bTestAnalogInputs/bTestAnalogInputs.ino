@@ -31,32 +31,73 @@
 
 using namespace nw2s;
 
+int average[12][10];
+PinAnalogIn inputs[12] = {
+	
+	DUE_IN_A00,
+	DUE_IN_A01,
+	DUE_IN_A02,
+	DUE_IN_A03,
+	DUE_IN_A04,
+	DUE_IN_A05,
+	DUE_IN_A06,
+	DUE_IN_A07,
+	DUE_IN_A08,
+	DUE_IN_A09,
+	DUE_IN_A10,
+	DUE_IN_A11
+	
+};
+
+int ptr = 0;
+
 void setup() 
 {
 	Serial.begin(19200);
-	Serial.println("\n\nStarting...");
+	Serial.println("Starting...");
 
 	/* Setup analog inputs */
 	analogReadResolution(12);
-	
+
+	for (int i = 0; i < 12; i++)
+	{
+		for (int j = 0; j < 10; j++)
+		{
+			average[i][j] = 0;
+		}
+	}	
 }
 
 void loop() 
 {	
-	if (millis() % 100 == 0)
+	if (millis() % 250 == 0)
 	{
-		Serial.print(String(analogRead(A0)) + "\t");
-		Serial.print(String(analogRead(A1)) + "\t");
-		Serial.print(String(analogRead(A2)) + "\t");
-		Serial.print(String(analogRead(A3)) + "\t");
-		Serial.print(String(analogRead(A4)) + "\t");
-		Serial.print(String(analogRead(A5)) + "\t");
-		Serial.print(String(analogRead(A6)) + "\t");
-		Serial.print(String(analogRead(A7)) + "\t");
-		Serial.print(String(analogRead(A8)) + "\t");
-		Serial.print(String(analogRead(A9)) + "\t");
-		Serial.print(String(analogRead(A10)) + "\t");
-		Serial.print(String(analogRead(A11)) + "\n");
+		int sum1 = 0;
+		int sum2 = 0;
+		
+		for (int i = 0; i < 12; i++)
+		{
+			int sum = 0;
+			int val = analogRead(inputs[i]);
+			
+			average[i][ptr] = val;
+			
+			for (int j = 0; j < 10; j++)
+			{
+				sum += average[i][j];
+			}			
+
+			sum1 += val;
+			sum2 += sum / 10;
+			
+			Serial.print(String(val) + "/" + String(sum / 10) + "/" + String(ANALOG_INPUT_TRANSLATION[sum / 10]) + "\t");
+		}
+
+		Serial.println(String(sum1 / 12) + "//" + String(sum2 / 12) + "//" + String(ANALOG_INPUT_TRANSLATION[sum2 / 12]));
+
+		ptr = (ptr + 1) % 10;
+
+		Serial.print("\n");
 	}
 
 }
