@@ -18,7 +18,6 @@
 
 */
 
-#include <MD5.h>
 #include <Key.h>
 #include <EventManager.h>
 #include <Trigger.h>
@@ -28,6 +27,7 @@
 #include <IO.h>
 #include <SPI.h>
 #include <SD.h>
+#include <Wire.h>
 
 
 using namespace nw2s;
@@ -55,7 +55,7 @@ void setup()
 	Serial.begin(19200);
 	Serial.print("\n\nStarting...\n");
 
-	pinMode(DUE_IN_DIGITAL_NOISE, INPUT);
+	EventManager::initialize();
 }
 
 void loop() 
