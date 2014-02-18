@@ -1853,6 +1853,7 @@ class nw2s::SignalData
 		short unsigned int *data;
 		int size;
 		static bool initialized;
+		bool streaming;
 		
 		SignalData(short unsigned int *data, long size);
 		
