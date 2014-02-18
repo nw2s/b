@@ -111,10 +111,14 @@ namespace nw2s
 	{
 		DIGITAL_IN_NONE = -1,
 		DUE_IN_DIGITAL_NOISE = 12,
-		DUE_IN_D0 = 50,
-		DUE_IN_D1 = 51,
-		DUE_IN_D2 = 52,
-		DUE_IN_D3 = 53,
+		DUE_IN_D0 = 46,
+		DUE_IN_D1 = 47,
+		DUE_IN_D2 = 48,
+		DUE_IN_D3 = 49,
+		DUE_IN_D4 = 50,
+		DUE_IN_D5 = 51,
+		DUE_IN_D6 = 52,
+		DUE_IN_D7 = 53,
 	};
 	
 	static const int ANALOG_INPUT_TRANSLATION[4096] = 

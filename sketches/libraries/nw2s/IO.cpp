@@ -38,22 +38,6 @@ AnalogOut::AnalogOut(PinAnalogOut pin)
 {
 
 	this->pin = pin;
-	
-#ifdef __AVR__
-
-	/* Arcdcore runs on an AVR platform */
-	if (pin == ARDCORE_DAC)
-	{
-  		for (int i=0; i<8; i++) 
-		{
-    		pinMode(ARDCORE_DAC_PIN_OFFSET + i, OUTPUT);
-    		digitalWrite(ARDCORE_DAC_PIN_OFFSET + i, LOW);
-		}
-	}
-
-#endif
-	
-#ifdef _SAM3XA_
 
 	/* nw2s::b runs on a SAM platform */
 	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
@@ -125,27 +109,10 @@ AnalogOut::AnalogOut(PinAnalogOut pin)
 				break;
 		}
 	}
-
-#endif
 }
 
 void AnalogOut::outputNoteCV(ScaleNote note)
 {
-
-#ifdef __AVR__
-
-	if (pin == ARDCORE_DAC)
-	{
-		byte v = note.cv;
-	
-	  	PORTB = (PORTB & B11100000) | (v >> 3);
-		PORTD = (PORTD & B00011111) | ((v & B00000111) << 5);
-	}	
-
-#endif
-
-#ifdef _SAM3XA_
-
 	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
 	{
 		if (IOUtils::enableLED) AnalogOut::ledDriver.setLEDDimmed(this->ledpin, note.cv);
@@ -159,29 +126,10 @@ void AnalogOut::outputNoteCV(ScaleNote note)
 			this->spidac.setValue_B(note.cv);
 		}
 	}
-
-#endif 
-
-
 }
 
 void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew)
 {
-	
-#ifdef __AVR__
-	
-	if (pin == ARDCORE_DAC)
-	{
-		byte v = slew->calculate_value(note.cv);
-	
-	  	PORTB = (PORTB & B11100000) | (v >> 3);
-		PORTD = (PORTD & B00011111) | ((v & B00000111) << 5);		
-	}	
-	
-#endif
-
-#ifdef _SAM3XA_
-
 	int v = slew->calculate_value(note.cv);
 
 	if (IOUtils::enableLED) AnalogOut::ledDriver.setLEDDimmed(this->ledpin, v);
@@ -196,32 +144,12 @@ void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew)
 		{
 			this->spidac.setValue_B(v);
 		}
-	}
-		
-#endif 
-
+	}		
 }
 
 
 void AnalogOut::outputCV(int cv)
 {
-
-#ifdef __AVR__
-
-	int dacval = (cv * 240UL) / 5000;
-
-	if (pin == ARDCORE_DAC)
-	{
-		byte v = dacval;
-		
-	  	PORTB = (PORTB & B11100000) | (v >> 3);
-		PORTD = (PORTD & B00011111) | ((v & B00000111) << 5);
-	}	
-
-#endif
-
-#ifdef _SAM3XA_
-
 	int dacval = (cv * 4000UL) / 5000;
 
 	if (IOUtils::enableLED) AnalogOut::ledDriver.setLEDDimmed(this->ledpin, dacval);
@@ -237,10 +165,6 @@ void AnalogOut::outputCV(int cv)
 			this->spidac.setValue_B(dacval);
 		}
 	}
-
-#endif 
-
-
 }
 
 void AnalogOut::outputSlewedCV(int cv, Slew* slew)
@@ -297,6 +221,17 @@ void IOUtils::setupPins()
 		pinMode(pin, OUTPUT);
 		digitalWrite(pin, LOW);	
 	}
+	
+	Serial.println("digital input pins");
+	for (int pin = 46; pin <= 53; pin++)
+	{
+		/* Setup the inputs */
+		pinMode(pin, INPUT);
+	}
+
+	Serial.println("noise pin");
+	pinMode(DUE_IN_DIGITAL_NOISE, INPUT);
+
 
 	Serial.println("beatclock pins");
 	for (int pin = 41; pin <= 45; pin++)
