@@ -104,8 +104,8 @@ VCSamplingFrequencyOscillator::VCSamplingFrequencyOscillator(PinAudioOut pinout,
 	/* Initialize 1:1 array */
 	for (int i = 0; i < 600; i++)
 	{
-		w[i] = SIGNAL_SIN[i] / 100;
-		source[i] = SIGNAL_SIN[i];
+		w[i] = SIGNAL_SAW[i] / 100;
+		source[i] = SIGNAL_SAW[i];
 	}
 	
 	this->wave = SignalData::fromArray(w, 600);
