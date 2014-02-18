@@ -26,6 +26,9 @@
 
 using namespace nw2s;
 
+
+static const int MAX_MEM_BUFFER_WORDS = 4000;
+
 bool SignalData::initialized = false;
 
 SignalData* SignalData::fromSDFile(char *filepath)
@@ -48,6 +51,9 @@ SignalData* SignalData::fromSDFile(char *filepath)
 		int filewords = filebytes / 2;
 
 		Serial.println("Loading Loop. Size: " + String(filebytes));
+
+		// /* If the file is bigger than a max size, then only allocate that much and flag that we're streaming off the SD card*/
+		// if (filewords > )
 
 		/* Allocate as much space as we have reported by file size */
 	 	unsigned short int *data = new unsigned short int[filewords];

@@ -47,6 +47,7 @@ Looper::Looper(PinAudioOut pin, SignalData* signalData)
 	this->pin = pin;
 	this->signalData = signalData;
 	this->size = signalData->getSize();
+	// this->
 	this->currentSample = 0;
 	this->channel = (pin == DUE_DAC0) ? 1 : 2;
 	this->dac = (pin == DUE_DAC0) ? 0 : 1;
