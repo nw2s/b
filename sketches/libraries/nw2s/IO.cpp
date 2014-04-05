@@ -27,17 +27,24 @@
 
 using namespace nw2s;
 
-AnalogOut* AnalogOut::create(PinAnalogOut out)
+int nw2s::analogRead(int input)
 {
-	return new AnalogOut(out);
+	return 4096 - ::analogRead(input);
+}
+
+
+AnalogOut* AnalogOut::create(PinAnalogOut out, CVGain gain)
+{
+	return new AnalogOut(out, gain);
 }
 
 PCA9685 AnalogOut::ledDriver;
 
-AnalogOut::AnalogOut(PinAnalogOut pin)
+AnalogOut::AnalogOut(PinAnalogOut pin, CVGain gain)
 {
 
 	this->pin = pin;
+	this->gain = gain;
 
 	/* nw2s::b runs on a SAM platform */
 	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
@@ -49,7 +56,7 @@ AnalogOut::AnalogOut(PinAnalogOut pin)
 		this->spidac_index = pin % 2;
 		this->spidac = MCP4822(cspin,ldacpin);
 		
-	    this->spidac.begin();
+	    this->spidac.begin(this->gain);
 	    SPI.setDataMode(SPI_MODE0);
 	    SPI.setBitOrder(MSBFIRST);
 	    SPI.setClockDivider(42);
@@ -150,20 +157,22 @@ void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew)
 
 void AnalogOut::outputCV(int cv)
 {
-	int dacval = (cv * 4000UL) / 5000;
+	int dacval = 4000 - (((cv + 5000) * 4000UL) / 10000);
 
-	if (IOUtils::enableLED) AnalogOut::ledDriver.setLEDDimmed(this->ledpin, dacval);
-
-	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
+	if (this->spidac_index == 0)
 	{
-		if (this->spidac_index == 0)
-		{
-			this->spidac.setValue_A(dacval);
-		}
-		else
-		{
-			this->spidac.setValue_B(dacval);
-		}
+		this->spidac.setValue_A(dacval);
+	}
+	else
+	{
+		this->spidac.setValue_B(dacval);
+	}
+
+	if (IOUtils::enableLED)
+	{
+		int ledval = (dacval < 2000) ? 4000 - (dacval * 2) : (dacval - 2000) * 2;
+		
+		AnalogOut::ledDriver.setLEDDimmed(this->ledpin, ledval);
 	}
 }
 

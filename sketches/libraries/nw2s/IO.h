@@ -30,8 +30,12 @@
 
 namespace nw2s
 {
+	enum CVGain
+	{
+		CV_GAIN_HIGH = 1,
+		CV_GAIN_LOW = 0
+	};
 	
-
 	enum PinDigitalOut
 	{
 		DUE_OUT_D00 = 37, 
@@ -120,6 +124,11 @@ namespace nw2s
 		DUE_IN_D6 = 52,
 		DUE_IN_D7 = 53,
 	};
+	
+	
+	/* This table translates the 4096 possible input values to an ideal millivolts value. */
+	/* They are average and don't take into account individual resistor errors, so expect */
+	/* to be within 2% or so. */
 	
 	static const int ANALOG_INPUT_TRANSLATION[4096] = 
 	{
@@ -4223,27 +4232,31 @@ namespace nw2s
 
 	class IOUtils;
 	class AnalogOut;
-	
+
+	int analogRead(int input);	
 }
 
 class nw2s::AnalogOut
 {
 	public:
 		static PCA9685 ledDriver;
-		static nw2s::AnalogOut* create(PinAnalogOut pin);
+		//static nw2s::AnalogOut* create(PinAnalogOut pin);
+		static nw2s::AnalogOut* create(PinAnalogOut pin, CVGain gain = CV_GAIN_LOW);
 		void outputNoteCV(ScaleNote note);
 		void outputSlewedNoteCV(ScaleNote note, Slew* slew);
 		void outputCV(int v);
+		void outputCVRaw(int v);
 		void outputSlewedCV(int v, Slew* slew);
 		
 	private:
 		PinAnalogOut pin;
-		AnalogOut(PinAnalogOut out);
+		AnalogOut(PinAnalogOut out, CVGain gain);
 
 		MCP4822 spidac;
 		int spidac_index;
 		int csvalue;
 		int ledpin;
+		CVGain gain;
 
 };
 

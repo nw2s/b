@@ -54,18 +54,20 @@ PinAnalogOut outpins[16] = {
 
 int values[11] = {
 	
+	-5000,
+	-4000,
+	-3000,
+	-2000,
+	-1000,
 	0,
-	500,
 	1000,
-	1500,
 	2000,
-	2500,
 	3000,
-	3500,
 	4000,
-	4500,
 	5000
 };
+
+bool checkToggle = false;
 
 AnalogOut* outputs[16];
 int counter = 0;
@@ -75,8 +77,12 @@ void setup()
 	Serial.begin(19200);
 	Serial.println("Starting...");
 
+	/* Set up a clock to have something to watch :P */
 	EventManager::initialize();
+	Clock* democlock = VariableClock::create(20, 200, DUE_IN_A01, 16);
+	EventManager::registerDevice(democlock);
 
+	/* Iterate each of the outputs and set to 0mV */
 	for (int i = 0; i < 16; i++)
 	{
 		outputs[i] = AnalogOut::create(outpins[i]);
@@ -87,14 +93,25 @@ void setup()
 
 void loop() 
 {	
-	if (millis() % 10000 == 0)
+	/* Only change from one to the next if the toggle is on */
+	if (!checkToggle && digitalRead(DUE_IN_D0) && (millis() % 150 == 0))
 	{
 		for (int i = 0; i < 16; i++)
 		{
 			outputs[i]->outputCV(values[counter]);
 		}
 		
+		Serial.println("output val: " + String(values[counter]));
+
 		counter = (counter + 1) % 11;
+		
+		checkToggle = true;
+	}
+	
+	/* Reset the toggle trigger if it's off */
+	if (checkToggle && !digitalRead(DUE_IN_D0))
+	{
+		checkToggle = false;
 	}
 
 	EventManager::loop();

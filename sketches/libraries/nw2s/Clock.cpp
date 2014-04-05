@@ -87,7 +87,7 @@ void Clock::registerDevice(BeatDevice* device)
 
 Clock::Clock()
 {
-	IOUtils::displayBeat(0, this);
+	IOUtils::displayBeat(1, this);
 
 	this->swingpercentage = 0;
 	this->swingdivision = 1000;
@@ -104,13 +104,30 @@ FixedClock::FixedClock(int tempo, unsigned char beats_per_measure)
 	/* The fixed clock operates on a regular period based on the tempo */
 	int normalized_tempo = (tempo < 1) ? 1 : (tempo > 500) ? 500 : tempo;
 		
+	Serial.println("Setup Clock " + String(tempo) + " " + String(normalized_tempo));	
+		
 	this->beat = 0;
-	this->period = 60000 / normalized_tempo;
+	this->period = 60000UL / normalized_tempo;
 	this->beats_per_measure = beats_per_measure;
+
+	this->last_clock_t = 0;
+	this->next_clock_t = 0;
+
+	Serial.println("Setup Clock " + String(tempo) + " " + String(normalized_tempo) + " " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));	
 }
 
 void Clock::timer(unsigned long t)
 {
+	if (t < 1000 && t % 20 == 0)
+	{
+		Serial.println(String(this->period));
+	}
+
+	if (t % 1000 == 0)
+	{
+		Serial.println("Clock T = " + String(t) + " " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));
+	}
+	
 	/* Call reset on devices first */
 	for (int i = 0; i < this->devices.size(); i++)
 	{
@@ -130,7 +147,7 @@ void Clock::timer(unsigned long t)
 	if (t >= this->next_clock_t)
 	{
 		if (t > this->next_clock_t) Serial.println("Clock missed next clock T by (ms) " + String(t - this->next_clock_t));
-		IOUtils::displayBeat(this->beat, this);				
+		IOUtils::displayBeat(this->beat + 1, this);				
 		this->beat = (this->beat + 1) % this->beats_per_measure;		
 
 		this->updateTempo(t);
@@ -186,7 +203,13 @@ void Clock::timer(unsigned long t)
 
 void Clock::updateTempo(unsigned long t)
 {
+	Serial.println("Before Update " + String(t) + " " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));	
+
 	/* If a clock type needs to update the tempo from time to time, then this can be used to do so */
+	this->next_clock_t = (t + this->period);
+	this->last_clock_t = t;	
+
+	Serial.println("After Update " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));	
 }
 
 VariableClock::VariableClock(int mintempo, int maxtempo, PinAnalogIn input, unsigned char beats_per_measure)

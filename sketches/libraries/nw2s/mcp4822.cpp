@@ -46,14 +46,21 @@ MCP4822::MCP4822(int csPin, int ldacPin) {
 //
 // initialization function
 // ----------------------------------------------------------------------------
-void MCP4822::begin() {
+void MCP4822::begin(int gain) 
+{
     pinMode(cs,OUTPUT);
     pinMode(ldac,OUTPUT);
     digitalWrite(cs,HIGH);
     digitalWrite(ldac,HIGH);
-    // Set to default configuration
-    setGain1X_AB();
-	//setGain2X_AB();
+
+	if (gain == 0)
+	{
+	    setGain1X_AB();
+	}
+	else
+	{
+		setGain2X_AB();
+	}
 }
 
 // ---------------------------------------------------------------------------
