@@ -18,8 +18,8 @@
 
 */
 
-#include <Key.h>
 #include <EventManager.h>
+#include <Key.h>
 #include <Trigger.h>
 #include <Clock.h>
 #include <Slew.h>

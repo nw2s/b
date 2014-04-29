@@ -18,6 +18,7 @@
 
 */
 
+#include "b.h"
 #include <Arduino.h>
 #include <SPI.h>
 #include <Wire.h>
@@ -32,21 +33,30 @@ int nw2s::analogRead(int input)
 	return 4096 - ::analogRead(input);
 }
 
-
-AnalogOut* AnalogOut::create(PinAnalogOut out, CVGain gain)
+int nw2s::analogReadmV(int input)
 {
-	return new AnalogOut(out, gain);
+	/* Get the value from ADC, inverted */
+	int val = ::analogRead(input);
+
+	/* Make sure we're 0 - 4095 */
+	int normalval = (val > 4095) ? 4095 : ((val < 0) ? 0 : val);
+	
+	/* Convert to voltage */
+	return ANALOG_INPUT_TRANSLATION[normalval];
+}
+
+AnalogOut* AnalogOut::create(PinAnalogOut out)
+{
+	return new AnalogOut(out);
 }
 
 PCA9685 AnalogOut::ledDriver;
 
-AnalogOut::AnalogOut(PinAnalogOut pin, CVGain gain)
+AnalogOut::AnalogOut(PinAnalogOut pin)
 {
 
 	this->pin = pin;
-	this->gain = gain;
 
-	/* nw2s::b runs on a SAM platform */
 	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
 	{
 		/* Calculate the CS and latch pins from the out pin */
@@ -56,12 +66,13 @@ AnalogOut::AnalogOut(PinAnalogOut pin, CVGain gain)
 		this->spidac_index = pin % 2;
 		this->spidac = MCP4822(cspin,ldacpin);
 		
-	    this->spidac.begin(this->gain);
+	    this->spidac.begin();
 	    SPI.setDataMode(SPI_MODE0);
 	    SPI.setBitOrder(MSBFIRST);
 	    SPI.setClockDivider(42);
 	    SPI.begin();
-		this->spidac.setGain1X_AB();	
+		
+		this->spidac.setGain1X(this->spidac_index);				
 		
 		/* Calculate the LED pin on the PCA9685 driver */
 		switch(pin)
@@ -124,14 +135,7 @@ void AnalogOut::outputNoteCV(ScaleNote note)
 	{
 		if (IOUtils::enableLED) AnalogOut::ledDriver.setLEDDimmed(this->ledpin, note.cv);
 						
-		if (this->spidac_index == 0)
-		{
-			this->spidac.setValue_A(note.cv);
-		}
-		else
-		{
-			this->spidac.setValue_B(note.cv);
-		}
+		this->spidac.setValue(this->spidac_index, note.cv);
 	}
 }
 
@@ -143,30 +147,31 @@ void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew)
 
 	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
 	{		
-		if (this->spidac_index == 0)
-		{
-			this->spidac.setValue_A(v);
-		}
-		else
-		{
-			this->spidac.setValue_B(v);
-		}
+		this->spidac.setValue(this->spidac_index, v);
 	}		
 }
 
 
 void AnalogOut::outputCV(int cv)
 {
-	int dacval = 4000 - (((cv + 5000) * 4000UL) / 10000);
+	/* 
+	
+	   The dacval is calculated as the desired input voltage in millivolts, scaled to the
+	   nearest even value (12 bit = 4000) 
+	
+	   Because the outputs are going through an inverting opamp, we then invert the signal
+	   by subtracting the scaled number from 4096.
 
-	if (this->spidac_index == 0)
-	{
-		this->spidac.setValue_A(dacval);
-	}
-	else
-	{
-		this->spidac.setValue_B(dacval);
-	}
+	*/
+
+	//TODO: change to 4096
+	int dacval = 4000 - (((cv + (b::cvGainMode ? 10000 : 5000)) * 4000UL) / 10000);
+	
+	/* We're not checking for overflow here - that'll take a few more cycles... */
+
+	this->spidac.setValue(this->spidac_index, dacval);
+
+	if (b::debugMode) Serial.println("outputCV: " + String(dacval));
 
 	if (IOUtils::enableLED)
 	{
@@ -179,23 +184,6 @@ void AnalogOut::outputCV(int cv)
 void AnalogOut::outputSlewedCV(int cv, Slew* slew)
 {
 
-#ifdef __AVR__
-
-	int slewval = slew->calculate_value(cv);
-	int dacval = (slewval * 240UL) / 5000;
-
-	if (pin == ARDCORE_DAC)
-	{
-		byte v = dacval;
-		
-	  	PORTB = (PORTB & B11100000) | (v >> 3);
-		PORTD = (PORTD & B00011111) | ((v & B00000111) << 5);
-	}	
-
-#endif
-
-#ifdef _SAM3XA_
-
 	int slewval = slew->calculate_value(cv);
 	int dacval = (slewval * 4000UL) / 5000;
 
@@ -203,25 +191,12 @@ void AnalogOut::outputSlewedCV(int cv, Slew* slew)
 
 	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
 	{
-		if (this->spidac_index == 0)
-		{
-			this->spidac.setValue_A(dacval);
-		}
-		else
-		{
-			this->spidac.setValue_B(dacval);
-		}
+		this->spidac.setValue(this->spidac_index, dacval);
 	}
-
-#endif 
-
-
 }
 
 void IOUtils::setupPins()
 {
-#ifdef _SAM3XA_
-
 	Serial.println("Initializing...");
 	
 	Serial.println("digital output pins");
@@ -270,7 +245,7 @@ void IOUtils::setupPins()
 
 	/* Setup the I2C bus and LED driver */
 	Wire1.begin();
-	AnalogOut::ledDriver.begin(B001000);
+	AnalogOut::ledDriver.begin(B000000);
 	IOUtils::enableLED = AnalogOut::ledDriver.init();
 	Serial.println("LED driver status: " + String(IOUtils::enableLED));
 
@@ -280,33 +255,32 @@ void IOUtils::setupPins()
 	/* And spin through the LEDs once just to see them */
 	for (int i = 0; i < 16; i++) 
 	{
-		// AnalogOut::ledDriver.setLEDOn(i);
-		digitalWrite(22 + i, HIGH);
+		AnalogOut::ledDriver.setLEDOn(i);
+		digitalWrite(22 + (15 - i), HIGH);
 
 		digitalWrite(45, LOW);
-		digitalWrite(41, (1 & (16 - i)) ? HIGH : LOW);
-		digitalWrite(42, (2 & (16 - i)) ? HIGH : LOW);
-		digitalWrite(44, (4 & (16 - i)) ? HIGH : LOW);
-		digitalWrite(43, (8 & (16 - i)) ? HIGH : LOW);
+		digitalWrite(41, (1 & (15 - i)) ? HIGH : LOW);
+		digitalWrite(42, (2 & (15 - i)) ? HIGH : LOW);
+		digitalWrite(44, (4 & (15 - i)) ? HIGH : LOW);
+		digitalWrite(43, (8 & (15 - i)) ? HIGH : LOW);
 		digitalWrite(45, HIGH);
 
 		delay(10);
 
-		// AnalogOut::ledDriver.setLEDOff(i);
-		digitalWrite(22 + i, LOW);
+		AnalogOut::ledDriver.setLEDOff(i);
+		digitalWrite(22 + (15 - i), LOW);
 	}
 
 	/* Then reset clock to 1 */	
 	digitalWrite(45, LOW);
-	digitalWrite(41, LOW);
-	digitalWrite(42, LOW);
-	digitalWrite(44, LOW);
-	digitalWrite(43, LOW);
+	digitalWrite(41, HIGH);
+	digitalWrite(42, HIGH);
+	digitalWrite(44, HIGH);
+	digitalWrite(43, HIGH);
 	digitalWrite(45, HIGH);
  
 	Serial.println("done setting up.\n\n\n\n");
 
-#endif
 }
 
 void* IOUtils::clockinstance = NULL;
@@ -314,8 +288,6 @@ bool IOUtils::enableLED = false;
 
 void IOUtils::displayBeat(int beat, void* clockinstance)
 {
-#ifdef _SAM3XA_
-
 	/* There's only one clock display, so only allow one instance to update the display. */
 	if (IOUtils::clockinstance == NULL)
 	{
@@ -334,8 +306,6 @@ void IOUtils::displayBeat(int beat, void* clockinstance)
 	digitalWrite(44, (4 & beat) ? HIGH : LOW);
 	digitalWrite(43, (8 & beat) ? HIGH : LOW);
 	digitalWrite(45, HIGH);
-#endif
-
 }
 
 

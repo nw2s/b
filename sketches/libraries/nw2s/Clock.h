@@ -128,7 +128,6 @@ class nw2s::RandomTempoClock : public Clock
 {
 	public:
 		static RandomTempoClock* create(int mintempo, int maxtempo, unsigned char beats_per_measure);
-		virtual void timer(unsigned long t);
 
 	private:
 		int mintempo;

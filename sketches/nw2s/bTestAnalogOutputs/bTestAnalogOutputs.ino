@@ -18,6 +18,7 @@
 
 */
 
+#include <b.h>
 #include <Key.h>
 #include <EventManager.h>
 #include <Trigger.h>
@@ -77,9 +78,13 @@ void setup()
 	Serial.begin(19200);
 	Serial.println("Starting...");
 
+	/* Always set up the gain mode first - use HIGH if you are biased for -10V - +10V */
+	b::cvGainMode = CV_GAIN_HIGH;
+
 	/* Set up a clock to have something to watch :P */
 	EventManager::initialize();
-	Clock* democlock = VariableClock::create(20, 200, DUE_IN_A01, 16);
+	//Clock* democlock = VariableClock::create(20, 200, DUE_IN_A01, 16);
+	Clock* democlock = RandomTempoClock::create(118, 122, 16);
 	EventManager::registerDevice(democlock);
 
 	/* Iterate each of the outputs and set to 0mV */
@@ -94,7 +99,7 @@ void setup()
 void loop() 
 {	
 	/* Only change from one to the next if the toggle is on */
-	if (!checkToggle && digitalRead(DUE_IN_D0) && (millis() % 150 == 0))
+	if (!checkToggle && digitalRead(DUE_IN_D0))
 	{
 		for (int i = 0; i < 16; i++)
 		{

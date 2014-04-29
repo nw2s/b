@@ -12,7 +12,10 @@
 
 #define MCP4822_NUMCHAN 2
 
-enum MCP4822_DAC_CHAN {MCP4822_DAC_A, MCP4822_DAC_B};
+/* I should have done a better job rewriting this guy's code to make a single instance
+   represent a single DAC channel, but haven't had time */
+
+enum MCP4822_DAC_CHAN {MCP4822_DAC_A = 0, MCP4822_DAC_B = 1};
 
 class MCP4822 {
 private:
@@ -23,7 +26,7 @@ private:
 public:
     MCP4822();
     MCP4822(int csPin, int ldacPin);
-    void begin(int gain);
+    void begin();
     void setValue(int dac, int value);
     void setValue_A(int value);
     void setValue_B(int value);

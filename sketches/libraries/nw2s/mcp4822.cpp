@@ -1,12 +1,3 @@
-// ----------------------------------------------------------------------------
-// max4822.cpp
-//
-// Provides an SPI based interface to the MCP4822 dual voltage output digital 
-// to analog converter.
-//
-// Author: Will Dickson, IO Rodeo Inc.
-// This code is licensed via Apaache 2.0
-// ----------------------------------------------------------------------------
 
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -27,40 +18,23 @@
 #define DAC_A_WRITE 0b0000000000000000
 #define DAC_B_WRITE 0b1000000000000000
 
-MCP4822::MCP4822() {
+MCP4822::MCP4822() 
+{
 }
 
-// ----------------------------------------------------------------------------
-// MCP4822::MCP4822
-//
-// Constructor
-// ----------------------------------------------------------------------------
-MCP4822::MCP4822(int csPin, int ldacPin) {
-    // Configure chip select and latch pins
-    cs = csPin;
-    ldac = ldacPin;
+MCP4822::MCP4822(int csPin, int ldacPin) 
+{
+    /* Configure chip select, gain, and latch */
+    this->cs = csPin;
+    this->ldac = ldacPin;
 }
 
-// ----------------------------------------------------------------------------
-// MCP4822::MCP4822
-//
-// initialization function
-// ----------------------------------------------------------------------------
-void MCP4822::begin(int gain) 
+void MCP4822::begin() 
 {
     pinMode(cs,OUTPUT);
     pinMode(ldac,OUTPUT);
     digitalWrite(cs,HIGH);
     digitalWrite(ldac,HIGH);
-
-	if (gain == 0)
-	{
-	    setGain1X_AB();
-	}
-	else
-	{
-		setGain2X_AB();
-	}
 }
 
 // ---------------------------------------------------------------------------
@@ -170,90 +144,56 @@ void MCP4822::setValue_AB(int value_A, int value_B) {
 
 }
 
-// ---------------------------------------------------------------------------
-// MCP4822::setGain2X
-//
-// Set the gain of the given channel to 2X
-// ---------------------------------------------------------------------------
-void MCP4822::setGain2X(int dac) {
-    if ((dac == MCP4822_DAC_A) || (dac == MCP4822_DAC_B)) {
+void MCP4822::setGain2X(int dac) 
+{
+    if ((dac == MCP4822_DAC_A) || (dac == MCP4822_DAC_B)) 
+	{
         gain[dac] = GAIN_2X;
     }
 }
 
-// ----------------------------------------------------------------------------
-// MCP4822::setGain2X_A
-//
-// Set the gain of dac A to 2X
-// ----------------------------------------------------------------------------
-void MCP4822::setGain2X_A() {
+void MCP4822::setGain2X_A() 
+{
     setGain2X(MCP4822_DAC_A);
 }
 
-// ----------------------------------------------------------------------------
-// MCP4822::setGain2X_B
-//
-// Set the gain of dac B to 2X
-// ----------------------------------------------------------------------------
-void MCP4822::setGain2X_B() {
+void MCP4822::setGain2X_B() 
+{
     setGain2X(MCP4822_DAC_B);
 }
 
-// ----------------------------------------------------------------------------
-// MCP4822::setGain2X_AB
-//
-// Set the gain of dac A and B to 2X
-// ----------------------------------------------------------------------------
-void MCP4822::setGain2X_AB() {
+void MCP4822::setGain2X_AB() 
+{
     setGain2X_A();
     setGain2X_B();
 }
 
-// ---------------------------------------------------------------------------
-// MCP4822::setGain1X
-//
-// Set the gain of the given channel to 1X
-// ----------------------------------------------------------------------------
-void MCP4822::setGain1X(int dac) {
-    if ((dac == MCP4822_DAC_A) || (dac == MCP4822_DAC_B)) {
+void MCP4822::setGain1X(int dac) 
+{
+    if ((dac == MCP4822_DAC_A) || (dac == MCP4822_DAC_B)) 
+	{
         gain[dac] = GAIN_1X;
     }
 }
 
-// ----------------------------------------------------------------------------
-// MCP4822::setGain1X_A
-//
-// Set the gain of dac A to 1X
-// ----------------------------------------------------------------------------
-void MCP4822::setGain1X_A() {
+void MCP4822::setGain1X_A() 
+{
     setGain1X(MCP4822_DAC_A);
 }
 
-// ----------------------------------------------------------------------------
-// MCP4822::setGain1X_B
-//
-// Set the gain of dac B to 1X
-// ----------------------------------------------------------------------------
-void MCP4822::setGain1X_B() {
+void MCP4822::setGain1X_B() 
+{
     setGain1X(MCP4822_DAC_B);
 }
 
-// ----------------------------------------------------------------------------
-// MCP4822::setGain1X_AB
-//
-// Set the gain of dac A and B to 1X
-// ----------------------------------------------------------------------------
-void MCP4822::setGain1X_AB() {
+void MCP4822::setGain1X_AB() 
+{
     setGain1X_A();
     setGain1X_B();
 }
 
-// ----------------------------------------------------------------------------
-// MCP4822::off
-//
-// Turn off the given dac
-// ----------------------------------------------------------------------------
-void MCP4822::off(int dac) {
+void MCP4822::off(int dac) 
+{
     int cmdWrd = 0;
     uint8_t byte0;
     uint8_t byte1;
@@ -281,30 +221,18 @@ void MCP4822::off(int dac) {
     digitalWrite(cs,HIGH);
 }
 
-// ----------------------------------------------------------------------------
-// MCP4822::off_A
-//
-// Turn off dac A
-// ----------------------------------------------------------------------------
-void MCP4822::off_A() {
+void MCP4822::off_A() 
+{
     off(MCP4822_DAC_A);
 }
 
-// ----------------------------------------------------------------------------
-// MCP4822::off_B
-//
-// Turn off dac B
-// ----------------------------------------------------------------------------
-void MCP4822::off_B() {
+void MCP4822::off_B() 
+{
     off(MCP4822_DAC_B);
 }
 
-// ----------------------------------------------------------------------------
-// MCP4822::off_AB
-//
-// Turn off dac A and B
-// ----------------------------------------------------------------------------
-void MCP4822::off_AB() {
+void MCP4822::off_AB() 
+{
     off_A();
     off_B();
 }

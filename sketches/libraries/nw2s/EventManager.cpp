@@ -18,15 +18,21 @@
 
 */
 
+#include "b.h"
 #include "EventManager.h"
 #include "IO.h"
 #include <Arduino.h>
+#include <Reset.h>
 
 using namespace std;
 using namespace nw2s;
 
 volatile unsigned long EventManager::t = 0UL;
 vector<TimeBasedDevice *> EventManager::timedevices;
+
+/* SERIAL COMMAND PROCESSING */
+String inputString = "";         
+bool stringComplete = false;
 
 void EventManager::initialize()
 {
@@ -51,10 +57,57 @@ void EventManager::loop()
 			EventManager::timedevices[i]->timer(EventManager::t);	
 		}
 	}
+
+	if (stringComplete)
+	{
+		if (inputString == "ERASEANDRESET")
+		{
+			Serial.println("Received command: ERASEANDRESET");
+			initiateReset(1);
+			tickReset();
+		}
+		else if (inputString == "DEBUG ON")
+		{
+			Serial.println("Received command: " + inputString);
+			b::debugMode = true;
+		}
+		else if (inputString == "DEBUG OFF")
+		{
+			Serial.println("Received command: " + inputString);
+			b::debugMode = false;
+		}
+		else
+		{
+			Serial.println("Unknown command: " + inputString);
+		}
+		
+		inputString = "";
+		stringComplete = false;
+	}
 }
 
 void EventManager::registerDevice(TimeBasedDevice *device)
 {
 	timedevices.push_back(device);
 }
+
+void serialEvent() 
+{
+	while (Serial.available()) 
+	{
+    	char c = (char)Serial.read(); 
+
+	    if (c == '\n') 
+		{
+	    	stringComplete = true;
+	    } 
+		else
+		{
+			inputString += c;			
+		}
+  	}
+}
+
+
+
 

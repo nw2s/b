@@ -31,6 +31,54 @@
 
 using namespace nw2s;
 
+/*
+
+	This sketch is used to tune the bias voltage of the input stage. The input circuit, unlike
+	the output circuit has a fixed gain stage with a variable bias. The bias is used to adjust
+	the zero point of the bipolar inputs. 
+
+	When tuning this portion of the circuit, first ensure that all of the input pots are turned
+	completel counter-clockwise (at zero). 
+
+	Upload the sketch and open the console window. You will see 13 columns of numbers. The values
+	look like this:
+
+	2017/2016/-2
+
+		The first number is the instantaneous raw value coming from the DAC. These numbers are 
+		12-bit numbers and range from 0 to 4096. 
+
+		The second number is an average of the last 10 raw values. 
+	
+		The third number is the average value converted to millivolts.
+
+	The first twelve columns represent the 12 individual inputs. The 13th number is the average
+	of all of the inputs.
+
+	You should see that all of the inputs are within a few millivolts of each other. Turn the
+	INPUT_BIAS pot until you see the millivolt values approach zero. Use the thirteenth column
+	to get the average of the inputs as close to zero as possible. If the pot seems to be a little
+	sticky and not settle excactly where you need it, simply turn it back and forth a couple of
+	times close to the position where it seems that it should be. Make smaller and smaller 
+	adjustments and allow the average to settle as you get closer to the target value. 
+
+	Once the bias is adjusted, the circuits should be tested. First, turn each pot completely from
+	zero to full and back to zero. You should see the millivolt values go from 0 to 5000 and back to
+	0 (or close to zero depending on the resistor errors).
+
+	Then, test the input jacks the same way. When testing the input jack, be sure to turn the pot
+	completely to the clockwise position to ensure that the signal is not attenuated at all. It is
+	also useful to use a bipolar signal on the input jacks to ensure that both positive and negative
+	swings are working. A through-zero modulator is most useful here. Something like the Doepfer 
+	A-145 is sufficient. 
+
+	Note that most of these test sketches are not meant to be examples of how best to perform
+	any particular task, but rather they are meant to test raw functionality. Please don't 
+	use these as sample of Good Things.
+	
+*/
+
+
 int average[12][10];
 PinAnalogIn inputs[12] = {
 	
@@ -78,7 +126,7 @@ void loop()
 		for (int i = 0; i < 12; i++)
 		{
 			int sum = 0;
-			int val = analogRead(inputs[i]);
+			int val = ::analogRead(inputs[i]);
 			
 			average[i][ptr] = val;
 			

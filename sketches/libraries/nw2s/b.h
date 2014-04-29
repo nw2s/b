@@ -1,0 +1,47 @@
+/*
+
+	nw2s::b - A microcontroller-based modular synth control framework
+	Copyright (C) 2013 Scott Wilson (thomas.scott.wilson@gmail.com)
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
+
+#ifndef b_h
+#define b_h
+
+namespace nw2s
+{
+	class b;
+
+	enum cvGainModeValues 
+	{
+		CV_GAIN_HIGH = 1,  // This is for when you're biasing to -10V and +10V
+		CV_GAIN_LOW = 0,   // This is for when you've biased to -5V to +5V
+	};
+			
+}
+
+class nw2s::b
+{
+	public:
+		static bool debugMode;
+		static bool cvGainMode;
+};
+
+
+#endif
+
+

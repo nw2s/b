@@ -24,13 +24,6 @@
 #include <iterator>
 #include <vector>
 
-#ifdef __AVR__
-#define CVTYPE unsigned char
-#else
-#define CVTYPE int
-#endif
-
-
 namespace nw2s
 {
 	enum ScaleType
@@ -63,14 +56,14 @@ namespace nw2s
 
 	struct ScaleCV
 	{
-		CVTYPE cv;
+		int cv;
 		int cvin;
 	};
 
 	struct ScaleNote 
 	{
 		char index;
-		CVTYPE cv;
+		int cv;
 		int cvin;
 		char octave;
 		char degree;
@@ -81,75 +74,6 @@ namespace nw2s
 	static const int NOTE_CV_SIZE = 61;
 	static const ScaleNote NOTE_NOT_FOUND = { -1, -1, -1, -1 };;
 
-#ifdef __AVR__
-
-	static const ScaleCV SCALE_NOTES[NOTE_CV_SIZE] = {
-	
-		{ 0, 0 },
-		{ 4, 9 },
-		{ 8, 26 },
-		{ 12, 43 },
-		{ 16, 60 },
-		{ 20, 77 },
-		{ 24, 94 },
-		{ 28, 111 },
-		{ 32, 128 },
-		{ 36, 145 },
-		{ 40, 162 },
-		{ 44, 180 },
-		{ 48, 197 },
-		{ 52, 214 },
-		{ 56, 231 },
-		{ 60, 248 },
-		{ 64, 265 },
-		{ 68, 282 },
-		{ 72, 299 },
-		{ 76, 316 },
-		{ 80, 333 },
-		{ 84, 350 },
-		{ 88, 367 },
-		{ 92, 384 },
-		{ 96, 401 },
-		{ 100, 418 },
-		{ 104, 435 },
-		{ 108, 452 },
-		{ 112, 469 },
-		{ 116, 486 },
-		{ 120, 503 },
-		{ 124, 521 },
-		{ 128, 538 },
-		{ 132, 555 },
-		{ 136, 572 },
-		{ 140, 589 },
-		{ 144, 606 },
-		{ 148, 623 },
-		{ 152, 640 },
-		{ 156, 657 },
-		{ 160, 674 },
-		{ 164, 691 },
-		{ 168, 708 },
-		{ 172, 725 },
-		{ 176, 742 },
-		{ 180, 759 },
-		{ 184, 776 },
-		{ 188, 793 },
-		{ 192, 810 },
-		{ 196, 827 },
-		{ 200, 844 },
-		{ 204, 862 },
-		{ 208, 879 },
-		{ 212, 896 },
-		{ 216, 913 },
-		{ 220, 930 },
-		{ 224, 947 },
-		{ 228, 964 },
-		{ 232, 981 },
-		{ 236, 998 },
-		{ 240, 1015 },
-	};
-
-
-#else
 
 	static const ScaleCV SCALE_NOTES[NOTE_CV_SIZE] = {
 	
@@ -216,6 +140,7 @@ namespace nw2s
 		{ 4000, 1015 },
 	};
 
+	
 	static const int CVFREQUENCY[4001] =
 	{
 		2394,
@@ -4220,8 +4145,6 @@ namespace nw2s
 		612019,
 		612868
 	};
-
-#endif
 
 	class Key;
 }

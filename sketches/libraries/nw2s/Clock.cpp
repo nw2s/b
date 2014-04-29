@@ -118,15 +118,10 @@ FixedClock::FixedClock(int tempo, unsigned char beats_per_measure)
 
 void Clock::timer(unsigned long t)
 {
-	if (t < 1000 && t % 20 == 0)
-	{
-		Serial.println(String(this->period));
-	}
-
-	if (t % 1000 == 0)
-	{
-		Serial.println("Clock T = " + String(t) + " " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));
-	}
+	// if (t % 1000 == 0)
+	// {
+	// 	Serial.println("Clock T = " + String(t) + " " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));
+	// }
 	
 	/* Call reset on devices first */
 	for (int i = 0; i < this->devices.size(); i++)
@@ -203,13 +198,13 @@ void Clock::timer(unsigned long t)
 
 void Clock::updateTempo(unsigned long t)
 {
-	Serial.println("Before Update " + String(t) + " " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));	
-
+//	Serial.println("Before Update " + String(t) + " " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));	
+	
 	/* If a clock type needs to update the tempo from time to time, then this can be used to do so */
 	this->next_clock_t = (t + this->period);
 	this->last_clock_t = t;	
 
-	Serial.println("After Update " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));	
+//	Serial.println("After Update " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));	
 }
 
 VariableClock::VariableClock(int mintempo, int maxtempo, PinAnalogIn input, unsigned char beats_per_measure)
@@ -236,6 +231,8 @@ void VariableClock::updateTempo(unsigned long t)
 	//TODO: Need to normalize the max analog value somewhere!
 	valuepointer = (valuepointer + 1) % 4;
 	pastvalues[valuepointer] = analogRead(this->input);
+
+	//TODO: If the change is bigger than a threshold, then assume we can clear the moving average
 
 	int movingaverage = (pastvalues[0] + pastvalues[1] + pastvalues[2] + pastvalues[3]) / 4;
 
@@ -264,9 +261,7 @@ void RandomTempoClock::updateTempo(unsigned long t)
  	this->period = 60000UL / tempo;
 
 	this->next_clock_t = (t + this->period);
-	this->last_clock_t = t;
-	
-	Serial.print("\ntempo: " + String(tempo));
+	this->last_clock_t = t;	
 }
 
 // volatile bool SlaveClock::trigger = false;
