@@ -213,34 +213,41 @@ VariableClock::VariableClock(int mintempo, int maxtempo, PinAnalogIn input, unsi
 	this->input = input;
 	this->beats_per_measure = beats_per_measure;
 	
-	pastvalues[0] = analogRead(this->input);
-	pastvalues[1] = analogRead(this->input);
-	pastvalues[2] = analogRead(this->input);
-	pastvalues[3] = analogRead(this->input);
-	valuepointer = 0;
-	
 	/* The variable clock operates on a period based on an input voltage */
 	this->mintempo = (mintempo < 1) ? 1 : (mintempo > 500) ? 500 : mintempo;
 	this->maxtempo = (maxtempo < 1) ? 1 : (maxtempo > 500) ? 500 : maxtempo;
 	
+	pastvalues[0] = analogReadmV(this->input);
+	pastvalues[1] = analogReadmV(this->input);
+	pastvalues[2] = analogReadmV(this->input);
+	pastvalues[3] = analogReadmV(this->input);
+	
+	int movingaverage = (pastvalues[0] + pastvalues[1] + pastvalues[2] + pastvalues[3]) / 4;
+	if (movingaverage < 0) movingaverage = 0;
+	
+	int tempo = ((((unsigned long)this->maxtempo - (unsigned long)this->mintempo) * ((unsigned long)movingaverage) / 5000UL)) + this->mintempo;
+ 	this->period = 60000UL / tempo;
+		
 	this->last_clock_t = 0;
 }
 
 void VariableClock::updateTempo(unsigned long t)
 {
-	//TODO: Need to normalize the max analog value somewhere!
-	valuepointer = (valuepointer + 1) % 4;
-	pastvalues[valuepointer] = analogRead(this->input);
-
-	//TODO: If the change is bigger than a threshold, then assume we can clear the moving average
+	pastvalues[0] = analogReadmV(this->input);
+	pastvalues[1] = analogReadmV(this->input);
+	pastvalues[2] = analogReadmV(this->input);
+	pastvalues[3] = analogReadmV(this->input);
 
 	int movingaverage = (pastvalues[0] + pastvalues[1] + pastvalues[2] + pastvalues[3]) / 4;
+	if (movingaverage < 0) movingaverage = 0;
 
-	int tempo = ((((unsigned long)this->maxtempo - (unsigned long)this->mintempo) * ((unsigned long)movingaverage) / 3300UL)) + this->mintempo;
+	int tempo = ((((unsigned long)this->maxtempo - (unsigned long)this->mintempo) * ((unsigned long)movingaverage) / 5000UL)) + this->mintempo;
  	this->period = 60000UL / tempo;
 
 	this->next_clock_t = (t + this->period);
 	this->last_clock_t = t;	
+	
+//	Serial.println("tempo: " + String(tempo));
 }
 
 RandomTempoClock::RandomTempoClock(int mintempo, int maxtempo, unsigned char beats_per_measure)

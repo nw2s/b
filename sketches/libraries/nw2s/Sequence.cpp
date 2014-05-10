@@ -209,22 +209,20 @@ void ProbabilityDrumTriggerSequencer::calculate()
 		{
 			this->resetnext = currentvalue >= rnd;	
 			this->nextvelocity = currentvelocity;
-			//TODO: randomize velocity here too, if required.
 		}
 		else
 		{
-			int rawval = analogRead(probabilitymodifierpin);
+			int rawval = analogReadmV(probabilitymodifierpin);
 			int factor = 100;
 					
-			//TODO: encapsulate scaling
 			/* Scale the factor based on 0-100 and 100-2000 */
-			if (rawval < 1700)
+			if (rawval < 2400)
 			{
-				factor = (rawval * 100) / 1700;
+				factor = (rawval * 100) / 2400;
 			}
-			else if (rawval > 1800)
+			else if (rawval > 2600)
 			{
-				factor = 100 + ((rawval * 1900UL) / 1700);
+				factor = 100 + ((rawval * 2600UL) / 2500);
 			}
 			
 			this->resetnext = ((currentvalue * factor) / 100) >= rnd;
@@ -232,7 +230,6 @@ void ProbabilityDrumTriggerSequencer::calculate()
 			if (this->resetnext)
 			{
 				//TODO: where do we scale velocities from 50 - 850???
-				//TODO: adjust velocity based on modifier pin
 				/* If we're triggering a hit next beat, calculate a velocity for it */
 				if (this->velocityrange != 0)
 				{
@@ -293,18 +290,18 @@ void ProbabilityTriggerSequencer::calculate()
 		}
 		else
 		{
-			int rawval = analogRead(modifierpin);
+			int rawval = analogReadmV(modifierpin);
 			int factor = 100;
 		
 			//TODO: encapsulate scaling
 			/* Scale the factor based on 0-100 and 100-2000 */
-			if (rawval < 1700)
+			if (rawval < 2400)
 			{
-				factor = (rawval * 100) / 1700;
+				factor = (rawval * 100) / 2400;
 			}
-			else if (rawval > 1800)
+			else if (rawval > 2600)
 			{
-				factor = 100 + ((rawval * 1900UL) / 1700);
+				factor = 100 + ((rawval * 2600UL) / 2400);
 			}
 			
 			this->resetnext = ((currentvalue * factor) / 100) >= rnd;

@@ -155,7 +155,7 @@ void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew)
 void AnalogOut::outputCV(int cv)
 {
 	/* 
-	
+
 	   The dacval is calculated as the desired input voltage in millivolts, scaled to the
 	   nearest even value (12 bit = 4000) 
 	
@@ -164,10 +164,9 @@ void AnalogOut::outputCV(int cv)
 
 	*/
 
-	//TODO: change to 4096
-	int dacval = 4000 - (((cv + (b::cvGainMode ? 10000 : 5000)) * 4000UL) / 10000);
+	int dacval = 4095 - (((cv + (b::cvGainMode ? 10000 : 5000)) * 4000UL) / 10000);
 	
-	/* We're not checking for overflow here - that'll take a few more cycles... */
+	/* We're not checking for overflow (value > 4095) here - that'll take a few more cycles... */
 
 	this->spidac.setValue(this->spidac_index, dacval);
 
@@ -264,7 +263,8 @@ void IOUtils::setupPins()
 		digitalWrite(44, (4 & (15 - i)) ? HIGH : LOW);
 		digitalWrite(43, (8 & (15 - i)) ? HIGH : LOW);
 		digitalWrite(45, HIGH);
-
+		
+		/* Delay just a tad so we see an animation when it reboots */
 		delay(10);
 
 		AnalogOut::ledDriver.setLEDOff(i);
@@ -298,7 +298,7 @@ void IOUtils::displayBeat(int beat, void* clockinstance)
 		if (clockinstance != IOUtils::clockinstance) return;
 	}
 
-	beat = 16 - beat;
+	beat = 15 - beat;
 
 	digitalWrite(45, LOW);
 	digitalWrite(41, (1 & beat) ? HIGH : LOW);
