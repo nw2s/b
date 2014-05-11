@@ -104,6 +104,8 @@ void setup()
 	Serial.begin(19200);
 	Serial.println("Starting...");
 
+	EventManager::initialize();
+
 	/* Setup analog inputs */
 	analogReadResolution(12);
 
@@ -147,5 +149,7 @@ void loop()
 
 		Serial.print("\n");
 	}
+	
+	EventManager::loop();
 
 }

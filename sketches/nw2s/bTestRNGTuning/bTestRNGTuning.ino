@@ -59,7 +59,7 @@ void setup()
 }
 
 void loop() 
-{
+{	
 	unsigned long zeros = 0;
 	unsigned long ones = 0;
 	unsigned long t = micros();

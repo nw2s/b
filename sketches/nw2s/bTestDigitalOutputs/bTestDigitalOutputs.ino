@@ -65,7 +65,7 @@ void setup()
 
 void loop() 
 {	
-	if (millis() % 1000 == 0)
+	if (millis() % 100 == 0)
 	{
 		digitalWrite(outputs[lastcounter], LOW);
 		digitalWrite(outputs[counter], HIGH);

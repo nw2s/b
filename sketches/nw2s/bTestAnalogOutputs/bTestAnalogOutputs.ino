@@ -69,6 +69,7 @@ int values[11] = {
 };
 
 bool checkToggle = false;
+long nextToggleTime = 0;
 
 AnalogOut* outputs[16];
 int counter = 0;
@@ -79,7 +80,7 @@ void setup()
 	Serial.println("Starting...");
 
 	/* Always set up the gain mode first - use HIGH if you are biased for -10V - +10V */
-	b::cvGainMode = CV_GAIN_HIGH;
+	b::cvGainMode = CV_GAIN_LOW;
 
 	/* Set up a clock to have something to watch :P */
 	EventManager::initialize();
@@ -97,27 +98,37 @@ void setup()
 }
 
 void loop() 
-{	
-	/* Only change from one to the next if the toggle is on */
-	if (!checkToggle && digitalRead(DUE_IN_D0))
+{
+	long t = millis();
+	
+	if (t > nextToggleTime)
 	{
-		for (int i = 0; i < 16; i++)
+	
+		/* Only change from one to the next if the toggle is on */
+		if (!checkToggle && digitalRead(DUE_IN_D0))
 		{
-			outputs[i]->outputCV(values[counter]);
-		}
-		
-		Serial.println("output val: " + String(values[counter]));
+			/* Stop the bounce */
+			nextToggleTime = t + 100;
+			checkToggle = true;
 
-		counter = (counter + 1) % 11;
+			for (int i = 0; i < 16; i++)
+			{
+				outputs[i]->outputCV(values[counter]);
+			}
 		
-		checkToggle = true;
+			Serial.println("output val: " + String(values[counter]));
+
+			counter = (counter + 1) % 11;		
+		}
+	
+		/* Reset the toggle trigger if it's off */
+		if (checkToggle && !digitalRead(DUE_IN_D0))
+		{
+			/* Stop the bounce */
+			nextToggleTime = t + 100;
+			checkToggle = false;
+		}
 	}
 	
-	/* Reset the toggle trigger if it's off */
-	if (checkToggle && !digitalRead(DUE_IN_D0))
-	{
-		checkToggle = false;
-	}
-
 	EventManager::loop();
 }

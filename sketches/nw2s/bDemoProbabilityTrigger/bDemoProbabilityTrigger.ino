@@ -44,7 +44,7 @@ void setup()
 	EventManager::initialize();
 
 	/* Setup a variable clock */
-	Clock* vclock = VariableClock::create(60, 240, DUE_IN_A00, 16);
+	Clock* vclock = VariableClock::create(10, 240, DUE_IN_A00, 16);
 
 	/* Trigger Sequence */
 	int snarelist[16] = { 0, 1, 1, 1, 75, 1, 1, 1, 0, 1, 1, 1, 75, 1, 1, 1 };
