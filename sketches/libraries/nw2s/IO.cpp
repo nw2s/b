@@ -246,7 +246,7 @@ void IOUtils::setupPins()
 	Wire1.begin();
 	AnalogOut::ledDriver.begin(B000000);
 	IOUtils::enableLED = AnalogOut::ledDriver.init();
-	Serial.println("ZZZ  LED driver status: " + String(IOUtils::enableLED));
+	Serial.println("LED driver status: " + String(IOUtils::enableLED));
 
 	/* Turn then all off */
 	for (int i = 0; i < 16; i++) AnalogOut::ledDriver.setLEDOff(i);
