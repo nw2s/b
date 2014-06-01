@@ -134,9 +134,7 @@ void Oscillator::timer_handler()
  	dacc_set_channel_selection(DACC_INTERFACE, this->dac);
 	dacc_write_conversion_data(DACC_INTERFACE, sample);
 
-	this->nextSample();		
-	
-	Serial.print("."); 
+	this->nextSample();			
 }
 
 VCSamplingFrequencyOscillator::VCSamplingFrequencyOscillator(PinAudioOut pinout, PinAnalogIn pinin) : Oscillator(pinout)
@@ -301,8 +299,6 @@ void VCSamplingFrequencyOscillator::timer(unsigned long t)
 			this->nextdecimationlevel = 6;
 			this->nextinterruptrate = 10500000 / (frequency100 / 20);
 		}
-				
-		//Serial.println(String(value) + " " + String(frequency100 / 100) + " " + String(this->nextinterruptrate));
 	}
 }
 
