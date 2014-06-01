@@ -28,6 +28,7 @@
 
 using namespace nw2s;
 
+
 int nw2s::analogRead(int input)
 {
 	return 4096 - ::analogRead(input);

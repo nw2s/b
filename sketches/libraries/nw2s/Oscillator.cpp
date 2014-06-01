@@ -22,6 +22,7 @@
 #include "Key.h"
 #include "Entropy.h"
 #include "SignalData.h"
+#include "../aJSON/aJSON.h"
 
 
 
@@ -37,9 +38,56 @@ VCSamplingFrequencyOscillator* VCSamplingFrequencyOscillator::create(PinAudioOut
 	return new VCSamplingFrequencyOscillator(pinout, pinin);
 }
 
+VCSamplingFrequencyOscillator* VCSamplingFrequencyOscillator::create(aJsonObject* data)
+{
+	aJsonObject* inputNode = aJson.getObjectItem(data, "analogInput");
+	aJsonObject* outputNode = aJson.getObjectItem(data, "dacOutput");
+	
+	if (inputNode == NULL)
+	{
+		Serial.println("The VCSamplingFrequencyOscillator node is missing an analogInput definition.");
+		return NULL;
+	}
+	
+	if (outputNode == NULL)
+	{
+		Serial.println("The VCSamplingFrequencyOscillator node is missing a dacOutput definition.");
+		return NULL;
+	}
+	
+	Serial.println("Frequency Input: Analog In " + String(inputNode->valueint));
+	Serial.println("Audio Output: DAC" + String(inputNode->valueint));
+	
+	return new VCSamplingFrequencyOscillator(INDEX_AUDIO_OUT[outputNode->valueint - 1], INDEX_ANALOG_IN[inputNode->valueint - 1]);
+}
+
+
 DiscreteNoise* DiscreteNoise::create(PinAudioOut pinout, PinAnalogIn pinin)
 {
 	return new DiscreteNoise(pinout, pinin);
+}
+
+DiscreteNoise* DiscreteNoise::create(aJsonObject* data)
+{
+	aJsonObject* inputNode = aJson.getObjectItem(data, "analogInput");
+	aJsonObject* outputNode = aJson.getObjectItem(data, "dacOutput");
+	
+	if (inputNode == NULL)
+	{
+		Serial.println("The DiscreteNoise node is missing an analogInput definition.");
+		return NULL;
+	}
+	
+	if (outputNode == NULL)
+	{
+		Serial.println("The DiscreteNoise node is missing a dacOutput definition.");
+		return NULL;
+	}
+	
+	Serial.println("Frequency Input: Analog In " + String(inputNode->valueint));
+	Serial.println("Audio Output: DAC" + String(inputNode->valueint));
+	
+	return new DiscreteNoise(INDEX_AUDIO_OUT[outputNode->valueint - 1], INDEX_ANALOG_IN[inputNode->valueint - 1]);
 }
 
 
@@ -87,6 +135,8 @@ void Oscillator::timer_handler()
 	dacc_write_conversion_data(DACC_INTERFACE, sample);
 
 	this->nextSample();		
+	
+	Serial.print("."); 
 }
 
 VCSamplingFrequencyOscillator::VCSamplingFrequencyOscillator(PinAudioOut pinout, PinAnalogIn pinin) : Oscillator(pinout)
@@ -267,6 +317,8 @@ VCO::VCO(PinAudioOut pinout, PinAnalogIn pinin) : Oscillator(pinout)
 	this->phaseindex = 0;
 	this->sample = 0;
 	this->samplespercycle = 1000000UL / this->frequency; // 10kHz sample rate
+
+	this->timer_start();
 }
 
 void VCO::timer(unsigned long t)
@@ -286,7 +338,7 @@ void VCO::nextSample()
 		this->frequency = CVFREQUENCY[value];
 		this->samplespercycle = 1000000UL / this->frequency; // 10kHz sample rate
 	}
-
+	
 	this->sample = this->nextVCOSample();
 }
 

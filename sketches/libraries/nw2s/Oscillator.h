@@ -25,6 +25,8 @@
 #include "AudioDevice.h"
 #include "EventManager.h"
 #include "SignalData.h"
+#include "../aJSON/aJSON.h"
+
 
 namespace nw2s
 {
@@ -59,6 +61,8 @@ class nw2s::VCSamplingFrequencyOscillator : public Oscillator, public TimeBasedD
 {
 	public:
 		static VCSamplingFrequencyOscillator* create(PinAudioOut pinout, PinAnalogIn pinin);
+		static VCSamplingFrequencyOscillator* create(aJsonObject* data);
+
 		virtual void timer(unsigned long t);
 
 	protected:
@@ -126,6 +130,7 @@ class nw2s::DiscreteNoise : public VCO
 {
 	public:
 		static DiscreteNoise* create(PinAudioOut pinout, PinAnalogIn pinin);
+		static DiscreteNoise* create(aJsonObject* data);
 		
 	private:		
 		int currentvalue;

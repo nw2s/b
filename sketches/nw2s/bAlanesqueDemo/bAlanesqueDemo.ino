@@ -44,11 +44,11 @@ void setup()
 
 	RandomLoopingShiftRegister* shiftregister = RandomLoopingShiftRegister::create(16, DUE_IN_A01, DIV_SIXTEENTH);
 	
-	shiftregister->setCVOut(DUE_SPI_4822_00);
+	shiftregister->setCVOut(DUE_SPI_4822_02);
 	shiftregister->setDelayedCVOut(DUE_SPI_4822_08, 2);
 
 	shiftregister->setKey(C, MAJOR);
-	shiftregister->setNoteOut(DUE_SPI_4822_01);
+	shiftregister->setNoteOut(DUE_SPI_4822_04);
 	shiftregister->setDelayedNoteOut(DUE_SPI_4822_09, 1);
 	
 	shiftregister->setGateOut(1, DUE_OUT_D00, 250);

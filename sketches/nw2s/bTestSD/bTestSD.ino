@@ -49,7 +49,7 @@ using namespace nw2s;
 Sd2Card card;
 SdVolume volume;
 SdFile root;
-File dataFile;
+SdFile dataFile;
 
 void setup() 
 {
@@ -120,31 +120,31 @@ void setup()
     // list all files in the card with date and size
     root.ls(LS_R | LS_DATE | LS_SIZE);
 
-	dataFile = SD.open("test/testdata.txt");
-	
-	// if the file isn't open, pop up an error:
-	if (!dataFile)
-	{
-	    Serial.println("error opening test/testdata.txt");
-	}	
+	// dataFile.open("test/testdata.txt");
+	// 
+	// // if the file isn't open, pop up an error:
+	// if (!dataFile)
+	// {
+	//     Serial.println("error opening test/testdata.txt");
+	// }	
 }
 
 void loop() 
 {
-	if (dataFile) 
-	{
-	    while (dataFile.available()) 
-		{
-			char c = dataFile.read();
-	    	Serial.print(c);
-			
-			if (c == '\n')
-			{
-				delay(10);
-				break;
-			}
-	    }
-	}  
+	// if (dataFile) 
+	// {
+	//     while (dataFile.available()) 
+	// 	{
+	// 		char c = dataFile.read();
+	//     	Serial.print(c);
+	// 		
+	// 		if (c == '\n')
+	// 		{
+	// 			delay(10);
+	// 			break;
+	// 		}
+	//     }
+	// }  
 		
 	
 }
