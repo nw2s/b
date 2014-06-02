@@ -134,9 +134,18 @@ void AnalogOut::outputNoteCV(ScaleNote note)
 {
 	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
 	{
-		if (IOUtils::enableLED) AnalogOut::ledDriver.setLEDDimmed(this->ledpin, note.cv);
-						
-		this->spidac.setValue(this->spidac_index, note.cv);
+		//TODO: account for gain mode
+		int dacval = 4095 - note.cv;
+
+		this->spidac.setValue(this->spidac_index, dacval);
+
+		if (IOUtils::enableLED)
+		{
+			//TODO: Don't do this too often
+			int ledval = (dacval < 2000) ? 4000 - (dacval * 2) : (dacval - 2000) * 2;
+		
+			AnalogOut::ledDriver.setLEDDimmed(this->ledpin, ledval);
+		}						
 	}
 }
 
