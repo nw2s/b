@@ -23,6 +23,7 @@
 
 #include "EventManager.h"
 #include "IO.h"
+#include "../aJSON/aJSON.h"
 
 #include <iterator>
 #include <vector>
@@ -101,6 +102,7 @@ class nw2s::FixedClock : public Clock
 {
 	public:
 		static FixedClock* create(int tempo, unsigned char beats_per_measure);
+		static FixedClock* create(aJsonObject* data);
 		
 	protected:		
 		FixedClock(int tempo, unsigned char beats_per_measure);		

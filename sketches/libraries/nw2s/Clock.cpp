@@ -21,6 +21,7 @@
 
 #include "Clock.h"
 #include <Arduino.h>
+#include "../aJSON/aJSON.h"
 
 using namespace std;
 using namespace nw2s;
@@ -58,6 +59,29 @@ void BeatDevice::calculate()
 FixedClock* FixedClock::create(int tempo, unsigned char beats_per_measure)
 {	
 	return new FixedClock(tempo, beats_per_measure);
+}
+
+FixedClock* FixedClock::create(aJsonObject* data)
+{
+	aJsonObject* tempoNode = aJson.getObjectItem(data, "tempo");
+	aJsonObject* beatsNode = aJson.getObjectItem(data, "beats");
+	
+	if (tempoNode == NULL)
+	{
+		Serial.println("The FixedClock node is missing a tempo definition.");
+		return NULL;
+	}
+	
+	if (beatsNode == NULL)
+	{
+		Serial.println("The FixedClock node is missing a beats definition.");
+		return NULL;
+	}
+	
+	Serial.println("Tempo: " + String(tempoNode->valueint));
+	Serial.println("Beats Per Measure: " + String(beatsNode->valueint));	
+	
+	return new FixedClock(tempoNode->valueint, beatsNode->valueint);
 }
 
 VariableClock* VariableClock::create(int mintempo, int maxtempo, PinAnalogIn input, unsigned char beats_per_measure)

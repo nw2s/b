@@ -147,6 +147,7 @@ class nw2s::NoteSequencer : public nw2s::Sequencer
 {
 	public:
 		static NoteSequencer* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq = false);
+		static NoteSequencer* create(aJsonObject* data);
 		virtual void timer(unsigned long t);
 		virtual void reset();
 	
@@ -156,7 +157,6 @@ class nw2s::NoteSequencer : public nw2s::Sequencer
 		int current_octave;
 		Key* key;
 	 	AnalogOut* output;
-
 	
 	protected:
 		volatile int sequence_index;

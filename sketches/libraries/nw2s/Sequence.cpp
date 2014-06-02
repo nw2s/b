@@ -339,7 +339,7 @@ NoteSequencer::NoteSequencer(vector<SequenceNote>* notes, NoteName key, ScaleTyp
 void NoteSequencer::timer(unsigned long t)
 {
 	// if (this->slew != NULL) this->output->outputSlewedNoteCV(this->key->getNote(this->current_octave, this->current_degree), this->slew);
-	// if (this->gate != NULL) this->gate->timer(t);
+	if (this->gate != NULL) this->gate->timer(t);
 	// if (this->envelope != NULL) this->envelope->timer(t);	
 }
 
@@ -360,7 +360,7 @@ void NoteSequencer::reset()
 
 		// if (this->slew == NULL) this->output->outputNoteCV(this->key->getNote(this->current_octave, this->current_degree));
 		// 
-		// if (this->gate != NULL) this->gate->reset();
+		if (this->gate != NULL) this->gate->reset();
 		// if (this->envelope != NULL) this->envelope->reset();
 	}
 }

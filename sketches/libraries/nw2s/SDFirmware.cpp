@@ -109,6 +109,30 @@ void nw2s::initializeFirmware()
 		return;
 	}
 
+	/* If there is a clock, keep track of it for beatdevices */
+	/* If there is a clock, keep track of it for beatdevices */
+	/* If there is a clock, keep track of it for beatdevices */
+
+	Clock* clockDevice = NULL;
+	aJsonObject* clockNode = aJson.getObjectItem(programNode, "clock");
+	
+	if (clockNode == NULL)
+	{
+		Serial.println("No clock defined. If you have any beat devices, they won't have a clock to run on");
+	}
+	else
+	{
+		aJsonObject* clockTypeNode = aJson.getObjectItem(clockNode, "type");
+		Serial.println("Clock: " + String(clockTypeNode->valuestring));
+		
+		if (strcmp(clockTypeNode->valuestring, "FixedClock") == 0)
+		{
+			clockDevice = FixedClock::create(clockNode);
+			EventManager::registerDevice(clockDevice);
+		}		
+	}
+	
+
 	/* Iterate over the devices and initialize them */
 	/* Iterate over the devices and initialize them */
 	/* Iterate over the devices and initialize them */
@@ -124,6 +148,17 @@ void nw2s::initializeFirmware()
 		if (strcmp(typeNode->valuestring, "DiscreteNoise") == 0)
 		{
 			EventManager::registerDevice(DiscreteNoise::create(deviceNode));
+		}
+		else if (strcmp(typeNode->valuestring, "NoteSequencer") == 0)
+		{
+			if (clockDevice != NULL)
+			{
+				clockDevice->registerDevice(NoteSequencer::create(deviceNode));
+			}
+			else
+			{
+				Serial.println("NoteSequencer defined with no clock, skipping.");
+			}
 		}
 		else if (strcmp(typeNode->valuestring, "VCSamplingFrequencyOscillator") == 0)
 		{
