@@ -106,6 +106,9 @@ class nw2s::FixedClock : public Clock
 		int period;
 		
 		FixedClock(int tempo, unsigned char beats_per_measure);		
+
+	private:
+		virtual void updateTempo(unsigned long t);
 };
 
 class nw2s::VariableClock : public Clock

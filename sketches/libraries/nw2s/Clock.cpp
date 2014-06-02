@@ -198,13 +198,17 @@ void Clock::timer(unsigned long t)
 
 void Clock::updateTempo(unsigned long t)
 {
-//	Serial.println("Before Update " + String(t) + " " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));	
 	
-	/* If a clock type needs to update the tempo from time to time, then this can be used to do so */
+}
+
+void FixedClock::updateTempo(unsigned long t)
+{
+	Serial.println("Before Update " + String(t) + " " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));	
+	
 	this->next_clock_t = (t + this->period);
 	this->last_clock_t = t;	
 
-//	Serial.println("After Update " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));	
+	Serial.println("After Update " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));	
 }
 
 VariableClock::VariableClock(int mintempo, int maxtempo, PinAnalogIn input, unsigned char beats_per_measure)
