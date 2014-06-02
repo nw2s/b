@@ -338,13 +338,14 @@ NoteSequencer::NoteSequencer(vector<SequenceNote>* notes, NoteName key, ScaleTyp
 
 void NoteSequencer::timer(unsigned long t)
 {
-	if (this->slew != NULL) this->output->outputSlewedNoteCV(this->key->getNote(this->current_octave, this->current_degree), this->slew);
-	if (this->gate != NULL) this->gate->timer(t);
-	if (this->envelope != NULL) this->envelope->timer(t);	
+	// if (this->slew != NULL) this->output->outputSlewedNoteCV(this->key->getNote(this->current_octave, this->current_degree), this->slew);
+	// if (this->gate != NULL) this->gate->timer(t);
+	// if (this->envelope != NULL) this->envelope->timer(t);	
 }
 
 void NoteSequencer::reset()
 {
+	//TODO: move to calculate
 	this->sequence_index = (randomize_seq) ? random(this->notes->size()) : ++(this->sequence_index) % this->notes->size();
 
 	/* If there's a HOLD in the sequence, then we don't change the note or trigger any events */
@@ -353,10 +354,14 @@ void NoteSequencer::reset()
 		this->current_degree = (*this->notes)[this->sequence_index].degree;
 		this->current_octave = (*this->notes)[this->sequence_index].octave;		
 
-		if (this->slew == NULL) this->output->outputNoteCV(this->key->getNote(this->current_octave, this->current_degree));
+		this->output->outputNoteCV(this->key->getNote(this->current_octave, this->current_degree));		
 
-		if (this->gate != NULL) this->gate->reset();
-		if (this->envelope != NULL) this->envelope->reset();
+		//Serial.println(String(this->sequence_index) + " " + String(this->current_degree) + " " + String(this->current_octave));
+
+		// if (this->slew == NULL) this->output->outputNoteCV(this->key->getNote(this->current_octave, this->current_degree));
+		// 
+		// if (this->gate != NULL) this->gate->reset();
+		// if (this->envelope != NULL) this->envelope->reset();
 	}
 }
 

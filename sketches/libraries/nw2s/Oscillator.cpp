@@ -248,20 +248,20 @@ void VCSamplingFrequencyOscillator::timer(unsigned long t)
 	if (t % 5 == 0)
 	{
 		/* Read the analog in and get a frequency */
-		// int value = analogRead(pinin);
-		// value = (value < 0) ? 0 : (value > 4000) ? 4000 : value;
-		// 	
+		//int value = analogRead(pinin);
+		//value = (value < 0) ? 0 : (value > 4000) ? 4000 : value;
+			
 		// value = value >> 2;
 		// value = value << 2;
 	
 		/* Testing a sweep */
-		//int value = (t / 10) % 4000; 
+		int value = (t / 10) % 4000; 
 	
 		/* Hardcode to 1kHz for testing */
-		int frequency100 = 100000;
+		// int frequency100 = 100000;
 	
 		/* Convert the input value to a frequency (x100) via lookup */
-		//int frequency100 = CVFREQUENCY[value];
+		int frequency100 = CVFREQUENCY[value];
 	
 		/* We want to use progressively decimated waves as the frequency goes up */
 		if (frequency100 < 3300)

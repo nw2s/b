@@ -28,6 +28,7 @@
 #include <SPI.h>
 #include <SD.h>
 #include <Wire.h>
+#include <aJSON.h>
 
 using namespace nw2s;
 
@@ -40,8 +41,7 @@ void setup()
 	EventManager::initialize();
 
 	/* Fixed clock running at 75BPM on an Ardcore D0 */
-	FixedClock* fixedclock = FixedClock::create(75, 8);
-	EventManager::registerDevice(fixedclock);
+	FixedClock* fixedclock = FixedClock::create(75, 16);
 
 	/* Set up the note data for the sequence */
 	SequenceNote notelist[34] = { {1,1}, {1,3}, {1,5}, {1,1}, {1,3}, {1,5}, {1,1}, {1,5}, 
@@ -53,14 +53,16 @@ void setup()
 	NoteSequenceData* notes = new NoteSequenceData(notelist, notelist + 34);
 
 	/* Build our note-based seuqnce */
-	NoteSequencer* sequencer = NoteSequencer::create(notes, C, MAJOR, DIV_EIGHTH, DUE_SPI_4822_00);
+	NoteSequencer* sequencer = NoteSequencer::create(notes, C, MAJOR, DIV_EIGHTH, DUE_SPI_4822_15);
 
 	/* Add some modifier values */
-	sequencer->setgate(Gate::create(DUE_OUT_D00, 75));
-	sequencer->setslew(DecaySlew::create(0.90));
-	sequencer->seteg(ADSR::create(20, 40, 254, 1250, 1200, false, DUE_SPI_4822_03));
+	// sequencer->setgate(Gate::create(DUE_OUT_D00, 75));
+	// sequencer->setslew(DecaySlew::create(0.90));
+	// sequencer->seteg(ADSR::create(20, 40, 254, 1250, 1200, false, DUE_SPI_4822_03));
 
 	fixedclock->registerDevice(sequencer);
+	
+	EventManager::registerDevice(fixedclock);	
 }
 
 void loop() 

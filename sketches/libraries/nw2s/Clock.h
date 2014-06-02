@@ -102,9 +102,7 @@ class nw2s::FixedClock : public Clock
 	public:
 		static FixedClock* create(int tempo, unsigned char beats_per_measure);
 		
-	protected:
-		int period;
-		
+	protected:		
 		FixedClock(int tempo, unsigned char beats_per_measure);		
 
 	private:

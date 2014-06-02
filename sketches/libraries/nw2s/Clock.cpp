@@ -104,16 +104,12 @@ FixedClock::FixedClock(int tempo, unsigned char beats_per_measure)
 	/* The fixed clock operates on a regular period based on the tempo */
 	int normalized_tempo = (tempo < 1) ? 1 : (tempo > 500) ? 500 : tempo;
 		
-	Serial.println("Setup Clock " + String(tempo) + " " + String(normalized_tempo));	
-		
 	this->beat = 0;
 	this->period = 60000UL / normalized_tempo;
 	this->beats_per_measure = beats_per_measure;
 
 	this->last_clock_t = 0;
 	this->next_clock_t = 0;
-
-	Serial.println("Setup Clock " + String(tempo) + " " + String(normalized_tempo) + " " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));	
 }
 
 void Clock::timer(unsigned long t)
@@ -158,9 +154,14 @@ void Clock::timer(unsigned long t)
 	/* Then calculate new time on devices and let them do any work they wanted deferred */
 	for (int i = 0; i < this->devices.size(); i++)
 	{
-		if ((this->devices[i]->getNextTime() == t) || (this->devices[i]->getNextTime() == 0))
+		if (this->devices[i]->getNextTime() <= t)
 		{
-			this->devices[i]->setNextTime((((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) + t);
+			Serial.println("calculating new time! " + String(this->devices[i]->getNextTime()) + " " + String(t));
+			
+			this->devices[i]->setNextTime((((unsigned long)(this->devices[i]->getclockdivision()) * (unsigned long)(this->period)) / 1000UL) + t);
+
+			Serial.println(String(this->devices[i]->getNextTime()) + " " + String(this->period));
+
 			
 			this->devices[i]->calculate();
 		}
@@ -203,12 +204,8 @@ void Clock::updateTempo(unsigned long t)
 
 void FixedClock::updateTempo(unsigned long t)
 {
-	Serial.println("Before Update " + String(t) + " " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));	
-	
 	this->next_clock_t = (t + this->period);
 	this->last_clock_t = t;	
-
-	Serial.println("After Update " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));	
 }
 
 VariableClock::VariableClock(int mintempo, int maxtempo, PinAnalogIn input, unsigned char beats_per_measure)
@@ -249,9 +246,7 @@ void VariableClock::updateTempo(unsigned long t)
  	this->period = 60000UL / tempo;
 
 	this->next_clock_t = (t + this->period);
-	this->last_clock_t = t;	
-	
-//	Serial.println("tempo: " + String(tempo));
+	this->last_clock_t = t;		
 }
 
 RandomTempoClock::RandomTempoClock(int mintempo, int maxtempo, unsigned char beats_per_measure)
