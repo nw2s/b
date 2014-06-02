@@ -2,21 +2,15 @@
 	"program" : 	
 
 	{
-		"name" : 			"Discrete Noise Demo",
+		"name" : 			"Discrete Noise",
 
 		"devices" : [
 			
 			{
 				"type" : "DiscreteNoise",
+				"dacOutput" : 1,
 				"analogInput" : 1,
-				"audioOutput" : 1
-			},
-			
-			{
-				"type" : "DiscreteNoise",
-				"analogInput" : 2,
-				"audioOutput" : 2
-			}			
+			}		
 		]
 	}
 }
