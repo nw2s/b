@@ -19,10 +19,16 @@
 */
 
 #include <EventManager.h>
+#include <Key.h>
 #include <Trigger.h>
 #include <Clock.h>
+#include <Slew.h>
+#include <Sequence.h>
 #include <IO.h>
 #include <SPI.h>
+#include <SD.h>
+#include <Wire.h>
+#include <aJSON.h>
 
 /*
 
@@ -62,32 +68,32 @@ void setup()
 	//Clock* democlock = SlaveClock::create(DUE_IN_D0, 16);
 
 	/* Register the clock with the EventManager */
-	EventManager::registerdevice(democlock);
+	EventManager::registerDevice(democlock);
 	
 	/* Gate running quarter notes on expander port 0 */
 	Trigger* trigger0 = Trigger::create(DUE_OUT_D08, DIV_QUARTER);
-	democlock->registerdevice(trigger0);
+	democlock->registerDevice(trigger0);
 
 	Trigger* trigger1 = Trigger::create(DUE_OUT_D09, DIV_HALF);
-	democlock->registerdevice(trigger1);
+	democlock->registerDevice(trigger1);
 	
 	Trigger* trigger2 = Trigger::create(DUE_OUT_D10, DIV_EIGHTH_DOT);
-	democlock->registerdevice(trigger2);
+	democlock->registerDevice(trigger2);
 	
 	Trigger* trigger3 = Trigger::create(DUE_OUT_D11, DIV_QUARTER_TRIPLET);
-	democlock->registerdevice(trigger3);
+	democlock->registerDevice(trigger3);
 	
 	Trigger* trigger4 = Trigger::create(DUE_OUT_D12, DIV_SIXTEENTH);
-	democlock->registerdevice(trigger4);
+	democlock->registerDevice(trigger4);
 	
 	Trigger* trigger5 = Trigger::create(DUE_OUT_D13, DIV_WHOLE);
-	democlock->registerdevice(trigger5);
+	democlock->registerDevice(trigger5);
 	
 	Trigger* trigger6 = Trigger::create(DUE_OUT_D14, DIV_EIGHTH_TRIPLET);
-	democlock->registerdevice(trigger6);
+	democlock->registerDevice(trigger6);
 	
 	Trigger* trigger7 = Trigger::create(DUE_OUT_D15, DIV_THIRTYSECOND);
-	democlock->registerdevice(trigger7);
+	democlock->registerDevice(trigger7);
 	
 }
 

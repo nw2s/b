@@ -56,6 +56,9 @@ namespace nw2s
 	class RandomTempoClock;
 	// class SlaveClock;
 	// class RandomDropoutClock;
+	
+	int clockDivisionFromName(char* name);
+	
 }
 
 class nw2s::BeatDevice : public TimeBasedDevice

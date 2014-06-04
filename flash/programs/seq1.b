@@ -18,8 +18,9 @@
 				"type" : "NoteSequencer",
 				"analogOutput" : 1,
 				"root" : "C",
-				"scale" : "MAJOR",
-				"division" : "EIGHTH",
+				"scale" : "major",
+				"division" : "eighth",
+				"randomize" : false,
 				"notes" : [
 					
 					[1,1], [1,3], [1,5], [2,1]

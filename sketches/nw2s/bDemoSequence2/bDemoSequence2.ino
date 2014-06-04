@@ -26,6 +26,9 @@
 #include <Slew.h>
 #include <Sequence.h>
 #include <SPI.h>
+#include <Wire.h>
+#include <aJSON.h>
+#include <SD.h>
 
 /*
 
@@ -61,7 +64,7 @@ void setup()
 	/* VOICE 1 */
 	/* VOICE 1 */
 
-	Clock* dropoutclock = RandomDropoutClock::create(125, 8, 20);
+	Clock* clock1 = FixedClock::create(125, 8);
 	
 	SequenceNote notelist[34] = { {1,1}, {1,1}, {1,5}, {1,1}, {1,1}, {1,3}, {1,3}, {1,5}, 
 								  {2,1}, {2,1}, {2,5}, {2,1}, {2,3}, {2,3}, {2,1}, {2,1}, 
@@ -73,9 +76,9 @@ void setup()
 	Sequencer* sequencer = MorphingNoteSequencer::create(notes, C, MAJOR, 25, DIV_SIXTEENTH, DUE_SPI_4822_00);
 	sequencer->seteg(ADSR::create(10, 250, 254, 1250, 1200, false, DUE_SPI_4822_01));
 	
-	dropoutclock->registerdevice(sequencer);
+	clock1->registerDevice(sequencer);
 	
-	EventManager::registerdevice(dropoutclock);
+	EventManager::registerDevice(clock1);
 	
 	
 	/* VOICE 2 */
@@ -90,9 +93,9 @@ void setup()
 	
 	Sequencer* sequencer2 = NoteSequencer::create(notes2, C, MAJOR, DIV_WHOLE, DUE_SPI_4822_02);
 	
-	fixedclock->registerdevice(sequencer2);
+	fixedclock->registerDevice(sequencer2);
 	
-	EventManager::registerdevice(fixedclock);
+	EventManager::registerDevice(fixedclock);
 	
 	/* VOICE 2 MODULATION SEQUENCE */
 	/* VOICE 2 MODULATION SEQUENCE */
@@ -103,9 +106,9 @@ void setup()
 	Sequencer* cvsequencer = CVSequencer::create(800, 1000, DIV_QUARTER, DUE_SPI_4822_03);
 	cvsequencer->setslew(LinearSlew::create(50));
 	
-	randomclock->registerdevice(cvsequencer);
+	randomclock->registerDevice(cvsequencer);
 	
-	EventManager::registerdevice(randomclock);
+	EventManager::registerDevice(randomclock);
 }
 
 void loop() 

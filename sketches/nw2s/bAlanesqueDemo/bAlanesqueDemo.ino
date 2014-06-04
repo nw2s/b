@@ -29,6 +29,7 @@
 #include <SD.h>
 #include <Wire.h>
 #include <ShiftRegister.h>
+#include <aJSON.h>
 
 using namespace nw2s;
 

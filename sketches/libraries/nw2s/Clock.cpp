@@ -26,6 +26,73 @@
 using namespace std;
 using namespace nw2s;
 
+int nw2s::clockDivisionFromName(char* name)
+{	
+	if (strcmp("whole", name))
+	{
+		return DIV_WHOLE;
+	}
+	if (strcmp("half", name))
+	{
+		return DIV_HALF;
+	}
+	if (strcmp("dotted half", name))
+	{
+		return DIV_HALF_DOT;
+	}
+	if (strcmp("quarter", name))
+	{
+		return DIV_QUARTER;
+	}
+	if (strcmp("quarter triplet", name))
+	{
+		return DIV_QUARTER_TRIPLET;
+	}
+	if (strcmp("dotted quarter", name))
+	{
+		return DIV_QUARTER_DOT;
+	}
+	if (strcmp("eigth", name))
+	{
+		return DIV_EIGHTH;
+	}
+	if (strcmp("eigth triplet", name))
+	{
+		return DIV_EIGHTH_TRIPLET;
+	}
+	if (strcmp("dotted eighth", name))
+	{
+		return DIV_EIGHTH_DOT;
+	}
+	if (strcmp("sixteenth", name))
+	{
+		return DIV_SIXTEENTH;
+	}
+	if (strcmp("sixteenth triplet", name))
+	{
+		return DIV_SIXTEENTH_TRIPLET;
+	}
+	if (strcmp("dotted sixteenth", name))
+	{
+		return DIV_SIXTEENTH_DOT;
+	}
+	if (strcmp("thirtysecond", name))
+	{
+		return DIV_THIRTYSECOND;
+	}
+	if (strcmp("dotted thirtysecond", name))
+	{
+		return DIV_THIRTYSECOND_DOT;
+	}
+	if (strcmp("thirtysecond triplet", name))
+	{
+		return DIV_THIRTYSECOND_TRIPLET;
+	}	
+	
+	Serial.println("Unknown division " + String(name) + " using quarter instead.");
+	return DIV_QUARTER;
+}
+
 BeatDevice::BeatDevice()
 {
 	this->clock_division = DIV_QUARTER;

@@ -29,6 +29,8 @@
 #include <SignalData.h>
 #include <SD.h>
 #include <Loop.h>
+#include <Wire.h>
+#include <aJSON.h>
 
 /*
 
@@ -56,7 +58,7 @@ void setup()
 	/* VOICE 1 */
 	/* VOICE 1 */
 
-	Clock* dropoutclock = RandomDropoutClock::create(128, 16, 20);
+	Clock* clock1 = FixedClock::create(128, 16);
 	
 	SequenceNote notelist[34] = { {1,1}, {1,1}, {1,5}, {1,1}, {1,1}, {1,3}, {1,3}, {1,5}, 
 								  {2,1}, {2,1}, {2,5}, {2,1}, {2,3}, {2,3}, {2,1}, {2,1}, 
@@ -68,9 +70,9 @@ void setup()
 	Sequencer* sequencer = MorphingNoteSequencer::create(notes, A, MINOR, 25, DIV_SIXTEENTH, DUE_SPI_4822_00);
 	sequencer->seteg(ADSR::create(10, 250, 254, 1250, 1200, false, DUE_SPI_4822_01));
 	
-	dropoutclock->registerdevice(sequencer);
+	clock1->registerDevice(sequencer);
 	
-	EventManager::registerdevice(dropoutclock);
+	EventManager::registerDevice(clock1);
 	
 	
 	/* VOICE 2 */
@@ -89,9 +91,9 @@ void setup()
 	Sequencer* cvsequencer = CVSequencer::create(800, 1000, DIV_QUARTER, DUE_SPI_4822_03);
 	cvsequencer->setslew(LinearSlew::create(50));
 	
-	randomclock->registerdevice(cvsequencer);
+	randomclock->registerDevice(cvsequencer);
 	
-	EventManager::registerdevice(randomclock);
+	EventManager::registerDevice(randomclock);
 	
 	
 	/* MECHANICAL NOISE */
@@ -112,9 +114,9 @@ void setup()
 	SignalData* drumloop = SignalData::fromSDFile("loops/loop01.raw");
 	ClockedLooper* looper1 = ClockedLooper::create(DUE_DAC1, drumloop, 2, DIV_QUARTER);
 	
-	loopclock->registerdevice(looper1);
+	loopclock->registerDevice(looper1);
 	
-	EventManager::registerdevice(loopclock);
+	EventManager::registerDevice(loopclock);
 	
 	
 }

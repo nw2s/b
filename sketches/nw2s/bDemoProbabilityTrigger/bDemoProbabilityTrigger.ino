@@ -28,6 +28,7 @@
 #include <SPI.h>
 #include <SD.h>
 #include <Wire.h>
+#include <aJSON.h>
 
 /*
 

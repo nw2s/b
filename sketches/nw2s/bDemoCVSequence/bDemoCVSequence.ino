@@ -31,6 +31,7 @@
 #include <SD.h>
 #include <Wire.h>
 #include <ShiftRegister.h>
+#include <aJSON.h>
 
 
 

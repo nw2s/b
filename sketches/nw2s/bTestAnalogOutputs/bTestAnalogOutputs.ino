@@ -29,6 +29,7 @@
 #include <SPI.h>
 #include <SD.h>
 #include <Wire.h>
+#include <aJSON.h>
 
 using namespace nw2s;
 

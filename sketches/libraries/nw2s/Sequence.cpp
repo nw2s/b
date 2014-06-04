@@ -26,10 +26,26 @@
 #include "Sequence.h"
 #include <math.h>
 #include "Entropy.h"
+#include "../aJSON/aJSON.h"
 
 
 using namespace std;
 using namespace nw2s;
+
+
+NoteSequenceData* noteSequenceFromJSON(aJsonObject* data)
+{
+	NoteSequenceData* notes = new NoteSequenceData();
+	
+	for (int i = 0; i < aJson.getArraySize(data); i++)
+	{
+		aJsonObject* noteNode = aJson.getArrayItem(data, i);
+		SequenceNote note = { 0, 0 };
+		notes->push_back(note);
+	}
+				
+	return notes;
+}
 
 TriggerSequencer* TriggerSequencer::create(vector<int>* triggers, int clockdivision, PinDigitalOut output)
 {
@@ -54,6 +70,66 @@ ProbabilityDrumTriggerSequencer* ProbabilityDrumTriggerSequencer::create(vector<
 NoteSequencer* NoteSequencer::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq)
 {
 	return new NoteSequencer(notes, key, scale, clockdivision, output, randomize_seq);
+}
+
+NoteSequencer* NoteSequencer::create(aJsonObject* data)
+{
+	aJsonObject* outputNode = aJson.getObjectItem(data, "analogOutput");
+	aJsonObject* rootNode = aJson.getObjectItem(data, "root");
+	aJsonObject* scaleNode = aJson.getObjectItem(data, "scale");
+	aJsonObject* divisionNode = aJson.getObjectItem(data, "division");
+	aJsonObject* randomizeNode = aJson.getObjectItem(data, "randomize");
+	aJsonObject* notesNode = aJson.getObjectItem(data, "notes");
+	
+	if (outputNode == NULL)
+	{
+		Serial.println("The NoteSequencer node is missing an analogOutput definition.");
+		return NULL;
+	}
+	
+	if (rootNode == NULL)
+	{
+		Serial.println("The NoteSequencer node is missing a root definition.");
+		return NULL;
+	}
+	
+	if (scaleNode == NULL)
+	{
+		Serial.println("The NoteSequencer node is missing a scale definition.");
+		return NULL;
+	}
+	
+	if (divisionNode == NULL)
+	{
+		Serial.println("The NoteSequencer node is missing a division definition.");
+		return NULL;
+	}
+	
+	if (randomizeNode == NULL)
+	{
+		Serial.println("The NoteSequencer node is missing a randomize definition.");
+		return NULL;
+	}
+	
+	if (notesNode == NULL)
+	{
+		Serial.println("The NoteSequencer node is missing a notes definition.");
+		return NULL;
+	}
+	
+	Serial.println("CV Output: Analog Out " + String(outputNode->valueint));
+	Serial.println("Scale Root: " + String(rootNode->valuestring));
+	Serial.println("Scale: " + String(scaleNode->valuestring));
+	Serial.println("Clock Division: " + String(divisionNode->valuestring));
+	Serial.println("Randomize: " + randomizeNode->valuebool ? "true" : "false");
+	
+	NoteSequenceData* notes = noteSequenceFromJSON(notesNode);
+	ScaleType scale = scaleTypeFromName(scaleNode->valuestring);
+	NoteName root = noteFromName(rootNode->valuestring);
+	int clockdivision = clockDivisionFromName(divisionNode->valuestring);
+	PinAnalogOut output = INDEX_ANALOG_OUT[outputNode->valueint - 1];
+	
+	return new NoteSequencer(notes, root, scale, clockdivision, output, randomizeNode->valuebool);
 }
 
 MorphingNoteSequencer* MorphingNoteSequencer::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output)

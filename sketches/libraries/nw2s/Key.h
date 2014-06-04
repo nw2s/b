@@ -32,6 +32,8 @@ namespace nw2s
 		MINOR,
 		CHROMATIC,
 	};	
+	
+	ScaleType scaleTypeFromName(char* name);
 
 	enum NoteName
 	{
@@ -42,6 +44,7 @@ namespace nw2s
 		D_SHARP = 3,
 		E_FLAT = 3,
 		E = 4,
+		E_SHARP = 5,
 		F = 5,
 		F_SHARP = 6,
 		G_FLAT = 6,
@@ -52,7 +55,10 @@ namespace nw2s
 		A_SHARP = 10,
 		B_FLAT = 10,
 		B = 11,
+		B_SHARP = 0
 	};
+
+	NoteName noteFromName(char* name);
 
 	struct ScaleCV
 	{

@@ -34,12 +34,110 @@ using namespace std;
 using namespace nw2s;
 
 
-/* Key CLASS IMPLEMENTATION */
-/* Key CLASS IMPLEMENTATION */
-/* Key CLASS IMPLEMENTATION */
 
+ScaleType nw2s::scaleTypeFromName(char* name)
+{
+	if (strcmp("major", name) == 0)
+	{
+		return MAJOR;
+	}
+	if (strcmp("minor", name) == 0)
+	{
+		return MINOR;
+	}
+	if (strcmp("chromatic", name) == 0)
+	{
+		return CHROMATIC;
+	}
 
-/* PUBLIC METHODS AND OPERATORS */
+	/* For now, just default to chromatic if we don't find the scale */
+	Serial.println("Unknown scale name " + String(name) + ". Just using chromatic instead.");
+	return CHROMATIC; 
+}
+
+NoteName nw2s::noteFromName(char* name)
+{
+	if (strcmp("C", name) == 0)
+	{
+		return C;
+	}
+	if (strcmp("C#", name) == 0)
+	{
+		return C_SHARP;
+	}
+	if (strcmp("Db", name) == 0)
+	{
+		return D_FLAT;
+	}
+	if (strcmp("D", name) == 0)
+	{
+		return D;
+	}
+	if (strcmp("D#", name) == 0)
+	{
+		return D_SHARP;
+	}
+	if (strcmp("Eb", name) == 0)
+	{
+		return E_FLAT;
+	}
+	if (strcmp("E", name) == 0)
+	{
+		return E;
+	}
+	if (strcmp("E#", name) == 0)
+	{
+		return E_SHARP;
+	}
+	if (strcmp("F", name) == 0)
+	{
+		return F;
+	}
+	if (strcmp("F#", name) == 0)
+	{
+		return F_SHARP;
+	}
+	if (strcmp("Gb", name) == 0)
+	{
+		return G_FLAT;
+	}
+	if (strcmp("G", name) == 0)
+	{
+		return G;
+	}
+	if (strcmp("G#", name) == 0)
+	{
+		return G_SHARP;
+	}
+	if (strcmp("Ab", name) == 0)
+	{
+		return A_FLAT;
+	}
+	if (strcmp("A", name) == 0)
+	{
+		return A;
+	}
+	if (strcmp("A#", name) == 0)
+	{
+		return A_SHARP;
+	}
+	if (strcmp("Bb", name) == 0)
+	{
+		return B_FLAT;
+	}
+	if (strcmp("B", name) == 0)
+	{
+		return B;
+	}
+	if (strcmp("B#", name) == 0)
+	{
+		return B_SHARP;
+	}
+
+	/* For now, just default to chromatic if we don't find the scale */
+	Serial.println("Unknown note name " + String(name) + ". Just using C instead.");
+	return C; 
+}
 
 Key::Key(ScaleType scaletype, NoteName rootnote)
 {

@@ -30,6 +30,7 @@
 #include <Wire.h>
 #include <ShiftRegister.h>
 #include <Oscillator.h>
+#include <aJSON.h>
 
 using namespace nw2s;
 
