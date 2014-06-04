@@ -35,12 +35,24 @@ using namespace nw2s;
 
 NoteSequenceData* noteSequenceFromJSON(aJsonObject* data)
 {
-	NoteSequenceData* notes = new NoteSequenceData();
+	/* Allocate enough space to store our vector or notes */
+	NoteSequenceData* notes = new NoteSequenceData(aJson.getArraySize(data));
 	
+	/* Iterate over the set of notes in the sequence */
 	for (int i = 0; i < aJson.getArraySize(data); i++)
 	{
 		aJsonObject* noteNode = aJson.getArrayItem(data, i);
-		SequenceNote note = { 0, 0 };
+		
+		if (aJson.getArraySize(noteNode) != 2)
+		{
+			Serial.println("Malformed note sequence. Should be of format [ [0,1], [1,1], [2,1] ]. Returning as much as I've parsed so far.");
+			return(notes);
+		}
+		
+		aJsonObject* octaveNode = aJson.getArrayItem(noteNode, 0);
+		aJsonObject* degreeNode = aJson.getArrayItem(noteNode, 1);
+		
+		SequenceNote note = { octaveNode->valueint, degreeNode->valueint };
 		notes->push_back(note);
 	}
 				
