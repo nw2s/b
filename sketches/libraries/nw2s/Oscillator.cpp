@@ -62,6 +62,35 @@ VCSamplingFrequencyOscillator* VCSamplingFrequencyOscillator::create(aJsonObject
 }
 
 
+BitCode* BitCode::create(PinAudioOut pinout, PinAnalogIn pinin)
+{
+	return new BitCode(pinout, pinin);
+}
+
+BitCode* BitCode::create(aJsonObject* data)
+{
+	//TODO: Use the encapsulated version of code
+	aJsonObject* inputNode = aJson.getObjectItem(data, "analogInput");
+	aJsonObject* outputNode = aJson.getObjectItem(data, "dacOutput");
+	
+	if (inputNode == NULL)
+	{
+		Serial.println("The DiscreteNoise node is missing an analogInput definition.");
+		return NULL;
+	}
+	
+	if (outputNode == NULL)
+	{
+		Serial.println("The DiscreteNoise node is missing a dacOutput definition.");
+		return NULL;
+	}
+	
+	Serial.println("Frequency Input: Analog In " + String(inputNode->valueint));
+	Serial.println("Audio Output: DAC" + String(inputNode->valueint));
+	
+	return new BitCode(INDEX_AUDIO_OUT[outputNode->valueint - 1], INDEX_ANALOG_IN[inputNode->valueint - 1]);
+}
+
 DiscreteNoise* DiscreteNoise::create(PinAudioOut pinout, PinAnalogIn pinin)
 {
 	return new DiscreteNoise(pinout, pinin);
@@ -69,6 +98,7 @@ DiscreteNoise* DiscreteNoise::create(PinAudioOut pinout, PinAnalogIn pinin)
 
 DiscreteNoise* DiscreteNoise::create(aJsonObject* data)
 {
+	//TODO: Use the encapsulated version of code
 	aJsonObject* inputNode = aJson.getObjectItem(data, "analogInput");
 	aJsonObject* outputNode = aJson.getObjectItem(data, "dacOutput");
 	
@@ -363,6 +393,28 @@ Saw::Saw(PinAudioOut pinout, PinAnalogIn pinin) : VCSamplingFrequencyOscillator(
 // 		
 // 	return this->currentvalue;
 // }
+
+BitCode::BitCode(PinAudioOut pinout, PinAnalogIn pinin) : VCO(pinout, pinin)
+{
+	//TODO: Add an integer parameter to indicate the iterator initial value 
+	//TODO: Add a parameter to allow an analog input to define the iterator offset
+	//TODO: Add a parameter that switches between algos
+	
+	this->currentvalue = 0;
+	this->iterator = 0;
+}
+
+int BitCode::nextVCOSample()
+{
+	if (this->phaseindex == 0)
+	{
+		this->currentvalue = this->iterator * ((this->iterator >> 12 | this->iterator >> 8) & 63 & this->iterator >> 4);
+		this->iterator++;
+	}
+
+	return this->currentvalue;
+}
+
 
 DiscreteNoise::DiscreteNoise(PinAudioOut pinout, PinAnalogIn pinin) : VCO(pinout, pinin)
 {

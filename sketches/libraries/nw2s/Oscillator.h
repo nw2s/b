@@ -35,6 +35,7 @@ namespace nw2s
 	class Saw;
 	class Sin;
 	class DiscreteNoise;
+	class BitCode;
 	class AliasingFilter;
 	class VCSamplingFrequencyOscillator;
 }
@@ -124,6 +125,20 @@ class nw2s::VCO : public Oscillator, public TimeBasedDevice
         private:
                 int sample;
                 
+};
+
+class nw2s::BitCode : public VCO
+{
+	public:
+		static BitCode* create(PinAudioOut pinout, PinAnalogIn pinin);
+		static BitCode* create(aJsonObject* data);
+	
+	private:		
+		int currentvalue;
+		int iterator;
+	
+		BitCode(PinAudioOut pinout, PinAnalogIn pinin);
+		virtual int nextVCOSample();
 };
 
 class nw2s::DiscreteNoise : public VCO

@@ -55,6 +55,8 @@ namespace nw2s
 	class ProbabilityDrumTriggerSequencer;
 	
 	class TimeBasedDevice;
+	
+	NoteSequenceData* noteSequenceFromJSON(aJsonObject* data);
 }
 
 class nw2s::Sequencer : public nw2s::BeatDevice
@@ -224,6 +226,7 @@ class nw2s::MorphingNoteSequencer : public NoteSequencer
 {
 	public:
 		static MorphingNoteSequencer* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output);
+		//static MorphingNoteSequencer* create(aJsonObject* data);
 		virtual void reset();
 		
 	private:

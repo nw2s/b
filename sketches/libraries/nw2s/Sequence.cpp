@@ -27,13 +27,14 @@
 #include <math.h>
 #include "Entropy.h"
 #include "../aJSON/aJSON.h"
+#include "JSONUtil.h"
 
 
 using namespace std;
 using namespace nw2s;
 
 
-NoteSequenceData* noteSequenceFromJSON(aJsonObject* data)
+NoteSequenceData* nw2s::noteSequenceFromJSON(aJsonObject* data)
 {
 	/* Allocate enough space to store our vector or notes */
 	NoteSequenceData* notes = new NoteSequenceData(aJson.getArraySize(data));
@@ -86,37 +87,9 @@ NoteSequencer* NoteSequencer::create(vector<SequenceNote>* notes, NoteName key, 
 
 NoteSequencer* NoteSequencer::create(aJsonObject* data)
 {
-	aJsonObject* outputNode = aJson.getObjectItem(data, "analogOutput");
-	aJsonObject* rootNode = aJson.getObjectItem(data, "root");
-	aJsonObject* scaleNode = aJson.getObjectItem(data, "scale");
-	aJsonObject* divisionNode = aJson.getObjectItem(data, "division");
 	aJsonObject* randomizeNode = aJson.getObjectItem(data, "randomize");
 	aJsonObject* notesNode = aJson.getObjectItem(data, "notes");
-	
-	if (outputNode == NULL)
-	{
-		Serial.println("The NoteSequencer node is missing an analogOutput definition.");
-		return NULL;
-	}
-	
-	if (rootNode == NULL)
-	{
-		Serial.println("The NoteSequencer node is missing a root definition.");
-		return NULL;
-	}
-	
-	if (scaleNode == NULL)
-	{
-		Serial.println("The NoteSequencer node is missing a scale definition.");
-		return NULL;
-	}
-	
-	if (divisionNode == NULL)
-	{
-		Serial.println("The NoteSequencer node is missing a division definition.");
-		return NULL;
-	}
-	
+			
 	if (randomizeNode == NULL)
 	{
 		Serial.println("The NoteSequencer node is missing a randomize definition.");
@@ -129,25 +102,33 @@ NoteSequencer* NoteSequencer::create(aJsonObject* data)
 		return NULL;
 	}
 	
-	Serial.println("CV Output: Analog Out " + String(outputNode->valueint));
-	Serial.println("Scale Root: " + String(rootNode->valuestring));
-	Serial.println("Scale: " + String(scaleNode->valuestring));
-	Serial.println("Clock Division: " + String(divisionNode->valuestring));
 	Serial.println("Randomize: " + randomizeNode->valuebool ? "true" : "false");
 	
 	NoteSequenceData* notes = noteSequenceFromJSON(notesNode);
-	ScaleType scale = scaleTypeFromName(scaleNode->valuestring);
-	NoteName root = noteFromName(rootNode->valuestring);
-	int clockdivision = clockDivisionFromName(divisionNode->valuestring);
-	PinAnalogOut output = INDEX_ANALOG_OUT[outputNode->valueint - 1];
-	
-	return new NoteSequencer(notes, root, scale, clockdivision, output, randomizeNode->valuebool);
+
+	return NULL;
+	// return new NoteSequencer(notes, root, scale, clockdivision, output, randomizeNode->valuebool);
+
+	// NoteSequenceData* notes = getNotesFromJSON(data);
+	// ScaleType scale = getScaleFromJSON(data);
+	// NoteName root = getRootFromJSON(data);
+	// int clockdivision = getDivisionFromJSON(data);
+	// PinAnalogOut output = getAnalogOutputFromJSON(data);
+	// bool randomize = getRandomizeFromJSON(data);
+	// 
+	// return new NoteSequencer(notes, root, scale, clockdivision, output, randomize);
+
 }
 
 MorphingNoteSequencer* MorphingNoteSequencer::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output)
 {
 	return new MorphingNoteSequencer(notes, key, scale, chaos, clockdivision, output);
 }
+
+// NoteSequencer* NoteSequencer::create(aJsonObject* data)
+// {
+// 	
+// }
 
 RandomNoteSequencer* RandomNoteSequencer::create(NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output)
 {
