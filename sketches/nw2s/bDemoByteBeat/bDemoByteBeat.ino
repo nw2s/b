@@ -49,9 +49,11 @@ void setup()
 
 	EventManager::initialize();
 
-	VCO* bytebeat = ByteBeat::create(DUE_DAC0, DUE_IN_A00);
+	VCO* bytebeat0 = ByteBeat::create(DUE_DAC0, DUE_IN_A00, 1, DUE_IN_A02, DUE_IN_A04, DUE_IN_A06, 0);
+	VCO* bytebeat1 = ByteBeat::create(DUE_DAC1, DUE_IN_A00, 1, DUE_IN_A02, DUE_IN_A04, DUE_IN_A06, 10000);
 		
-	EventManager::registerDevice(bytebeat);
+	EventManager::registerDevice(bytebeat0);
+	EventManager::registerDevice(bytebeat1);
 }
 
 void loop() 

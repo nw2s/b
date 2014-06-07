@@ -62,9 +62,9 @@ VCSamplingFrequencyOscillator* VCSamplingFrequencyOscillator::create(aJsonObject
 }
 
 
-ByteBeat* ByteBeat::create(PinAudioOut pinout, PinAnalogIn pinin)
+ByteBeat* ByteBeat::create(PinAudioOut pinout, PinAnalogIn samplerate, int algorithm, PinAnalogIn param1, PinAnalogIn param2, PinAnalogIn param3, int offset)
 {
-	return new ByteBeat(pinout, pinin);
+	return new ByteBeat(pinout, samplerate, algorithm, param1, param2, param3, offset);
 }
 
 ByteBeat* ByteBeat::create(aJsonObject* data)
@@ -88,7 +88,7 @@ ByteBeat* ByteBeat::create(aJsonObject* data)
 	Serial.println("Frequency Input: Analog In " + String(inputNode->valueint));
 	Serial.println("Audio Output: DAC" + String(inputNode->valueint));
 	
-	return new ByteBeat(INDEX_AUDIO_OUT[outputNode->valueint - 1], INDEX_ANALOG_IN[inputNode->valueint - 1]);
+	//return new ByteBeat(INDEX_AUDIO_OUT[outputNode->valueint - 1], INDEX_ANALOG_IN[inputNode->valueint - 1]);
 }
 
 DiscreteNoise* DiscreteNoise::create(PinAudioOut pinout, PinAnalogIn pinin)
@@ -394,12 +394,8 @@ Saw::Saw(PinAudioOut pinout, PinAnalogIn pinin) : VCSamplingFrequencyOscillator(
 // 	return this->currentvalue;
 // }
 
-ByteBeat::ByteBeat(PinAudioOut pinout, PinAnalogIn pinin) : VCO(pinout, pinin)
-{
-	//TODO: Add an integer parameter to indicate the iterator initial value 
-	//TODO: Add a parameter to allow an analog input to define the iterator offset
-	//TODO: Add a parameter that switches between algos
-	
+ByteBeat::ByteBeat(PinAudioOut pinout, PinAnalogIn samplerate, int algorithm, PinAnalogIn param1, PinAnalogIn param2, PinAnalogIn param3, int offset) : VCO(pinout, samplerate)
+{	
 	this->currentvalue = 0;
 	this->iterator = 0;
 }

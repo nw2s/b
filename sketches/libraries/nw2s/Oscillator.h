@@ -130,14 +130,14 @@ class nw2s::VCO : public Oscillator, public TimeBasedDevice
 class nw2s::ByteBeat : public VCO
 {
 	public:
-		static ByteBeat* create(PinAudioOut pinout, PinAnalogIn pinin);
+		static ByteBeat* create(PinAudioOut pinout, PinAnalogIn samplerate, int algorithm, PinAnalogIn param1, PinAnalogIn param2, PinAnalogIn param3, int offset = 0);
 		static ByteBeat* create(aJsonObject* data);
 	
 	private:		
 		unsigned int currentvalue;
 		unsigned int iterator;
 	
-		ByteBeat(PinAudioOut pinout, PinAnalogIn pinin);
+		ByteBeat(PinAudioOut pinout, PinAnalogIn samplerate, int algorithm, PinAnalogIn param1, PinAnalogIn param2, PinAnalogIn param3, int offset = 0);
 		virtual int nextVCOSample();
 };
 
