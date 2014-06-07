@@ -62,12 +62,12 @@ VCSamplingFrequencyOscillator* VCSamplingFrequencyOscillator::create(aJsonObject
 }
 
 
-BitCode* BitCode::create(PinAudioOut pinout, PinAnalogIn pinin)
+ByteBeat* ByteBeat::create(PinAudioOut pinout, PinAnalogIn pinin)
 {
-	return new BitCode(pinout, pinin);
+	return new ByteBeat(pinout, pinin);
 }
 
-BitCode* BitCode::create(aJsonObject* data)
+ByteBeat* ByteBeat::create(aJsonObject* data)
 {
 	//TODO: Use the encapsulated version of code
 	aJsonObject* inputNode = aJson.getObjectItem(data, "analogInput");
@@ -88,7 +88,7 @@ BitCode* BitCode::create(aJsonObject* data)
 	Serial.println("Frequency Input: Analog In " + String(inputNode->valueint));
 	Serial.println("Audio Output: DAC" + String(inputNode->valueint));
 	
-	return new BitCode(INDEX_AUDIO_OUT[outputNode->valueint - 1], INDEX_ANALOG_IN[inputNode->valueint - 1]);
+	return new ByteBeat(INDEX_AUDIO_OUT[outputNode->valueint - 1], INDEX_ANALOG_IN[inputNode->valueint - 1]);
 }
 
 DiscreteNoise* DiscreteNoise::create(PinAudioOut pinout, PinAnalogIn pinin)
@@ -394,7 +394,7 @@ Saw::Saw(PinAudioOut pinout, PinAnalogIn pinin) : VCSamplingFrequencyOscillator(
 // 	return this->currentvalue;
 // }
 
-BitCode::BitCode(PinAudioOut pinout, PinAnalogIn pinin) : VCO(pinout, pinin)
+ByteBeat::ByteBeat(PinAudioOut pinout, PinAnalogIn pinin) : VCO(pinout, pinin)
 {
 	//TODO: Add an integer parameter to indicate the iterator initial value 
 	//TODO: Add a parameter to allow an analog input to define the iterator offset
@@ -404,11 +404,17 @@ BitCode::BitCode(PinAudioOut pinout, PinAnalogIn pinin) : VCO(pinout, pinin)
 	this->iterator = 0;
 }
 
-int BitCode::nextVCOSample()
+int ByteBeat::nextVCOSample()
 {
 	if (this->phaseindex == 0)
 	{
-		this->currentvalue = this->iterator * ((this->iterator >> 12 | this->iterator >> 8) & 63 & this->iterator >> 4);
+		unsigned int t = this->iterator;
+		unsigned int p1 = 1000;
+		unsigned int p2 = 500;
+		unsigned int p3 = 20;
+		
+		// this->currentvalue = this->iterator * ((this->iterator >> 12 | this->iterator >> 8) & 63 & this->iterator >> 4);
+		this->currentvalue = ((t % (512 - (t * 351) + 16)) ^ ((t >> (p1 >> 5)))) * (2 + (t >> 14) % 6) | ((t * p2) & (t >> (p3 >> 5)));
 		this->iterator++;
 	}
 

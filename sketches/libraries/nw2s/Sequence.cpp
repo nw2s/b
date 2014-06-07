@@ -88,23 +88,15 @@ NoteSequencer* NoteSequencer::create(vector<SequenceNote>* notes, NoteName key, 
 NoteSequencer* NoteSequencer::create(aJsonObject* data)
 {
 	aJsonObject* randomizeNode = aJson.getObjectItem(data, "randomize");
-	aJsonObject* notesNode = aJson.getObjectItem(data, "notes");
 			
 	if (randomizeNode == NULL)
 	{
 		Serial.println("The NoteSequencer node is missing a randomize definition.");
 		return NULL;
 	}
-	
-	if (notesNode == NULL)
-	{
-		Serial.println("The NoteSequencer node is missing a notes definition.");
-		return NULL;
-	}
-	
+		
 	Serial.println("Randomize: " + randomizeNode->valuebool ? "true" : "false");
 	
-	NoteSequenceData* notes = noteSequenceFromJSON(notesNode);
 
 	return NULL;
 	// return new NoteSequencer(notes, root, scale, clockdivision, output, randomizeNode->valuebool);

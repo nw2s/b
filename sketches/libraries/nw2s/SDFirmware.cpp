@@ -149,9 +149,9 @@ void nw2s::initializeFirmware()
 		{
 			EventManager::registerDevice(DiscreteNoise::create(deviceNode));
 		}
-		else if (strcmp(typeNode->valuestring, "BitCode") == 0)
+		else if (strcmp(typeNode->valuestring, "ByteBeat") == 0)
 		{
-			EventManager::registerDevice(BitCode::create(deviceNode));
+			EventManager::registerDevice(ByteBeat::create(deviceNode));
 		}
 		else if (strcmp(typeNode->valuestring, "NoteSequencer") == 0)
 		{
