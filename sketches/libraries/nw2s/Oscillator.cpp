@@ -398,19 +398,49 @@ ByteBeat::ByteBeat(PinAudioOut pinout, PinAnalogIn samplerate, int algorithm, Pi
 {	
 	this->currentvalue = 0;
 	this->iterator = 0;
+	
+	this->algorithm = algorithm;
+	this->param1 = param1;
+	this->param2 = param2;
+	this->param3 = param3;
+	this->offset = offset;
 }
 
 int ByteBeat::nextVCOSample()
 {
 	if (this->phaseindex == 0)
 	{
-		unsigned int t = this->iterator;
-		unsigned int p1 = 1000;
-		unsigned int p2 = 500;
-		unsigned int p3 = 20;
+		int tp1 = analogReadmV(this->param1);
+		int tp2 = analogReadmV(this->param2);
+		int tp3 = analogReadmV(this->param3);
+
+		/* Really, these should be set by the input parameters, but they are very sensitive to specific values */
+		unsigned int p1 = 2000;
+		unsigned int p2 = 200;
+		unsigned int p3 = 100;
 		
-		// this->currentvalue = this->iterator * ((this->iterator >> 12 | this->iterator >> 8) & 63 & this->iterator >> 4);
-		this->currentvalue = ((t % (512 - (t * 351) + 16)) ^ ((t >> (p1 >> 5)))) * (2 + (t >> 14) % 6) | ((t * p2) & (t >> (p3 >> 5)));
+		// unsigned int p1 = 2000;
+		// unsigned int p2 = 500;
+		// unsigned int p3 = 1;
+
+		unsigned int t = this->iterator + this->offset;
+
+		switch (this->algorithm)
+		{
+			/* 
+				This is a demo of some bitcode oscillating kind of like the equation composer module. Many thanks for clone45 for most
+				of the code that makes these work. You can see the original code here: https://github.com/clone45/EquationComposer
+				and you can see more info about the module here: http://www.papernoise.net/microbe-modular-equation-composer/
+			*/
+			case 0:
+				/*  Filtered Triangles */
+				this->currentvalue = ((t % (512 - (t * 351) + 16)) ^ ((t >> (p1 >> 5)))) * (2 + (t >> 14) % 6) | ((t * p2) & (t >> (p3 >> 5)));
+				break;
+				
+			default:
+				this->currentvalue = t;
+		}
+
 		this->iterator++;
 	}
 

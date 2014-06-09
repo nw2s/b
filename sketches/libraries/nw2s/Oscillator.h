@@ -136,6 +136,13 @@ class nw2s::ByteBeat : public VCO
 	private:		
 		unsigned int currentvalue;
 		unsigned int iterator;
+		unsigned int offset;
+		
+		int algorithm;
+		
+		PinAnalogIn param1;
+		PinAnalogIn param2;
+		PinAnalogIn param3;
 	
 		ByteBeat(PinAudioOut pinout, PinAnalogIn samplerate, int algorithm, PinAnalogIn param1, PinAnalogIn param2, PinAnalogIn param3, int offset = 0);
 		virtual int nextVCOSample();

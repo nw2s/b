@@ -36,7 +36,7 @@ using namespace nw2s;
 
 
 /* 
-	This is a demo of some bitcode oscillating kind of like the equation composer module. Maby thanks for clone45 for most
+	This is a demo of some bitcode oscillating kind of like the equation composer module. Many thanks for clone45 for most
 	of the code that makes these work. You can see the original code here: https://github.com/clone45/EquationComposer
 	and you can see more info about the module here: http://www.papernoise.net/microbe-modular-equation-composer/
 */
@@ -49,8 +49,8 @@ void setup()
 
 	EventManager::initialize();
 
-	VCO* bytebeat0 = ByteBeat::create(DUE_DAC0, DUE_IN_A00, 1, DUE_IN_A02, DUE_IN_A04, DUE_IN_A06, 0);
-	VCO* bytebeat1 = ByteBeat::create(DUE_DAC1, DUE_IN_A00, 1, DUE_IN_A02, DUE_IN_A04, DUE_IN_A06, 10000);
+	VCO* bytebeat0 = ByteBeat::create(DUE_DAC0, DUE_IN_A00, 0, DUE_IN_A02, DUE_IN_A04, DUE_IN_A06, 0);
+	VCO* bytebeat1 = ByteBeat::create(DUE_DAC1, DUE_IN_A00, 1, DUE_IN_A02, DUE_IN_A04, DUE_IN_A06, 0);
 		
 	EventManager::registerDevice(bytebeat0);
 	EventManager::registerDevice(bytebeat1);
