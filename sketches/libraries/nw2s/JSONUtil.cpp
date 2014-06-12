@@ -23,30 +23,61 @@
 using namespace nw2s;
 
 
+int nw2s::getIntFromJSON(aJsonObject* data, const char* nodeName, int defaultVal, int min, int max)
+{
+	aJsonObject* node = aJson.getObjectItem(data, nodeName);
+	
+	if (node == NULL)
+	{
+		static const char nodeError[] = "Missing ";
+		Serial.println(String(nodeError) + String(nodeName));
+		return defaultVal;
+	}
+	
+	if (node->valueint > max || node->valueint < min)
+	{
+		static const char nodeError[] = "Invalid ";
+		Serial.println(String(nodeError) + String(nodeName));
+		return defaultVal;
+	}
+	
+	static const char info[] = ": ";
+	Serial.println(String(nodeName) + String(info) + String(node->valueint));
+
+	return node->valueint;
+}
+
 PinAnalogOut nw2s::getAnalogOutputFromJSON(aJsonObject* data)
 {
-	aJsonObject* outputNode = aJson.getObjectItem(data, "analogOutput");
-	
-	if (outputNode == NULL)
-	{
-		static const char nodeError[] = "Missing analogOutput";
-		Serial.println(String(nodeError));
-		return ANALOG_OUT_NONE;
-	}
-	
-	if (outputNode->valueint > 16 || outputNode->valueint < 1)
-	{
-		static const char nodeError[] = "Invalid analogOutput";
-		Serial.println(String(nodeError));
-		return ANALOG_OUT_NONE;
-	}
-	
-	static const char info[] = "CV Output: Analog Out ";
-	Serial.println(String(info) + String(outputNode->valueint));
+	static const char nodeName[] = "analogOutput";
+	int val = getIntFromJSON(data, nodeName, 0, 1, 16);
 
-	return INDEX_ANALOG_OUT[outputNode->valueint - 1];
+	return INDEX_ANALOG_OUT[val];
 	
 }
+
+PinAnalogIn nw2s::getAnalogInputFromJSON(aJsonObject* data)
+{
+	static const char nodeName[] = "analogInput";
+
+	return getAnalogInputFromJSON(data, nodeName);	
+}
+
+PinAnalogIn nw2s::getAnalogInputFromJSON(aJsonObject* data, const char* nodeName)
+{
+	int val = getIntFromJSON(data, nodeName, 0, 1, 12);
+
+	return INDEX_ANALOG_IN[val];	
+}
+
+PinAudioOut nw2s::getAudioOutputFromJSON(aJsonObject* data)
+{
+	static const char nodeName[] = "dacOutput";
+	int val = getIntFromJSON(data, nodeName, 1, 1, 2);
+
+	return val == 1 ? DUE_DAC0 : DUE_DAC1;
+}
+
 
 ScaleType nw2s::getScaleFromJSON(aJsonObject* data)
 {	

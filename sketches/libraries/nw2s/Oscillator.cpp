@@ -23,6 +23,7 @@
 #include "IO.h"
 #include "Entropy.h"
 #include "SignalData.h"
+#include "JSONUtil.h"
 #include "../aJSON/aJSON.h"
 
 
@@ -70,39 +71,20 @@ ByteBeat* ByteBeat::create(PinAudioOut pinout, PinAnalogIn samplerate, int algor
 
 ByteBeat* ByteBeat::create(aJsonObject* data)
 {
-	//TODO: Use the encapsulated version of code
-	aJsonObject* algorithmNode = aJson.getObjectItem(data, "algorithm");
-	aJsonObject* inputNode = aJson.getObjectItem(data, "sampleRate");
-	aJsonObject* outputNode = aJson.getObjectItem(data, "dacOutput");
+	static const char sampleRateNodeName[] = "sampleRate";
+	static const char algorithmNodeName[] = "algorithm";
+
+	PinAnalogIn in = getAnalogInputFromJSON(data, sampleRateNodeName);
+	PinAudioOut out = getAudioOutputFromJSON(data);
+	int algorithm = getIntFromJSON(data, algorithmNodeName, 0, 0, 128);
 	
+	//TODO: param pins and offset pin
 	PinAnalogIn param1 = DUE_IN_A_NONE;
 	PinAnalogIn param2 = DUE_IN_A_NONE;
-	PinAnalogIn param3 = DUE_IN_A_NONE;
+	PinAnalogIn param3 = DUE_IN_A_NONE;	
+	int offset = 0;
 	
-	if (inputNode == NULL)
-	{
-		Serial.println("Missing an analogInput definition.");
-		return NULL;
-	}
-	
-	if (outputNode == NULL)
-	{
-		Serial.println("Missing a dacOutput definition.");
-		return NULL;
-	}
-	
-	if (algorithmNode == NULL)
-	{
-		Serial.println("Missing an algorithm definition.");
-		return NULL;
-	}
-	
-	Serial.println("Frequency Input: Analog In " + String(inputNode->valueint));
-	Serial.println("Audio Output: DAC" + String(inputNode->valueint));
-
-	//TODO: offset node!
-	
-	return new ByteBeat(INDEX_AUDIO_OUT[outputNode->valueint - 1], INDEX_ANALOG_IN[inputNode->valueint - 1], algorithmNode->valueint, param1, param2, param3, 0);
+	return new ByteBeat(out, in, algorithm, param1, param2, param3, offset);
 }
 
 DiscreteNoise* DiscreteNoise::create(PinAudioOut pinout, PinAnalogIn pinin)
@@ -112,26 +94,10 @@ DiscreteNoise* DiscreteNoise::create(PinAudioOut pinout, PinAnalogIn pinin)
 
 DiscreteNoise* DiscreteNoise::create(aJsonObject* data)
 {
-	//TODO: Use the encapsulated version of code
-	aJsonObject* inputNode = aJson.getObjectItem(data, "analogInput");
-	aJsonObject* outputNode = aJson.getObjectItem(data, "dacOutput");
+	PinAnalogIn in = getAnalogInputFromJSON(data);
+	PinAudioOut out = getAudioOutputFromJSON(data);
 	
-	if (inputNode == NULL)
-	{
-		Serial.println("The DiscreteNoise node is missing an analogInput definition.");
-		return NULL;
-	}
-	
-	if (outputNode == NULL)
-	{
-		Serial.println("The DiscreteNoise node is missing a dacOutput definition.");
-		return NULL;
-	}
-	
-	Serial.println("Frequency Input: Analog In " + String(inputNode->valueint));
-	Serial.println("Audio Output: DAC" + String(inputNode->valueint));
-	
-	return new DiscreteNoise(INDEX_AUDIO_OUT[outputNode->valueint - 1], INDEX_ANALOG_IN[inputNode->valueint - 1]);
+	return new DiscreteNoise(out, in);
 }
 
 
