@@ -20,6 +20,7 @@
 
 #include "Oscillator.h"
 #include "Key.h"
+#include "IO.h"
 #include "Entropy.h"
 #include "SignalData.h"
 #include "../aJSON/aJSON.h"
@@ -70,25 +71,38 @@ ByteBeat* ByteBeat::create(PinAudioOut pinout, PinAnalogIn samplerate, int algor
 ByteBeat* ByteBeat::create(aJsonObject* data)
 {
 	//TODO: Use the encapsulated version of code
-	aJsonObject* inputNode = aJson.getObjectItem(data, "analogInput");
+	aJsonObject* algorithmNode = aJson.getObjectItem(data, "algorithm");
+	aJsonObject* inputNode = aJson.getObjectItem(data, "sampleRate");
 	aJsonObject* outputNode = aJson.getObjectItem(data, "dacOutput");
+	
+	PinAnalogIn param1 = DUE_IN_A_NONE;
+	PinAnalogIn param2 = DUE_IN_A_NONE;
+	PinAnalogIn param3 = DUE_IN_A_NONE;
 	
 	if (inputNode == NULL)
 	{
-		Serial.println("The DiscreteNoise node is missing an analogInput definition.");
+		Serial.println("Missing an analogInput definition.");
 		return NULL;
 	}
 	
 	if (outputNode == NULL)
 	{
-		Serial.println("The DiscreteNoise node is missing a dacOutput definition.");
+		Serial.println("Missing a dacOutput definition.");
+		return NULL;
+	}
+	
+	if (algorithmNode == NULL)
+	{
+		Serial.println("Missing an algorithm definition.");
 		return NULL;
 	}
 	
 	Serial.println("Frequency Input: Analog In " + String(inputNode->valueint));
 	Serial.println("Audio Output: DAC" + String(inputNode->valueint));
+
+	//TODO: offset node!
 	
-	//return new ByteBeat(INDEX_AUDIO_OUT[outputNode->valueint - 1], INDEX_ANALOG_IN[inputNode->valueint - 1]);
+	return new ByteBeat(INDEX_AUDIO_OUT[outputNode->valueint - 1], INDEX_ANALOG_IN[inputNode->valueint - 1], algorithmNode->valueint, param1, param2, param3, 0);
 }
 
 DiscreteNoise* DiscreteNoise::create(PinAudioOut pinout, PinAnalogIn pinin)
@@ -427,14 +441,23 @@ int ByteBeat::nextVCOSample()
 
 		switch (this->algorithm)
 		{
-			/* 
-				This is a demo of some bitcode oscillating kind of like the equation composer module. Many thanks for clone45 for most
-				of the code that makes these work. You can see the original code here: https://github.com/clone45/EquationComposer
-				and you can see more info about the module here: http://www.papernoise.net/microbe-modular-equation-composer/
-			*/
 			case 0:
-				/*  Filtered Triangles */
+				/* 
+					This is a demo of some bitcode oscillating kind of like the equation composer module. Many thanks for clone45 for most
+					of the code that makes these work. You can see the original code here: https://github.com/clone45/EquationComposer
+					and you can see more info about the module here: http://www.papernoise.net/microbe-modular-equation-composer/
+				*/
 				this->currentvalue = ((t % (512 - (t * 351) + 16)) ^ ((t >> (p1 >> 5)))) * (2 + (t >> 14) % 6) | ((t * p2) & (t >> (p3 >> 5)));
+				break;
+			
+			case 1:
+				/* From: http://yehar.com/blog/?p=2554 */
+				this->currentvalue = t * (t >> ((t >> 11) & 15)) * (t >> 9 & 1) << 2;	
+				break;
+				
+			case 2:
+				/* From: http://yehar.com/blog/?p=2554 */
+				this->currentvalue = t >> 4 | t * t * (t >> 6 & 8 ^ 8) * (t >> 11 ^ t / 3 >> 12) / (7 + (t >> 10 & t >> 14 & 3));
 				break;
 				
 			default:

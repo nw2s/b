@@ -9,12 +9,12 @@
 			{
 				"type" : "ByteBeat",
 				"dacOutput" : 1,
-				"analogInput1" : 1,
-				"analogInput2" : 2,
-				"analogInput3" : 3,
-				"algorithm" : 1,
+				"sampleRate" : 1,
+				"algorithm" : 0,
 				"offset" : 1
 			}		
 		]
 	}
 }
+
+
