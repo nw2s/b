@@ -73,18 +73,20 @@ ByteBeat* ByteBeat::create(aJsonObject* data)
 {
 	static const char sampleRateNodeName[] = "sampleRate";
 	static const char algorithmNodeName[] = "algorithm";
+	static const char offsetNodeName[] = "offset";
+	static const char param1NodeName[] = "analogInput1";
+	static const char param2NodeName[] = "analogInput2";
+	static const char param3NodeName[] = "analogInput3";
 
 	PinAnalogIn in = getAnalogInputFromJSON(data, sampleRateNodeName);
 	PinAudioOut out = getAudioOutputFromJSON(data);
 	int algorithm = getIntFromJSON(data, algorithmNodeName, 0, 0, 128);
-	
-	//TODO: param pins and offset pin
-	PinAnalogIn param1 = DUE_IN_A_NONE;
-	PinAnalogIn param2 = DUE_IN_A_NONE;
-	PinAnalogIn param3 = DUE_IN_A_NONE;	
-	int offset = 0;
-	
-	return new ByteBeat(out, in, algorithm, param1, param2, param3, offset);
+	int offset = getIntFromJSON(data, offsetNodeName, 0, 0, 32765);
+	PinAnalogIn in1 = getAnalogInputFromJSON(data, param1NodeName);
+	PinAnalogIn in2 = getAnalogInputFromJSON(data, param2NodeName);
+	PinAnalogIn in3 = getAnalogInputFromJSON(data, param3NodeName);
+		
+	return new ByteBeat(out, in, algorithm, in1, in2, in3, offset);
 }
 
 DiscreteNoise* DiscreteNoise::create(PinAudioOut pinout, PinAnalogIn pinin)
