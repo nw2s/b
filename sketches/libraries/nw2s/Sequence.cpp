@@ -90,7 +90,7 @@ NoteSequencer* NoteSequencer::create(aJsonObject* data)
 {
 	static const char randomizeNodeName[] = "randomize";
 	static const char gateNodeName[] = "gateOutput";
-	static const char durationNodeName[] = "gateDuration";
+	static const char durationNodeName[] = "gateLength";
 	
 	bool randomize = getBoolFromJSON(data, randomizeNodeName, false);	
 	NoteSequenceData* notes = getNotesFromJSON(data);
