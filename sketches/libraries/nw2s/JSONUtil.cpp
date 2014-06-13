@@ -47,6 +47,23 @@ int nw2s::getIntFromJSON(aJsonObject* data, const char* nodeName, int defaultVal
 	return node->valueint;
 }
 
+bool nw2s::getBoolFromJSON(aJsonObject* data, const char* nodeName, bool defaultVal)
+{
+	aJsonObject* node = aJson.getObjectItem(data, nodeName);
+	
+	if (node == NULL)
+	{
+		static const char nodeError[] = "Missing ";
+		Serial.println(String(nodeError) + String(nodeName));
+		return defaultVal;
+	}
+		
+	static const char info[] = ": ";
+	Serial.println(String(nodeName) + String(info) + (node->valuebool ? "true" : "false"));
+
+	return node->valuebool;
+}
+
 PinAnalogOut nw2s::getAnalogOutputFromJSON(aJsonObject* data)
 {
 	static const char nodeName[] = "analogOutput";
@@ -68,6 +85,13 @@ PinAnalogIn nw2s::getAnalogInputFromJSON(aJsonObject* data, const char* nodeName
 	int val = getIntFromJSON(data, nodeName, 0, 1, 12);
 
 	return INDEX_ANALOG_IN[val];	
+}
+
+PinDigitalOut nw2s::getDigitalOutputFromJSON(aJsonObject* data, const char* nodeName)
+{
+	int val = getIntFromJSON(data, nodeName, 0, 1, 16);
+
+	return INDEX_DIGITAL_OUT[val];	
 }
 
 PinAudioOut nw2s::getAudioOutputFromJSON(aJsonObject* data)

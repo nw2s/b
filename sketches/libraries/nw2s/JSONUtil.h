@@ -38,12 +38,11 @@ namespace nw2s
 	PinAnalogOut getAnalogOutputFromJSON(aJsonObject* data);
 	PinAnalogIn getAnalogInputFromJSON(aJsonObject* data);
 	PinAnalogIn getAnalogInputFromJSON(aJsonObject* data, const char* nodeName);
-	PinDigitalOut getDigitalOutputFromJSON(aJsonObject* data);
+	PinDigitalOut getDigitalOutputFromJSON(aJsonObject* data, const char* nodeName);
 	PinDigitalIn getDigitalInputFromJSON(aJsonObject* data);
 	NoteName getRootFromJSON(aJsonObject* data);
 	ScaleType getScaleFromJSON(aJsonObject* data);
 	int getDivisionFromJSON(aJsonObject* data);
-	bool getRandomizeFromJSON(aJsonObject* data);
 	NoteSequenceData* getNotesFromJSON(aJsonObject* data);
 	int getTempoFromJSON(aJsonObject* data);
 	int getBeatsFromJSON(aJsonObject* data);
@@ -54,6 +53,7 @@ namespace nw2s
 	aJsonObject* getDevicesFromJSON(aJsonObject* data);	
 	
 	int getIntFromJSON(aJsonObject* data, const char* nodeName, int defaultVal, int min, int max);
+	bool getBoolFromJSON(aJsonObject* data, const char* nodeName, bool defaultVal);
 }
 
 #endif

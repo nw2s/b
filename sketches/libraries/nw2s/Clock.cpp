@@ -28,63 +28,63 @@ using namespace nw2s;
 
 int nw2s::clockDivisionFromName(char* name)
 {	
-	if (strcmp("whole", name))
+	if (strcmp("whole", name) == 0)
 	{
 		return DIV_WHOLE;
 	}
-	if (strcmp("half", name))
+	if (strcmp("half", name) == 0)
 	{
 		return DIV_HALF;
 	}
-	if (strcmp("dotted half", name))
+	if (strcmp("dotted half", name) == 0)
 	{
 		return DIV_HALF_DOT;
 	}
-	if (strcmp("quarter", name))
+	if (strcmp("quarter", name) == 0)
 	{
 		return DIV_QUARTER;
 	}
-	if (strcmp("quarter triplet", name))
+	if (strcmp("quarter triplet", name) == 0)
 	{
 		return DIV_QUARTER_TRIPLET;
 	}
-	if (strcmp("dotted quarter", name))
+	if (strcmp("dotted quarter", name) == 0)
 	{
 		return DIV_QUARTER_DOT;
 	}
-	if (strcmp("eigth", name))
+	if (strcmp("eigth", name) == 0)
 	{
 		return DIV_EIGHTH;
 	}
-	if (strcmp("eigth triplet", name))
+	if (strcmp("eigth triplet", name) == 0)
 	{
 		return DIV_EIGHTH_TRIPLET;
 	}
-	if (strcmp("dotted eighth", name))
+	if (strcmp("dotted eighth", name) == 0)
 	{
 		return DIV_EIGHTH_DOT;
 	}
-	if (strcmp("sixteenth", name))
+	if (strcmp("sixteenth", name) == 0)
 	{
 		return DIV_SIXTEENTH;
 	}
-	if (strcmp("sixteenth triplet", name))
+	if (strcmp("sixteenth triplet", name) == 0)
 	{
 		return DIV_SIXTEENTH_TRIPLET;
 	}
-	if (strcmp("dotted sixteenth", name))
+	if (strcmp("dotted sixteenth", name) == 0)
 	{
 		return DIV_SIXTEENTH_DOT;
 	}
-	if (strcmp("thirtysecond", name))
+	if (strcmp("thirtysecond", name) == 0)
 	{
 		return DIV_THIRTYSECOND;
 	}
-	if (strcmp("dotted thirtysecond", name))
+	if (strcmp("dotted thirtysecond", name) == 0)
 	{
 		return DIV_THIRTYSECOND_DOT;
 	}
-	if (strcmp("thirtysecond triplet", name))
+	if (strcmp("thirtysecond triplet", name) == 0)
 	{
 		return DIV_THIRTYSECOND_TRIPLET;
 	}	
@@ -204,12 +204,7 @@ FixedClock::FixedClock(int tempo, unsigned char beats_per_measure)
 }
 
 void Clock::timer(unsigned long t)
-{
-	// if (t % 1000 == 0)
-	// {
-	// 	Serial.println("Clock T = " + String(t) + " " + String(this->beat) + " " + String(this->next_clock_t) + " " + String(this->last_clock_t) + " " + String(this->period));
-	// }
-	
+{	
 	/* Call reset on devices first */
 	for (int i = 0; i < this->devices.size(); i++)
 	{
@@ -229,7 +224,7 @@ void Clock::timer(unsigned long t)
 	if (t >= this->next_clock_t)
 	{
 		if (t > this->next_clock_t) Serial.println("Clock missed next clock T by (ms) " + String(t - this->next_clock_t));
-		IOUtils::displayBeat(this->beat + 1, this);				
+		IOUtils::displayBeat(this->beat, this);				
 		this->beat = (this->beat + 1) % this->beats_per_measure;		
 
 		this->updateTempo(t);
@@ -247,13 +242,8 @@ void Clock::timer(unsigned long t)
 	{
 		if (this->devices[i]->getNextTime() <= t)
 		{
-			Serial.println("calculating new time! " + String(this->devices[i]->getNextTime()) + " " + String(t));
-			
 			this->devices[i]->setNextTime((((unsigned long)(this->devices[i]->getclockdivision()) * (unsigned long)(this->period)) / 1000UL) + t);
 
-			Serial.println(String(this->devices[i]->getNextTime()) + " " + String(this->period));
-
-			
 			this->devices[i]->calculate();
 		}
 	}

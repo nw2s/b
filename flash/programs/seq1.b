@@ -16,16 +16,21 @@
 			
 			{
 				"type" : "NoteSequencer",
-				"analogOutput" : 1,
+				"analogOutput" : 2,
+				"gateOutput" : 1,
+				"gateLength" : 125,
 				"root" : "C",
 				"scale" : "major",
-				"division" : "eighth",
-				"randomize" : false,
+				"division" : "sixteenth",
+				"randomize" : true,
 				"notes" : [
 					
-					[1,1], [1,3], [1,5], [2,1]
+					[1,1], [0,0], [1,5], [1,4],
+					[1,1], [1,4], [0,0], [1,5],
+					[1,1], [1,5], [1,3], [0,0],
+					[1,1], [1,5], [1,4], [1,3]
 					
-				],
+				]
 			}		
 		]
 	}

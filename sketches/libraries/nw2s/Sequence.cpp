@@ -54,7 +54,8 @@ NoteSequenceData* nw2s::noteSequenceFromJSON(aJsonObject* data)
 		aJsonObject* degreeNode = aJson.getArrayItem(noteNode, 1);
 		
 		SequenceNote note = { octaveNode->valueint, degreeNode->valueint };
-		notes->push_back(note);
+		
+		(*notes)[i] = note;
 	}
 				
 	return notes;
@@ -87,40 +88,30 @@ NoteSequencer* NoteSequencer::create(vector<SequenceNote>* notes, NoteName key, 
 
 NoteSequencer* NoteSequencer::create(aJsonObject* data)
 {
-	aJsonObject* randomizeNode = aJson.getObjectItem(data, "randomize");
-			
-	if (randomizeNode == NULL)
-	{
-		Serial.println("The NoteSequencer node is missing a randomize definition.");
-		return NULL;
-	}
-		
-	Serial.println("Randomize: " + randomizeNode->valuebool ? "true" : "false");
+	static const char randomizeNodeName[] = "randomize";
+	static const char gateNodeName[] = "gateOutput";
+	static const char durationNodeName[] = "gateDuration";
 	
-
-	return NULL;
-	// return new NoteSequencer(notes, root, scale, clockdivision, output, randomizeNode->valuebool);
-
-	// NoteSequenceData* notes = getNotesFromJSON(data);
-	// ScaleType scale = getScaleFromJSON(data);
-	// NoteName root = getRootFromJSON(data);
-	// int clockdivision = getDivisionFromJSON(data);
-	// PinAnalogOut output = getAnalogOutputFromJSON(data);
-	// bool randomize = getRandomizeFromJSON(data);
-	// 
-	// return new NoteSequencer(notes, root, scale, clockdivision, output, randomize);
-
+	bool randomize = getBoolFromJSON(data, randomizeNodeName, false);	
+	NoteSequenceData* notes = getNotesFromJSON(data);
+	ScaleType scale = getScaleFromJSON(data);
+	NoteName root = getRootFromJSON(data);
+	int clockdivision = getDivisionFromJSON(data);
+	PinAnalogOut output = getAnalogOutputFromJSON(data);
+	PinDigitalOut gatePin = getDigitalOutputFromJSON(data, gateNodeName);
+	int gateDuration = getIntFromJSON(data, durationNodeName, 20, 1, 1000);
+	
+	NoteSequencer* seq = new NoteSequencer(notes, root, scale, clockdivision, output, randomize);
+		
+	if (gatePin != DIGITAL_OUT_NONE) seq->setgate(Gate::create(gatePin, gateDuration));
+	
+	return seq;
 }
 
 MorphingNoteSequencer* MorphingNoteSequencer::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output)
 {
 	return new MorphingNoteSequencer(notes, key, scale, chaos, clockdivision, output);
 }
-
-// NoteSequencer* NoteSequencer::create(aJsonObject* data)
-// {
-// 	
-// }
 
 RandomNoteSequencer* RandomNoteSequencer::create(NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output)
 {
@@ -399,9 +390,7 @@ NoteSequencer::NoteSequencer(vector<SequenceNote>* notes, NoteName key, ScaleTyp
 
 void NoteSequencer::timer(unsigned long t)
 {
-	// if (this->slew != NULL) this->output->outputSlewedNoteCV(this->key->getNote(this->current_octave, this->current_degree), this->slew);
 	if (this->gate != NULL) this->gate->timer(t);
-	// if (this->envelope != NULL) this->envelope->timer(t);	
 }
 
 void NoteSequencer::reset()
@@ -417,12 +406,7 @@ void NoteSequencer::reset()
 
 		this->output->outputNoteCV(this->key->getNote(this->current_octave, this->current_degree));		
 
-		//Serial.println(String(this->sequence_index) + " " + String(this->current_degree) + " " + String(this->current_octave));
-
-		// if (this->slew == NULL) this->output->outputNoteCV(this->key->getNote(this->current_octave, this->current_degree));
-		// 
 		if (this->gate != NULL) this->gate->reset();
-		// if (this->envelope != NULL) this->envelope->reset();
 	}
 }
 
