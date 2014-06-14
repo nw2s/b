@@ -36,16 +36,12 @@ namespace nw2s
 		int octave;
 		int degree;
 	};
-	
-	static const SequenceNote HOLD = {0, 0};
-	
+		
 	typedef std::vector<SequenceNote> NoteSequenceData;
 	typedef std::vector<int> TriggerSequenceData;
 
 	class Sequencer;
 	class NoteSequencer;
-	class RandomNoteSequencer;
-	class RandomTimeSequencer;
 	class CVNoteSequencer;
 	class CVSequencer;
 	class MorphingNoteSequencer;
@@ -148,7 +144,7 @@ class nw2s::ProbabilityTriggerSequencer : public nw2s::TriggerSequencer
 class nw2s::NoteSequencer : public nw2s::Sequencer
 {
 	public:
-		static NoteSequencer* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq = false);
+		static NoteSequencer* create(NoteSequenceData* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq = false);
 		static NoteSequencer* create(aJsonObject* data);
 		virtual void timer(unsigned long t);
 		virtual void reset();
@@ -162,24 +158,9 @@ class nw2s::NoteSequencer : public nw2s::Sequencer
 	
 	protected:
 		volatile int sequence_index;
-		std::vector<SequenceNote>* notes;
+		NoteSequenceData* notes;
 		
-		NoteSequencer(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq);
-};
-
-class nw2s::RandomNoteSequencer : public nw2s::Sequencer
-{
-	public:
-		static RandomNoteSequencer* create(NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output);
-		virtual void timer(unsigned long t);
-		virtual void reset();
-	
-	private:
-		Key* key;
-		AnalogOut* output;
-		ScaleNote current_note;
-		
-		RandomNoteSequencer(NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output);
+		NoteSequencer(NoteSequenceData* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq);
 };
 
 class nw2s::CVNoteSequencer : public nw2s::Sequencer
@@ -225,15 +206,16 @@ class  nw2s::CVSequencer : public Sequencer
 class nw2s::MorphingNoteSequencer : public NoteSequencer
 {
 	public:
-		static MorphingNoteSequencer* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output);
-		//static MorphingNoteSequencer* create(aJsonObject* data);
+		static MorphingNoteSequencer* create(NoteSequenceData* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output, PinDigitalIn reset);
+		static MorphingNoteSequencer* create(aJsonObject* data);
 		virtual void reset();
 		
 	private:
 		int chaos;
+		NoteSequenceData* notesOriginal;
+		PinDigitalIn resetPin;
 
-		MorphingNoteSequencer(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output);
-		//static NoteSequencer* create(std::vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq = false);
+		MorphingNoteSequencer(NoteSequenceData* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output, PinDigitalIn reset);
 };
 
 #endif

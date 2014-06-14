@@ -46,7 +46,8 @@ NoteSequenceData* nw2s::noteSequenceFromJSON(aJsonObject* data)
 		
 		if (aJson.getArraySize(noteNode) != 2)
 		{
-			Serial.println("Malformed note sequence. Should be of format [ [0,1], [1,1], [2,1] ]. Returning as much as I've parsed so far.");
+			static const char nodeError[] = "Malformed note sequence. Should be of format [ [0,1], [1,1], [2,1] ]. Returning as much as I've parsed so far.";
+			Serial.println(nodeError);
 			return(notes);
 		}
 		
@@ -108,15 +109,35 @@ NoteSequencer* NoteSequencer::create(aJsonObject* data)
 	return seq;
 }
 
-MorphingNoteSequencer* MorphingNoteSequencer::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output)
+MorphingNoteSequencer* MorphingNoteSequencer::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output, PinDigitalIn resetPin)
 {
-	return new MorphingNoteSequencer(notes, key, scale, chaos, clockdivision, output);
+	return new MorphingNoteSequencer(notes, key, scale, chaos, clockdivision, output, resetPin);
 }
 
-RandomNoteSequencer* RandomNoteSequencer::create(NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output)
+MorphingNoteSequencer* MorphingNoteSequencer::create(aJsonObject* data)
 {
-	return new RandomNoteSequencer(key, scale, clockdivision, output);
+	static const char resetNodeName[] = "reset";
+	static const char chaosNodeName[] = "chaos";
+	static const char gateNodeName[] = "gateOutput";
+	static const char durationNodeName[] = "gateLength";
+	
+	NoteSequenceData* notes = getNotesFromJSON(data);
+	ScaleType scale = getScaleFromJSON(data);
+	NoteName root = getRootFromJSON(data);
+	int clockdivision = getDivisionFromJSON(data);
+	PinAnalogOut output = getAnalogOutputFromJSON(data);
+	PinDigitalOut gatePin = getDigitalOutputFromJSON(data, gateNodeName);
+	PinDigitalIn reset = getDigitalInputFromJSON(data, resetNodeName);
+	int gateDuration = getIntFromJSON(data, durationNodeName, 20, 1, 1000);
+	int chaos = getIntFromJSON(data, chaosNodeName, 20, 1, 100);
+	
+	MorphingNoteSequencer* seq = new MorphingNoteSequencer(notes, root, scale, chaos, clockdivision, output, reset);
+		
+	if (gatePin != DIGITAL_OUT_NONE) seq->setgate(Gate::create(gatePin, gateDuration));
+	
+	return seq;
 }
+
 
 CVNoteSequencer* CVNoteSequencer::create(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input)
 {
@@ -410,32 +431,6 @@ void NoteSequencer::reset()
 	}
 }
 
-RandomNoteSequencer::RandomNoteSequencer(NoteName key, ScaleType scale, int clockdivision, PinAnalogOut pin)
-{
-	this->key = new Key(scale, key);
-	this->output = output;
-	this->clock_division = clockdivision;
-		
-	/* Start the CV at a random note in the sequence */
-	this->current_note = this->key->getRandomNote();
-	this->output = AnalogOut::create(pin);
-	this->output->outputNoteCV(this->current_note);
-}
-
-void RandomNoteSequencer::timer(unsigned long t)
-{	
-	if (this->slew != NULL) this->output->outputSlewedNoteCV(this->current_note, this->slew);	
-	if (this->gate != NULL) this->gate->timer(t);
-	if (this->envelope != NULL) this->envelope->timer(t);
-}
-
-void RandomNoteSequencer::reset()
-{
-	this->current_note = this->key->getRandomNote();		
-	if (this->slew == NULL) this->output->outputNoteCV(this->current_note);		
-	if (this->envelope != NULL) this->envelope->reset();
-}
-
 CVNoteSequencer::CVNoteSequencer(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut pin, PinAnalogIn input)
 {	
 	this->key = new Key(scale, key);
@@ -580,20 +575,35 @@ void CVSequencer::reset()
 	if (this->envelope != NULL) this->envelope->reset();
 }
 
-MorphingNoteSequencer::MorphingNoteSequencer(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output) : NoteSequencer(notes, key, scale, clockdivision, output, false)
+MorphingNoteSequencer::MorphingNoteSequencer(NoteSequenceData* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output, PinDigitalIn resetPin) : NoteSequencer(notes, key, scale, clockdivision, output, false)
 {
-	this->chaos = chaos;	
+	this->chaos = chaos;
+	this->resetPin = resetPin;
+	this->notesOriginal = new NoteSequenceData(this->notes->size());
+	
+	for (int i = 0; i < this->notes->size(); i++)
+	{
+		(*this->notesOriginal)[i] = (*this->notes)[i];
+	}
 }
 
 void MorphingNoteSequencer::reset()
 {	
 	/* Theres a chance that we want to randomly (permanently) swap this note with another from the sequence */
-	if (this->chaos >= random(100))
+	if ((!digitalRead(this->resetPin)) && (this->chaos >= random(100)))
 	{
 		int target = random(this->notes->size());
 		SequenceNote targetNote = (*this->notes)[target];
 		(*this->notes)[target] = (*this->notes)[this->sequence_index];
 		(*this->notes)[this->sequence_index] = targetNote;
+	}
+	
+	if (digitalRead(this->resetPin))
+	{
+		for (int i = 0; i < this->notes->size(); i++)
+		{
+			(*this->notes)[i] = (*this->notesOriginal)[i];
+		}
 	}
 	
 	NoteSequencer::reset();

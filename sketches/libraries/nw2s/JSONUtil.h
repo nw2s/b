@@ -39,7 +39,7 @@ namespace nw2s
 	PinAnalogIn getAnalogInputFromJSON(aJsonObject* data);
 	PinAnalogIn getAnalogInputFromJSON(aJsonObject* data, const char* nodeName);
 	PinDigitalOut getDigitalOutputFromJSON(aJsonObject* data, const char* nodeName);
-	PinDigitalIn getDigitalInputFromJSON(aJsonObject* data);
+	PinDigitalIn getDigitalInputFromJSON(aJsonObject* data, const char* nodeName);
 	NoteName getRootFromJSON(aJsonObject* data);
 	ScaleType getScaleFromJSON(aJsonObject* data);
 	int getDivisionFromJSON(aJsonObject* data);

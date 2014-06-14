@@ -153,6 +153,18 @@ void nw2s::initializeFirmware()
 		{
 			EventManager::registerDevice(ByteBeat::create(deviceNode));
 		}
+		else if (strcmp(typeNode->valuestring, "MorphingNoteSequencer") == 0)
+		{
+			if (clockDevice != NULL)
+			{
+				clockDevice->registerDevice(MorphingNoteSequencer::create(deviceNode));
+			}
+			else
+			{
+				static const char nodeError[] = "NoteSequencer defined with no clock, skipping.";
+				Serial.println(String(nodeError));
+			}
+		}
 		else if (strcmp(typeNode->valuestring, "NoteSequencer") == 0)
 		{
 			if (clockDevice != NULL)
@@ -161,7 +173,8 @@ void nw2s::initializeFirmware()
 			}
 			else
 			{
-				Serial.println("NoteSequencer defined with no clock, skipping.");
+				static const char nodeError[] = "NoteSequencer defined with no clock, skipping.";
+				Serial.println(String(nodeError));
 			}
 		}
 		else if (strcmp(typeNode->valuestring, "VCSamplingFrequencyOscillator") == 0)

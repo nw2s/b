@@ -87,6 +87,13 @@ PinAnalogIn nw2s::getAnalogInputFromJSON(aJsonObject* data, const char* nodeName
 	return INDEX_ANALOG_IN[val];	
 }
 
+PinDigitalIn nw2s::getDigitalInputFromJSON(aJsonObject* data, const char* nodeName)
+{
+	int val = getIntFromJSON(data, nodeName, 0, 1, 8);
+
+	return INDEX_DIGITAL_IN[val];	
+}
+
 PinDigitalOut nw2s::getDigitalOutputFromJSON(aJsonObject* data, const char* nodeName)
 {
 	int val = getIntFromJSON(data, nodeName, 0, 1, 16);
