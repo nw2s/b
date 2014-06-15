@@ -46,6 +46,16 @@ int nw2s::analogReadmV(int input)
 	return ANALOG_INPUT_TRANSLATION[normalval];
 }
 
+int nw2s::analogReadmV(int input, int min, int max)
+{
+	int mv = analogReadmV(input);
+	
+	if (mv > max) return max;
+	if (mv < min) return min;
+	
+	return mv;
+}
+
 AnalogOut* AnalogOut::create(PinAnalogOut out)
 {
 	return new AnalogOut(out);

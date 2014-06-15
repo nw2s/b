@@ -153,6 +153,10 @@ void nw2s::initializeFirmware()
 		{
 			EventManager::registerDevice(ByteBeat::create(deviceNode));
 		}
+		else if (strcmp(typeNode->valuestring, "CVNoteSequencer") == 0)
+		{
+			EventManager::registerDevice(CVNoteSequencer::create(deviceNode));
+		}
 		else if (strcmp(typeNode->valuestring, "MorphingNoteSequencer") == 0)
 		{
 			if (clockDevice != NULL)

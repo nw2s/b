@@ -139,10 +139,33 @@ MorphingNoteSequencer* MorphingNoteSequencer::create(aJsonObject* data)
 }
 
 
-CVNoteSequencer* CVNoteSequencer::create(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input)
+CVNoteSequencer* CVNoteSequencer::create(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input, bool randomize)
 {
-	return new CVNoteSequencer(notes, key, scale, output, input);
+	return new CVNoteSequencer(notes, key, scale, output, input, randomize);
 }
+
+CVNoteSequencer* CVNoteSequencer::create(aJsonObject* data)
+{
+	static const char randomizeNodeName[] = "randomize";
+	static const char gateNodeName[] = "gateOutput";
+	static const char durationNodeName[] = "gateLength";
+	
+	bool randomize = getBoolFromJSON(data, randomizeNodeName, false);	
+	NoteSequenceData* notes = getNotesFromJSON(data);
+	ScaleType scale = getScaleFromJSON(data);
+	NoteName root = getRootFromJSON(data);
+	PinAnalogOut output = getAnalogOutputFromJSON(data);
+	PinAnalogIn input = getAnalogInputFromJSON(data);
+	PinDigitalOut gatePin = getDigitalOutputFromJSON(data, gateNodeName);
+	int gateDuration = getIntFromJSON(data, durationNodeName, 20, 1, 1000);
+	
+	CVNoteSequencer* seq = new CVNoteSequencer(notes, root, scale, output, input, randomize);
+		
+	if (gatePin != DIGITAL_OUT_NONE) seq->setgate(Gate::create(gatePin, gateDuration));
+	
+	return seq;
+}
+
 
 CVSequencer* CVSequencer::create(vector<int>* values, int clockdivision, PinAnalogOut output, bool randomize_seq)
 {
@@ -431,7 +454,7 @@ void NoteSequencer::reset()
 	}
 }
 
-CVNoteSequencer::CVNoteSequencer(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut pin, PinAnalogIn input)
+CVNoteSequencer::CVNoteSequencer(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut pin, PinAnalogIn input, bool randomize_seq)
 {	
 	this->key = new Key(scale, key);
 	this->output = output;
@@ -439,18 +462,18 @@ CVNoteSequencer::CVNoteSequencer(NoteSequenceData* notes, NoteName key, ScaleTyp
 	this->gate = NULL;
 	this->last_note_t = 0;
 	this->cv_in = input;
+	this->randomize_seq = randomize_seq;
 		
 	/* Copy the sequence to our own memory */
 	this->notes = new vector<SequenceNote>();
 	copy(notes->begin(), notes->end(), back_inserter(*this->notes));
 
 	/* Read the input and calculate the position in the sequence */	
-	unsigned long noteindex = (((analogRead(cv_in) * 1000UL) / 1023UL) * this->notes->size()) / 1000UL;
-	this->sequence_index = noteindex;
+	this->sequence_index = calculatePosition();
 
 	/* Output the first note of the sequence */
-	int startdegree = (*this->notes)[noteindex].degree;
-	int startoctave = (*this->notes)[noteindex].octave;
+	int startdegree = (*this->notes)[this->sequence_index].degree;
+	int startoctave = (*this->notes)[this->sequence_index].octave;
 	this->output = AnalogOut::create(pin);
 	this->output->outputNoteCV(this->key->getNote(startoctave, startdegree));	
 }
@@ -459,56 +482,46 @@ void CVNoteSequencer::timer(unsigned long t)
 {			
 	int period_t = t - this->last_note_t;
 
-	if ((this->slew == NULL) && (t % 50 == 0)) 
+	/* Only check the analog input every 50ms */
+	if (t % 50 == 0)
 	{
-		//TODO: Optimize even more
-		/* Save some cycles, only do this every 50ms */
-	
 		/* Read the input and calculate the position in the sequence */
-		//TODO: This is buggy - fix!
-		unsigned long noteindex = (((analogRead(cv_in) * 1000UL) / 3700UL) * this->notes->size()) / 1000UL;
+		int noteindex = calculatePosition();
 	
 		/* If the note is still the same, just be done */
 		if (this->sequence_index == noteindex) return;
+		
+		//TODO: Check for randomize
 		
 		this->sequence_index = noteindex;
 		this->last_note_t = t;
 		period_t = 0;
 
-		this->sequence_index = noteindex;
+		// this->sequence_index = (randomize_seq) ? random(this->values->size()) : ++(this->sequence_index) % this->values->size();
+
 		int degree = (*this->notes)[noteindex].degree;
 		int octave = (*this->notes)[noteindex].octave;		
 			
 		this->output->outputNoteCV(this->key->getNote(octave, degree));
 
-		if (this->envelope != NULL) this->envelope->reset();		
-	}
-	else if (this->slew != NULL)
-	{		
-		/* Read the input and calculate the position in the sequence */
-		int noteindex = (((analogRead(cv_in) * 1000UL) / 3600UL) * this->notes->size()) / 1000UL;
-	
-		if (this->sequence_index != noteindex)
-		{
-			this->sequence_index = noteindex;
-			this->last_note_t = t;
-		}
-		
-		this->sequence_index = noteindex;
-		int degree = (*this->notes)[noteindex].degree;
-		int octave = (*this->notes)[noteindex].octave;		
-	
-		this->output->outputSlewedNoteCV(this->key->getNote(octave, degree), this->slew);
+		if (this->gate != NULL) this->gate->reset();		
 	}
 
 	if (this->gate != NULL) this->gate->timer(t);
-	if (this->envelope != NULL) this->envelope->timer(t);	
 }
 
 void CVNoteSequencer::reset()
 {
 	
 }
+
+int CVNoteSequencer::calculatePosition()
+{
+	/* Get the input in mV, normalized 0-5V */
+	return analogReadmV(cv_in, 0, 5000) / (5000 / (this->notes->size() - 1));
+}
+
+
 
 CVSequencer::CVSequencer(vector<int>* values, int clockdivision, PinAnalogOut pin, bool randomize_seq)
 {
@@ -534,7 +547,7 @@ CVSequencer::CVSequencer(int min, int max, int clockdivision, PinAnalogOut pin)
 	this->values = NULL;
 	this->output = output;
 	this->sequence_index = 0;
-	this->randomize_seq = randomize_seq;
+	this->randomize_seq = true;
 	this->clock_division = clockdivision;
 
 	this->min = (min < 0) ? 0 : min;

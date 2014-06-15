@@ -166,25 +166,28 @@ class nw2s::NoteSequencer : public nw2s::Sequencer
 class nw2s::CVNoteSequencer : public nw2s::Sequencer
 {
 	public:
-		static CVNoteSequencer* create(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input);
+		static CVNoteSequencer* create(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input, bool randomize_seq = false);
+		static CVNoteSequencer* create(aJsonObject* data);		
 		virtual void timer(unsigned long t);
 		virtual void reset();
 	
 	private:
+		bool randomize_seq;
 		volatile int sequence_index;
 		std::vector<SequenceNote>* notes;
 		Key* key;
 	 	AnalogOut* output;
 		PinAnalogIn cv_in;
 		unsigned long last_note_t;
+		int calculatePosition();
 		
-		CVNoteSequencer(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input);
+		CVNoteSequencer(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input, bool randomize_seq);
 };
 
 class  nw2s::CVSequencer : public Sequencer
 {
 	public:
-		static CVSequencer* create(std::vector<int>* values, int clockdivision, PinAnalogOut output, bool randomize_seq = false);
+		static CVSequencer* create(std::vector<int>* values, int clockdivision, PinAnalogOut output, bool randomize_seq);
 		static CVSequencer* create(int clockdivision, PinAnalogOut output);
 		static CVSequencer* create(int min, int max, int clockdivision, PinAnalogOut output);
 		virtual void timer(unsigned long t);

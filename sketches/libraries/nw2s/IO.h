@@ -4237,6 +4237,7 @@ namespace nw2s
 
 	int analogRead(int input);	
 	int analogReadmV(int input);	
+	int analogReadmV(int input, int min, int max);	
 }
 
 class nw2s::AnalogOut
