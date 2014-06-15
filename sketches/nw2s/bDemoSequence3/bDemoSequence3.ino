@@ -67,7 +67,7 @@ void setup()
 								
 	std::vector<SequenceNote>* notes = new vector<SequenceNote>(notelist, notelist + 34);
 	
-	Sequencer* sequencer = MorphingNoteSequencer::create(notes, A, MINOR, 25, DIV_SIXTEENTH, DUE_SPI_4822_00);
+	Sequencer* sequencer = MorphingNoteSequencer::create(notes, A, Key::SCALE_MINOR, 25, DIV_SIXTEENTH, DUE_SPI_4822_00);
 	sequencer->seteg(ADSR::create(10, 250, 254, 1250, 1200, false, DUE_SPI_4822_01));
 	
 	clock1->registerDevice(sequencer);
@@ -85,7 +85,7 @@ void setup()
 	
 	std::vector<SequenceNote>* notes2 = new vector<SequenceNote>(notelist2, notelist2 + 4);
 	
-	Sequencer* sequencer2 = NoteSequencer::create(notes2, A, MINOR, DIV_WHOLE, DUE_SPI_4822_02);
+	Sequencer* sequencer2 = NoteSequencer::create(notes2, A, Key::SCALE_MINOR, DIV_WHOLE, DUE_SPI_4822_02);
 	sequencer2->setslew(LinearSlew::create(50));
 	
 	Sequencer* cvsequencer = CVSequencer::create(800, 1000, DIV_QUARTER, DUE_SPI_4822_03);

@@ -83,7 +83,7 @@ void setup()
 	NoteSequenceData* notes = new NoteSequenceData(notelist, notelist + 34);
 
 	/* Build our note-based seuqnce */
-	Sequencer* sequencer = CVNoteSequencer::create(notes, C, MAJOR, DUE_SPI_4822_02, DUE_IN_A02);
+	Sequencer* sequencer = CVNoteSequencer::create(notes, C, Key::SCALE_MAJOR, DUE_SPI_4822_02, DUE_IN_A02);
 
 	/* Add some modifier values */
 	// sequencer->setgate(Gate::create(DUE_OUT_D04, 75));

@@ -65,7 +65,6 @@ PCA9685 AnalogOut::ledDriver;
 
 AnalogOut::AnalogOut(PinAnalogOut pin)
 {
-
 	this->pin = pin;
 
 	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
@@ -140,38 +139,6 @@ AnalogOut::AnalogOut(PinAnalogOut pin)
 	}
 }
 
-void AnalogOut::outputNoteCV(ScaleNote note)
-{
-	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
-	{
-		//TODO: account for gain mode
-		int dacval = 4095 - note.cv;
-
-		this->spidac.setValue(this->spidac_index, dacval);
-
-		if (IOUtils::enableLED)
-		{
-			//TODO: Don't do this too often
-			int ledval = (dacval < 2000) ? 4000 - (dacval * 2) : (dacval - 2000) * 2;
-		
-			AnalogOut::ledDriver.setLEDDimmed(this->ledpin, ledval);
-		}						
-	}
-}
-
-void AnalogOut::outputSlewedNoteCV(ScaleNote note, Slew* slew)
-{
-	int v = slew->calculate_value(note.cv);
-
-	if (IOUtils::enableLED) AnalogOut::ledDriver.setLEDDimmed(this->ledpin, v);
-
-	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
-	{		
-		this->spidac.setValue(this->spidac_index, v);
-	}		
-}
-
-
 void AnalogOut::outputCV(int cv)
 {
 	/* 
@@ -197,20 +164,6 @@ void AnalogOut::outputCV(int cv)
 		int ledval = (dacval < 2000) ? 4000 - (dacval * 2) : (dacval - 2000) * 2;
 		
 		AnalogOut::ledDriver.setLEDDimmed(this->ledpin, ledval);
-	}
-}
-
-void AnalogOut::outputSlewedCV(int cv, Slew* slew)
-{
-
-	int slewval = slew->calculate_value(cv);
-	int dacval = (slewval * 4000UL) / 5000;
-
-	if (IOUtils::enableLED) AnalogOut::ledDriver.setLEDDimmed(this->ledpin, dacval);
-
-	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
-	{
-		this->spidac.setValue(this->spidac_index, dacval);
 	}
 }
 

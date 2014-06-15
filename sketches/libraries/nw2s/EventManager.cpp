@@ -91,6 +91,11 @@ void EventManager::registerDevice(TimeBasedDevice *device)
 	timedevices.push_back(device);
 }
 
+unsigned long EventManager::getT()
+{
+	return t;
+}
+
 void serialEvent() 
 {
 	while (Serial.available()) 

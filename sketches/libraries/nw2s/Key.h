@@ -25,15 +25,14 @@
 #include <vector>
 
 namespace nw2s
-{
-	enum ScaleType
+{	
+	struct Scale
 	{
-		MAJOR,
-		MINOR,
-		CHROMATIC,
-	};	
+		int length;
+		int semis[12];
+	};
 	
-	ScaleType scaleTypeFromName(char* name);
+	Scale scaleFromName(char* name);
 
 	enum NoteName
 	{
@@ -60,92 +59,24 @@ namespace nw2s
 
 	NoteName noteFromName(char* name);
 
-	struct ScaleCV
-	{
-		int cv;
-		int cvin;
+	typedef std::vector<int> ScaleDegrees; 
+
+	static const int SEMITONE_MV[12] = {
+		
+		0,
+		83,
+		167,
+		250,
+		333,
+		417,
+		500,
+		583,
+		667,
+		750,
+		833,
+		917
+
 	};
-
-	struct ScaleNote 
-	{
-		char index;
-		int cv;
-		int cvin;
-		char octave;
-		char degree;
-	};
-
-	typedef std::vector<ScaleNote> ScaleNotes; 
-
-	static const int NOTE_CV_SIZE = 61;
-	static const ScaleNote NOTE_NOT_FOUND = { -1, -1, -1, -1 };;
-
-
-	static const ScaleCV SCALE_NOTES[NOTE_CV_SIZE] = {
-	
-		{ 0, 0 },
-		{ 67, 9 },
-		{ 133, 26 },
-		{ 200, 43 },
-		{ 267, 60 },
-		{ 333, 77 },
-		{ 400, 94 },
-		{ 467, 111 },
-		{ 533, 128 },
-		{ 600, 145 },
-		{ 667, 162 },
-		{ 733, 180 },
-		{ 800, 197 },
-		{ 867, 214 },
-		{ 933, 231 },
-		{ 1000, 248 },
-		{ 1067, 265 },
-		{ 1133, 282 },
-		{ 1200, 299 },
-		{ 1267, 316 },
-		{ 1333, 333 },
-		{ 1400, 350 },
-		{ 1467, 367 },
-		{ 1533, 384 },
-		{ 1600, 401 },
-		{ 1667, 418 },
-		{ 1733, 435 },
-		{ 1800, 452 },
-		{ 1867, 469 },
-		{ 1933, 486 },
-		{ 2000, 503 },
-		{ 2067, 521 },
-		{ 2133, 538 },
-		{ 2200, 555 },
-		{ 2267, 572 },
-		{ 2333, 589 },
-		{ 2400, 606 },
-		{ 2467, 623 },
-		{ 2533, 640 },
-		{ 2600, 657 },
-		{ 2667, 674 },
-		{ 2733, 691 },
-		{ 2800, 708 },
-		{ 2867, 725 },
-		{ 2933, 742 },
-		{ 3000, 759 },
-		{ 3067, 776 },
-		{ 3133, 793 },
-		{ 3200, 810 },
-		{ 3267, 827 },
-		{ 3333, 844 },
-		{ 3400, 862 },
-		{ 3467, 879 },
-		{ 3533, 896 },
-		{ 3600, 913 },
-		{ 3667, 930 },
-		{ 3733, 947 },
-		{ 3800, 964 },
-		{ 3867, 981 },
-		{ 3933, 998 },
-		{ 4000, 1015 },
-	};
-
 	
 	static const int CVFREQUENCY[4001] =
 	{
@@ -4158,25 +4089,21 @@ namespace nw2s
 class nw2s::Key 
 {
 	public:
-		Key(ScaleType scaletype, NoteName rootnote);
+		Key(Scale scale, NoteName rootnote);		
+		int getNoteMillivolt(int octave, int degree);
+		int quantizeOutput(int cv);
 		
-		ScaleNote& operator [] (const int index);
 		
-		size_t getNoteCount();
-		NoteName getRoot();
-		ScaleNote getNote(int octave, int degree);
-		ScaleNote getRandomNote();
-		ScaleNote getRandomNote(int min, int max);
-		ScaleNote quantizeInput(int cv);
-		ScaleNote quantizeOutput(int cv);
-
+		/* I'm not making these static const to avoid having to fetch them from NVRAM. */
+		static Scale SCALE_MAJOR;
+		static Scale SCALE_MINOR;
+		static Scale SCALE_CHROMATIC;
+		static Scale SCALE_MAJOR_PENTATONIC;
+		
+	
 	private:
-		ScaleType scaletype;			
-		NoteName rootnote;			 
-		ScaleNotes notes;
-		
-		void initScaleMeta(ScaleType scaletype, NoteName rootnote);
-		void initScaleNotes(int notesperoctave, int noteindexes[]);		
+		Scale scale;			
+		NoteName rootnote;
 };
 
 #endif

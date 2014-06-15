@@ -54,7 +54,7 @@ void setup()
 	
 	NoteSequenceData* notes = new NoteSequenceData(notelist, notelist + 4);
 	
-	Sequencer* sequencer = NoteSequencer::create(notes, C, MAJOR, DIV_SIXTEENTH, DUE_SPI_4822_00);
+	Sequencer* sequencer = NoteSequencer::create(notes, C, Key::SCALE_MAJOR, DIV_SIXTEENTH, DUE_SPI_4822_00);
 	
 	//fixedclock->registerdevice(sequencer);
 

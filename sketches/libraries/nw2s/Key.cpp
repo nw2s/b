@@ -21,38 +21,39 @@
 #include <iterator>
 #include <vector>
 #include <stdexcept>
-
-#ifdef __AVR__
-#include <pnew.cpp>
-#endif
-
 #include <Arduino.h>
-
 #include "Key.h"
 
 using namespace std;
 using namespace nw2s;
 
+Scale nw2s::Key::SCALE_MAJOR = { 7, { 0, 2, 4, 5, 7, 9, 10 } };
+Scale nw2s::Key::SCALE_MINOR = { 7, { 0, 2, 3, 5, 7, 8, 10 } };
+Scale nw2s::Key::SCALE_CHROMATIC = { 12, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 } };
+Scale nw2s::Key::SCALE_MAJOR_PENTATONIC = { 5, { 0, 2, 4, 7, 9 } };
 
-
-ScaleType nw2s::scaleTypeFromName(char* name)
+Scale nw2s::scaleFromName(char* name)
 {
 	if (strcmp("major", name) == 0)
 	{
-		return MAJOR;
+		return Key::SCALE_MAJOR;
 	}
 	if (strcmp("minor", name) == 0)
 	{
-		return MINOR;
+		return Key::SCALE_MINOR;
 	}
 	if (strcmp("chromatic", name) == 0)
 	{
-		return CHROMATIC;
+		return Key::SCALE_CHROMATIC;
+	}
+	if (strcmp("major pentatonic", name) == 0)
+	{
+		return Key::SCALE_MAJOR_PENTATONIC;
 	}
 
 	/* For now, just default to chromatic if we don't find the scale */
 	Serial.println("Unknown scale name " + String(name) + ". Just using chromatic instead.");
-	return CHROMATIC; 
+	return Key::SCALE_CHROMATIC; 
 }
 
 NoteName nw2s::noteFromName(char* name)
@@ -134,122 +135,35 @@ NoteName nw2s::noteFromName(char* name)
 		return B_SHARP;
 	}
 
-	/* For now, just default to chromatic if we don't find the scale */
+	/* For now, just default to C if we don't find the note */
 	Serial.println("Unknown note name " + String(name) + ". Just using C instead.");
 	return C; 
 }
 
-Key::Key(ScaleType scaletype, NoteName rootnote)
+Key::Key(Scale scale, NoteName rootnote)
 {
-	this->scaletype = scaletype;
+	this->scale = scale;
 	this->rootnote = rootnote;
+}
+
+int Key::getNoteMillivolt(int octave, int degree)
+{
+	int rootmV = (octave * 1000) + SEMITONE_MV[this->rootnote];
+	int degreemV = SEMITONE_MV[(degree - 1) % this->scale.length];
 	
-	this->initScaleMeta(scaletype, rootnote);	
+	return rootmV + degreemV;
 }
 
-ScaleNote& Key::operator [] (const int index)
+int Key::quantizeOutput(int cv)
 {
-	return this->notes[index];
-}
-
-size_t Key::getNoteCount()
-{
-	return this->notes.size();
-}
-
-NoteName Key::getRoot()
-{
-	return this->rootnote;
-}
-
-ScaleNote Key::getNote(int octave, int degree)
-{
-	for (int i = 0; i < notes.size(); i++)
-	{
-		if (notes[i].octave == octave && notes[i].degree == degree) return notes[i];
-	}
-	
-	return nw2s::NOTE_NOT_FOUND;
-}
-
-ScaleNote Key::getRandomNote()
-{
-	return this->notes[random(this->notes.size())];
-}
-
-/* PRIVATE METHODS */
-
-void Key::initScaleMeta(ScaleType scaletype, NoteName rootnote)
-{	
-	switch (scaletype)
-	{
-		case MAJOR:
-		{
-			int noteindexes[] = { 0, 2, 4, 5, 7, 9, 10 };
-			initScaleNotes(7, noteindexes);
-			break;
-		}
-			
-		case MINOR:
-		{
-			int noteindexes[] = { 0, 2, 3, 5, 7, 8, 10 };
-			initScaleNotes(7, noteindexes);
-			break;
-		}
-					
-		case CHROMATIC:
-		{
-			int noteindexes[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-			initScaleNotes(11, noteindexes);
-			break;
-		}
-	}
-}
-
-void Key::initScaleNotes(int notesperoctave, int noteindexes[])
-{
-	this->notes = nw2s::ScaleNotes();
-		
-	for (int octaveindex = -1; octaveindex < 6; octaveindex++)
-	{
-		for (int noteindex = 0; noteindex < notesperoctave; noteindex++)
-		{
-			int cvlocation = noteindexes[noteindex] + this->rootnote + (octaveindex * 12);
-			
-			/* Once we're past the bounds, we're done */
-			if (cvlocation >= nw2s::NOTE_CV_SIZE) break;
-
-			/* Skip the negative locations */
-			if (cvlocation > -1)
-			{	
-				ScaleNote note = { noteindex, SCALE_NOTES[cvlocation].cv, SCALE_NOTES[cvlocation].cvin, octaveindex, noteindex + 1 };
-				this->notes.push_back(note);
-			}
-		}
-	}
-}
-
-ScaleNote Key::quantizeOutput(int cv)
-{
-	/* Output quantizing is done when we're going from 0-4096 */
-	for (int i = this->notes.size() - 1; i >= 0; i--)
-	{
-		//TODO: giving it a few bits of slop - good idea?
-		if (cv >= this->notes[i].cv - 10) return this->notes[i];
-	}
-
-	return this->notes[0];
-}
-
-ScaleNote Key::quantizeInput(int cv)
-{
-	/* Output quantizing is done when we're going from 0-4096 */
-	for (int i = this->notes.size() - 1; i >= 0; i--)
-	{
-		//TODO: giving it a few bits of slop - good idea?
-		if (cv >= this->notes[i].cvin - 10) return this->notes[i];
-	}
-
-	return this->notes[0];
+	return 0;
+	// /* Output quantizing is done when we're going from 0-4096 */
+	// for (int i = this->notes.size() - 1; i >= 0; i--)
+	// {
+	// 	//TODO: giving it a few bits of slop - good idea?
+	// 	if (cv >= this->notes[i].cv - 10) return this->notes[i];
+	// }
+	// 
+	// return this->notes[0];
 }
 

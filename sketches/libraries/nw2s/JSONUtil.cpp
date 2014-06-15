@@ -110,7 +110,7 @@ PinAudioOut nw2s::getAudioOutputFromJSON(aJsonObject* data)
 }
 
 
-ScaleType nw2s::getScaleFromJSON(aJsonObject* data)
+Scale nw2s::getScaleFromJSON(aJsonObject* data)
 {	
 	aJsonObject* scaleNode = aJson.getObjectItem(data, "scale");
 
@@ -118,13 +118,13 @@ ScaleType nw2s::getScaleFromJSON(aJsonObject* data)
 	{
 		static const char nodeError[] = "Missing scale definition. Using chromatic.";
 		Serial.println(String(nodeError));
-		return CHROMATIC;
+		return Key::SCALE_CHROMATIC;
 	}
 
 	static const char info[] = "Scale: ";
 	Serial.println(String(info) + String(scaleNode->valuestring));
 
-	return scaleTypeFromName(scaleNode->valuestring);
+	return scaleFromName(scaleNode->valuestring);
 }
 
 NoteName nw2s::getRootFromJSON(aJsonObject* data)

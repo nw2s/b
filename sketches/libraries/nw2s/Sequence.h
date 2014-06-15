@@ -59,15 +59,11 @@ class nw2s::Sequencer : public nw2s::BeatDevice
 {
 	public: 
 		void setgate(Gate* gate);
-		void setslew(Slew* slew);
-		void seteg(Envelope* eg);
 		virtual void timer(unsigned long t) = 0;
 		virtual void reset() = 0;
 	
 	protected:
 		Gate* gate;	
-		Slew* slew;
-		Envelope* envelope;
 		
 		Sequencer();
 };
@@ -144,7 +140,7 @@ class nw2s::ProbabilityTriggerSequencer : public nw2s::TriggerSequencer
 class nw2s::NoteSequencer : public nw2s::Sequencer
 {
 	public:
-		static NoteSequencer* create(NoteSequenceData* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq = false);
+		static NoteSequencer* create(NoteSequenceData* notes, NoteName key, Scale scale, int clockdivision, PinAnalogOut output, bool randomize_seq = false);
 		static NoteSequencer* create(aJsonObject* data);
 		virtual void timer(unsigned long t);
 		virtual void reset();
@@ -160,13 +156,13 @@ class nw2s::NoteSequencer : public nw2s::Sequencer
 		volatile int sequence_index;
 		NoteSequenceData* notes;
 		
-		NoteSequencer(NoteSequenceData* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq);
+		NoteSequencer(NoteSequenceData* notes, NoteName key, Scale scale, int clockdivision, PinAnalogOut output, bool randomize_seq);
 };
 
 class nw2s::CVNoteSequencer : public nw2s::Sequencer
 {
 	public:
-		static CVNoteSequencer* create(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input, bool randomize_seq = false);
+		static CVNoteSequencer* create(NoteSequenceData* notes, NoteName key, Scale scale, PinAnalogOut output, PinAnalogIn input, bool randomize_seq = false);
 		static CVNoteSequencer* create(aJsonObject* data);		
 		virtual void timer(unsigned long t);
 		virtual void reset();
@@ -181,7 +177,7 @@ class nw2s::CVNoteSequencer : public nw2s::Sequencer
 		unsigned long last_note_t;
 		int calculatePosition();
 		
-		CVNoteSequencer(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input, bool randomize_seq);
+		CVNoteSequencer(NoteSequenceData* notes, NoteName key, Scale scale, PinAnalogOut output, PinAnalogIn input, bool randomize_seq);
 };
 
 class  nw2s::CVSequencer : public Sequencer
@@ -209,7 +205,7 @@ class  nw2s::CVSequencer : public Sequencer
 class nw2s::MorphingNoteSequencer : public NoteSequencer
 {
 	public:
-		static MorphingNoteSequencer* create(NoteSequenceData* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output, PinDigitalIn reset);
+		static MorphingNoteSequencer* create(NoteSequenceData* notes, NoteName key, Scale scale, int chaos, int clockdivision, PinAnalogOut output, PinDigitalIn reset);
 		static MorphingNoteSequencer* create(aJsonObject* data);
 		virtual void reset();
 		
@@ -218,7 +214,7 @@ class nw2s::MorphingNoteSequencer : public NoteSequencer
 		NoteSequenceData* notesOriginal;
 		PinDigitalIn resetPin;
 
-		MorphingNoteSequencer(NoteSequenceData* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output, PinDigitalIn reset);
+		MorphingNoteSequencer(NoteSequenceData* notes, NoteName key, Scale scale, int chaos, int clockdivision, PinAnalogOut output, PinDigitalIn reset);
 };
 
 #endif

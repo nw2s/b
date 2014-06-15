@@ -41,7 +41,7 @@ namespace nw2s
 	PinDigitalOut getDigitalOutputFromJSON(aJsonObject* data, const char* nodeName);
 	PinDigitalIn getDigitalInputFromJSON(aJsonObject* data, const char* nodeName);
 	NoteName getRootFromJSON(aJsonObject* data);
-	ScaleType getScaleFromJSON(aJsonObject* data);
+	Scale getScaleFromJSON(aJsonObject* data);
 	int getDivisionFromJSON(aJsonObject* data);
 	NoteSequenceData* getNotesFromJSON(aJsonObject* data);
 	int getTempoFromJSON(aJsonObject* data);

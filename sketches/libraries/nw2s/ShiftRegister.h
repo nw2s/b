@@ -40,7 +40,7 @@ class nw2s::RandomLoopingShiftRegister : public nw2s::BeatDevice
 		virtual void reset();
 		void setCVOut(PinAnalogOut pinout);
 		void setDelayedCVOut(PinAnalogOut pinout, int ticks);
-		void setKey(NoteName root, ScaleType scale);
+		void setKey(NoteName root, Scale scale);
 		void setNoteOut(PinAnalogOut pinout);
 		void setDelayedNoteOut(PinAnalogOut pinout, int ticks);
 		// void setWriteZero(PinDigitalIn pinin);
@@ -58,13 +58,13 @@ class nw2s::RandomLoopingShiftRegister : public nw2s::BeatDevice
 
 	private:
 		int nextCV;
-		ScaleNote nextNote;
+		int nextNote;
 		bool next_or_gate;
 		bool next_and_gate;
 		bool next_or_trigger;
 		bool next_and_trigger;
 		int next_sequencercv;
-		ScaleNote next_sequencernote;
+		int next_sequencernote;
 		
 		std::vector<bool> shiftregister;
 		PinAnalogIn controlpin;
@@ -76,7 +76,7 @@ class nw2s::RandomLoopingShiftRegister : public nw2s::BeatDevice
 		AnalogOut* delayednoteout;
 		AnalogOut* sequencercvout;
 		AnalogOut* sequencernoteout;
-		std::vector<ScaleNote> notedelayline;
+		std::vector<int> notedelayline;
 		std::vector<int> cvdelayline;
 		Key* key;
 		Gate* gate[8];

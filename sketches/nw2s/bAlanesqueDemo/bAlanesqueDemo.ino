@@ -48,7 +48,7 @@ void setup()
 	shiftregister->setCVOut(DUE_SPI_4822_02);
 	shiftregister->setDelayedCVOut(DUE_SPI_4822_08, 2);
 
-	shiftregister->setKey(C, MAJOR);
+	shiftregister->setKey(C, Key::SCALE_MAJOR);
 	shiftregister->setNoteOut(DUE_SPI_4822_04);
 	shiftregister->setDelayedNoteOut(DUE_SPI_4822_09, 1);
 	

@@ -82,7 +82,7 @@ ProbabilityDrumTriggerSequencer* ProbabilityDrumTriggerSequencer::create(vector<
 	return new ProbabilityDrumTriggerSequencer(triggers, velocities, velocityrange, clockdivision, output);
 }
 
-NoteSequencer* NoteSequencer::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut output, bool randomize_seq)
+NoteSequencer* NoteSequencer::create(vector<SequenceNote>* notes, NoteName key, Scale scale, int clockdivision, PinAnalogOut output, bool randomize_seq)
 {
 	return new NoteSequencer(notes, key, scale, clockdivision, output, randomize_seq);
 }
@@ -95,7 +95,7 @@ NoteSequencer* NoteSequencer::create(aJsonObject* data)
 	
 	bool randomize = getBoolFromJSON(data, randomizeNodeName, false);	
 	NoteSequenceData* notes = getNotesFromJSON(data);
-	ScaleType scale = getScaleFromJSON(data);
+	Scale scale = getScaleFromJSON(data);
 	NoteName root = getRootFromJSON(data);
 	int clockdivision = getDivisionFromJSON(data);
 	PinAnalogOut output = getAnalogOutputFromJSON(data);
@@ -109,7 +109,7 @@ NoteSequencer* NoteSequencer::create(aJsonObject* data)
 	return seq;
 }
 
-MorphingNoteSequencer* MorphingNoteSequencer::create(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output, PinDigitalIn resetPin)
+MorphingNoteSequencer* MorphingNoteSequencer::create(vector<SequenceNote>* notes, NoteName key, Scale scale, int chaos, int clockdivision, PinAnalogOut output, PinDigitalIn resetPin)
 {
 	return new MorphingNoteSequencer(notes, key, scale, chaos, clockdivision, output, resetPin);
 }
@@ -122,7 +122,7 @@ MorphingNoteSequencer* MorphingNoteSequencer::create(aJsonObject* data)
 	static const char durationNodeName[] = "gateLength";
 	
 	NoteSequenceData* notes = getNotesFromJSON(data);
-	ScaleType scale = getScaleFromJSON(data);
+	Scale scale = getScaleFromJSON(data);
 	NoteName root = getRootFromJSON(data);
 	int clockdivision = getDivisionFromJSON(data);
 	PinAnalogOut output = getAnalogOutputFromJSON(data);
@@ -139,7 +139,7 @@ MorphingNoteSequencer* MorphingNoteSequencer::create(aJsonObject* data)
 }
 
 
-CVNoteSequencer* CVNoteSequencer::create(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut output, PinAnalogIn input, bool randomize)
+CVNoteSequencer* CVNoteSequencer::create(NoteSequenceData* notes, NoteName key, Scale scale, PinAnalogOut output, PinAnalogIn input, bool randomize)
 {
 	return new CVNoteSequencer(notes, key, scale, output, input, randomize);
 }
@@ -152,7 +152,7 @@ CVNoteSequencer* CVNoteSequencer::create(aJsonObject* data)
 	
 	bool randomize = getBoolFromJSON(data, randomizeNodeName, false);	
 	NoteSequenceData* notes = getNotesFromJSON(data);
-	ScaleType scale = getScaleFromJSON(data);
+	Scale scale = getScaleFromJSON(data);
 	NoteName root = getRootFromJSON(data);
 	PinAnalogOut output = getAnalogOutputFromJSON(data);
 	PinAnalogIn input = getAnalogInputFromJSON(data);
@@ -186,26 +186,12 @@ CVSequencer* CVSequencer::create(int min, int max, int clockdivision, PinAnalogO
 Sequencer::Sequencer()
 {
 	this->gate = NULL;
-	this->slew = NULL;
-	this->envelope = NULL;
 }
 
 void Sequencer::setgate(Gate* gate)
 {
 	this->gate = gate;
 }
-
-void Sequencer::setslew(Slew* slew)
-{
-	this->slew = slew;
-}
-
-void Sequencer::seteg(Envelope* envelope)
-{
-	this->envelope = envelope;
-}
-
-
 
 TriggerSequencer::TriggerSequencer(vector<int>* triggers, int clockdivision, PinDigitalOut pin)
 {
@@ -411,7 +397,7 @@ void ProbabilityTriggerSequencer::reset()
 }
 
 
-NoteSequencer::NoteSequencer(vector<SequenceNote>* notes, NoteName key, ScaleType scale, int clockdivision, PinAnalogOut pin, bool randomize_seq)
+NoteSequencer::NoteSequencer(vector<SequenceNote>* notes, NoteName key, Scale scale, int clockdivision, PinAnalogOut pin, bool randomize_seq)
 {
 	this->key = new Key(scale, key);
 	this->output = AnalogOut::create(pin);
@@ -429,7 +415,7 @@ NoteSequencer::NoteSequencer(vector<SequenceNote>* notes, NoteName key, ScaleTyp
 	int startdegree = (*this->notes)[this->sequence_index].degree;
 	int startoctave = (*this->notes)[this->sequence_index].octave;
 	this->output = AnalogOut::create(pin);
-	this->output->outputNoteCV(this->key->getNote(startoctave, startdegree));		
+	this->output->outputCV(this->key->getNoteMillivolt(startoctave, startdegree));		
 }
 
 void NoteSequencer::timer(unsigned long t)
@@ -448,13 +434,13 @@ void NoteSequencer::reset()
 		this->current_degree = (*this->notes)[this->sequence_index].degree;
 		this->current_octave = (*this->notes)[this->sequence_index].octave;		
 
-		this->output->outputNoteCV(this->key->getNote(this->current_octave, this->current_degree));		
+		this->output->outputCV(this->key->getNoteMillivolt(this->current_octave, this->current_degree));		
 
 		if (this->gate != NULL) this->gate->reset();
 	}
 }
 
-CVNoteSequencer::CVNoteSequencer(NoteSequenceData* notes, NoteName key, ScaleType scale, PinAnalogOut pin, PinAnalogIn input, bool randomize_seq)
+CVNoteSequencer::CVNoteSequencer(NoteSequenceData* notes, NoteName key, Scale scale, PinAnalogOut pin, PinAnalogIn input, bool randomize_seq)
 {	
 	this->key = new Key(scale, key);
 	this->output = output;
@@ -475,7 +461,7 @@ CVNoteSequencer::CVNoteSequencer(NoteSequenceData* notes, NoteName key, ScaleTyp
 	int startdegree = (*this->notes)[this->sequence_index].degree;
 	int startoctave = (*this->notes)[this->sequence_index].octave;
 	this->output = AnalogOut::create(pin);
-	this->output->outputNoteCV(this->key->getNote(startoctave, startdegree));	
+	this->output->outputCV(this->key->getNoteMillivolt(startoctave, startdegree));	
 }
 
 void CVNoteSequencer::timer(unsigned long t)
@@ -502,7 +488,7 @@ void CVNoteSequencer::timer(unsigned long t)
 		int degree = (*this->notes)[noteindex].degree;
 		int octave = (*this->notes)[noteindex].octave;		
 			
-		this->output->outputNoteCV(this->key->getNote(octave, degree));
+		this->output->outputCV(this->key->getNoteMillivolt(octave, degree));
 
 		if (this->gate != NULL) this->gate->reset();		
 	}
@@ -562,12 +548,7 @@ CVSequencer::CVSequencer(int min, int max, int clockdivision, PinAnalogOut pin)
 
 void CVSequencer::timer(unsigned long t)
 {	
-	if (this->slew != NULL) 
-	{
-		this->output->outputSlewedCV(this->current_value, this->slew);
-	}
 	if (this->gate != NULL) this->gate->timer(t);
-	if (this->envelope != NULL) this->envelope->timer(t);	
 }
 
 void CVSequencer::reset()
@@ -582,13 +563,10 @@ void CVSequencer::reset()
 		this->current_value = random(0, 5000);		
 	}
 
-	if (this->slew == NULL) this->output->outputCV(this->current_value);
-
 	if (this->gate != NULL) this->gate->reset();
-	if (this->envelope != NULL) this->envelope->reset();
 }
 
-MorphingNoteSequencer::MorphingNoteSequencer(NoteSequenceData* notes, NoteName key, ScaleType scale, int chaos, int clockdivision, PinAnalogOut output, PinDigitalIn resetPin) : NoteSequencer(notes, key, scale, clockdivision, output, false)
+MorphingNoteSequencer::MorphingNoteSequencer(NoteSequenceData* notes, NoteName key, Scale scale, int chaos, int clockdivision, PinAnalogOut output, PinDigitalIn resetPin) : NoteSequencer(notes, key, scale, clockdivision, output, false)
 {
 	this->chaos = chaos;
 	this->resetPin = resetPin;

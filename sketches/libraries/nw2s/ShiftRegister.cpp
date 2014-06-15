@@ -119,7 +119,7 @@ void RandomLoopingShiftRegister::setDelayedNoteOut(PinAnalogOut pinout, int tick
 {
 	this->delayednoteout = AnalogOut::create(pinout);
 	
-	for (int i = 0; i <= ticks; i++) this->notedelayline.push_back(this->key->getNote(0, 1));
+	for (int i = 0; i <= ticks; i++) this->notedelayline.push_back(this->key->getNoteMillivolt(0, 1));
 }
 
 void RandomLoopingShiftRegister::setTriggerOut(int position, PinDigitalOut pinout)
@@ -132,7 +132,7 @@ void RandomLoopingShiftRegister::setGateOut(int position, PinDigitalOut pinout, 
 	this->gate[position - 1] = Gate::create(pinout, duration);
 }
 
-void RandomLoopingShiftRegister::setKey(NoteName root, ScaleType scale)
+void RandomLoopingShiftRegister::setKey(NoteName root, Scale scale)
 {
 	this->key = new Key(scale, root);
 }
@@ -302,7 +302,7 @@ void RandomLoopingShiftRegister::reset()
 {
 	/* CV Output */
 	if (this->cvout != NULL) this->cvout->outputCV(this->nextCV);
-	if (this->noteout != NULL) this->noteout->outputNoteCV(key->quantizeOutput(this->nextCV));
+	if (this->noteout != NULL) this->noteout->outputCV(key->quantizeOutput(this->nextCV));
 	
 	for (int i = 0; i < 8; i++)
 	{
@@ -319,7 +319,7 @@ void RandomLoopingShiftRegister::reset()
 	/* Note Delay Line */
 	if (this->notedelayline.size() > 0)
 	{
-		this->delayednoteout->outputNoteCV(this->notedelayline.back());
+		this->delayednoteout->outputCV(this->notedelayline.back());
 	}
 			
 	/* Logical Or Trigger */
@@ -350,7 +350,7 @@ void RandomLoopingShiftRegister::reset()
 	if (this->sequencerinput[0] != DUE_IN_A_NONE)
 	{
 		if (this->sequencercvout != NULL) this->sequencercvout->outputCV(this->next_sequencercv);
-		if (this->sequencernoteout != NULL) this->sequencernoteout->outputNoteCV(this->key->quantizeOutput(this->next_sequencercv));		
+		if (this->sequencernoteout != NULL) this->sequencernoteout->outputCV(this->key->quantizeOutput(this->next_sequencercv));		
 	}
 }
 

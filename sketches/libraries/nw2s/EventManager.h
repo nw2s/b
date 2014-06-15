@@ -44,6 +44,7 @@ class nw2s::EventManager
 		static void initialize();
  		static void registerDevice(TimeBasedDevice* device);
 		static void loop();
+		static unsigned long getT();
 	
 	private:
 		static volatile unsigned long t;

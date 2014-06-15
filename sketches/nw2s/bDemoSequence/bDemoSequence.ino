@@ -53,7 +53,7 @@ void setup()
 	NoteSequenceData* notes = new NoteSequenceData(notelist, notelist + 34);
 
 	/* Build our note-based seuqnce */
-	NoteSequencer* sequencer = NoteSequencer::create(notes, C, MAJOR, DIV_EIGHTH, DUE_SPI_4822_15);
+	NoteSequencer* sequencer = NoteSequencer::create(notes, C, Key::SCALE_MAJOR, DIV_EIGHTH, DUE_SPI_4822_15);
 
 	sequencer->setgate(Gate::create(DUE_OUT_D00, 75));
 
