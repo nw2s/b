@@ -175,5 +175,23 @@ NoteSequenceData* nw2s::getNotesFromJSON(aJsonObject* data)
 	NoteSequenceData* notes = noteSequenceFromJSON(notesNode);	
 }
 
+std::vector<int>* nw2s::getIntCollectionFromJSON(aJsonObject* data, const char* nodeName)
+{
+	aJsonObject* valuesNode = aJson.getObjectItem(data, nodeName);
+	
+	if (valuesNode == NULL) return NULL;
 
+	/* Allocate enough space to store our vector */
+	std::vector<int>* values = new std::vector<int>(aJson.getArraySize(valuesNode));
+	
+	/* Iterate over the set of values in the sequence */
+	for (int i = 0; i < aJson.getArraySize(valuesNode); i++)
+	{
+		aJsonObject* valueNode = aJson.getArrayItem(valuesNode, i);
+				
+		(*values)[i] = valueNode->valueint;
+	}
+				
+	return values;
+}
 

@@ -157,6 +157,18 @@ void nw2s::initializeFirmware()
 		{
 			EventManager::registerDevice(CVNoteSequencer::create(deviceNode));
 		}
+		else if (strcmp(typeNode->valuestring, "CVSequencer") == 0)
+		{
+			if (clockDevice != NULL)
+			{
+				clockDevice->registerDevice(CVSequencer::create(deviceNode));
+			}
+			else
+			{
+				static const char nodeError[] = "CVSequencer defined with no clock, skipping.";
+				Serial.println(String(nodeError));
+			}
+		}
 		else if (strcmp(typeNode->valuestring, "MorphingNoteSequencer") == 0)
 		{
 			if (clockDevice != NULL)

@@ -39,6 +39,7 @@ namespace nw2s
 		
 	typedef std::vector<SequenceNote> NoteSequenceData;
 	typedef std::vector<int> TriggerSequenceData;
+	typedef std::vector<int> CVSequenceData;
 
 	class Sequencer;
 	class NoteSequencer;
@@ -183,9 +184,11 @@ class nw2s::CVNoteSequencer : public nw2s::Sequencer
 class  nw2s::CVSequencer : public Sequencer
 {
 	public:
-		static CVSequencer* create(std::vector<int>* values, int clockdivision, PinAnalogOut output, bool randomize_seq);
+		static CVSequencer* create(CVSequenceData* values, int clockdivision, PinAnalogOut output, bool randomize_seq);
 		static CVSequencer* create(int clockdivision, PinAnalogOut output);
 		static CVSequencer* create(int min, int max, int clockdivision, PinAnalogOut output);
+		static CVSequencer* create(aJsonObject* data);
+		
 		virtual void timer(unsigned long t);
 		virtual void reset();
 
@@ -195,7 +198,7 @@ class  nw2s::CVSequencer : public Sequencer
 		int max;
 		volatile int sequence_index;
 		volatile int current_value;
-		std::vector<int>* values;
+		CVSequenceData* values;
 	 	AnalogOut* output;
 	
 		CVSequencer(std::vector<int>* values, int clockdivision, PinAnalogOut output, bool randomize_seq);

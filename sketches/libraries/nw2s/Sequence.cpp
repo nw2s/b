@@ -167,7 +167,7 @@ CVNoteSequencer* CVNoteSequencer::create(aJsonObject* data)
 }
 
 
-CVSequencer* CVSequencer::create(vector<int>* values, int clockdivision, PinAnalogOut output, bool randomize_seq)
+CVSequencer* CVSequencer::create(CVSequenceData* values, int clockdivision, PinAnalogOut output, bool randomize_seq)
 {
 	return new CVSequencer(values, clockdivision, output, randomize_seq);
 }
@@ -182,6 +182,29 @@ CVSequencer* CVSequencer::create(int min, int max, int clockdivision, PinAnalogO
 	return new CVSequencer(min, max, clockdivision, output);
 }
 
+CVSequencer* CVSequencer::create(aJsonObject* data)
+{
+	static const char randomizeNodeName[] = "randomize";
+	static const char minNodeName[] = "min";
+	static const char maxNodeName[] = "max";
+	static const char valuesNodeName[] = "values";
+	
+	CVSequenceData* values = getIntCollectionFromJSON(data, valuesNodeName);
+	bool randomize = getBoolFromJSON(data, randomizeNodeName, false);	
+	int clockdivision = getDivisionFromJSON(data);
+	PinAnalogOut output = getAnalogOutputFromJSON(data);
+	int min = getIntFromJSON(data, minNodeName, 0, -10000, 10000);
+	int max = getIntFromJSON(data, maxNodeName, 5000, -10000, 10000);
+	
+	if (values != NULL)
+	{
+		return new CVSequencer(values, clockdivision, output, randomize);
+	}
+	else
+	{
+		return new CVSequencer(min, max, clockdivision, output);
+	}			
+}
 
 Sequencer::Sequencer()
 {
@@ -477,16 +500,14 @@ void CVNoteSequencer::timer(unsigned long t)
 		/* If the note is still the same, just be done */
 		if (this->sequence_index == noteindex) return;
 		
-		//TODO: Check for randomize
-		
 		this->sequence_index = noteindex;
 		this->last_note_t = t;
 		period_t = 0;
 
-		// this->sequence_index = (randomize_seq) ? random(this->values->size()) : ++(this->sequence_index) % this->values->size();
+		int currentindex = (this->randomize_seq) ? random(this->notes->size()) : this->sequence_index;
 
-		int degree = (*this->notes)[noteindex].degree;
-		int octave = (*this->notes)[noteindex].octave;		
+		int degree = (*this->notes)[currentindex].degree;
+		int octave = (*this->notes)[currentindex].octave;		
 			
 		this->output->outputCV(this->key->getNoteMillivolt(octave, degree));
 
@@ -519,7 +540,7 @@ CVSequencer::CVSequencer(vector<int>* values, int clockdivision, PinAnalogOut pi
 	/* Copy the sequence to our own memory */
 	this->values = new vector<int>();
 	copy(values->begin(), values->end(), back_inserter(*this->values));
-	this->current_value = 
+
 	this->sequence_index = (randomize_seq) ? random(this->values->size()) : 0;
 	this->current_value = (*this->values)[this->sequence_index];
 	

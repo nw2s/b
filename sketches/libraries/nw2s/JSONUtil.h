@@ -47,6 +47,7 @@ namespace nw2s
 	int getTempoFromJSON(aJsonObject* data);
 	int getBeatsFromJSON(aJsonObject* data);
 	char* getNameFromJSON(aJsonObject* data);
+	std::vector<int>* getIntCollectionFromJSON(aJsonObject* data, const char* nodeName);
 
 	aJsonObject* getClockFromJSON(aJsonObject* data);
 	aJsonObject* getProgramFromJSON(aJsonObject* data);
