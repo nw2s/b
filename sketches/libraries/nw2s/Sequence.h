@@ -74,6 +74,7 @@ class nw2s::TriggerSequencer : public nw2s::Sequencer
 {
 	public: 
 		static TriggerSequencer* create(std::vector<int>* triggers, int clockdivision, PinDigitalOut output);
+		static TriggerSequencer* create(aJsonObject* data);		
 		virtual void timer(unsigned long t);
 		virtual void reset();
 		
@@ -201,7 +202,7 @@ class  nw2s::CVSequencer : public Sequencer
 		CVSequenceData* values;
 	 	AnalogOut* output;
 	
-		CVSequencer(std::vector<int>* values, int clockdivision, PinAnalogOut output, bool randomize_seq);
+		CVSequencer(CVSequenceData* values, int clockdivision, PinAnalogOut output, bool randomize_seq);
 		CVSequencer(int min, int max, int clockdivision, PinAnalogOut output);
 };
 

@@ -193,6 +193,18 @@ void nw2s::initializeFirmware()
 				Serial.println(String(nodeError));
 			}
 		}
+		else if (strcmp(typeNode->valuestring, "TriggerSequencer") == 0)
+		{
+			if (clockDevice != NULL)
+			{
+				clockDevice->registerDevice(TriggerSequencer::create(deviceNode));
+			}
+			else
+			{
+				static const char nodeError[] = "TriggerSequencer defined with no clock, skipping.";
+				Serial.println(String(nodeError));
+			}
+		}
 		else if (strcmp(typeNode->valuestring, "VCSamplingFrequencyOscillator") == 0)
 		{
 			EventManager::registerDevice(VCSamplingFrequencyOscillator::create(deviceNode));

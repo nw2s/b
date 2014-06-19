@@ -67,6 +67,21 @@ TriggerSequencer* TriggerSequencer::create(vector<int>* triggers, int clockdivis
 	return new TriggerSequencer(triggers, clockdivision, output);
 }
 
+TriggerSequencer* TriggerSequencer::create(aJsonObject* data)
+{
+	static const char triggersNodeName[] = "triggers";
+	static const char gateNodeName[] = "triggerOutput";
+	
+	TriggerSequenceData* triggers = getIntCollectionFromJSON(data, triggersNodeName);
+	int clockdivision = getDivisionFromJSON(data);
+	PinDigitalOut triggerPin = getDigitalOutputFromJSON(data, gateNodeName);
+	
+	TriggerSequencer* seq = new TriggerSequencer(triggers, clockdivision, triggerPin);
+			
+	return seq;
+}
+
+
 DrumTriggerSequencer* DrumTriggerSequencer::create(std::vector<int>* triggers, int clockdivision, PinAnalogOut output)
 {
 	return new DrumTriggerSequencer(triggers, clockdivision, output);
