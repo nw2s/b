@@ -22,6 +22,7 @@
 #define Gate_h
 
 #include "IO.h"
+#include "EventManager.h"
 
 namespace nw2s
 {		
@@ -29,11 +30,11 @@ namespace nw2s
 
 }
 
-class nw2s::Gate
+class nw2s::Gate : public nw2s::TimeBasedDevice
 {
 	public:
 		static Gate* create(PinDigitalOut pin, unsigned int duration);
-		void timer(unsigned long t);
+		virtual void timer(unsigned long t);
 		void reset();
 		void updateDuration();
 

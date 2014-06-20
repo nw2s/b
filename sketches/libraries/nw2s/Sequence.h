@@ -90,6 +90,7 @@ class nw2s::DrumTriggerSequencer : public nw2s::Sequencer
 {
 	public: 
 		static DrumTriggerSequencer* create(std::vector<int>* triggers, int clockdivision, PinAnalogOut output);
+		static DrumTriggerSequencer* create(aJsonObject* data);		
 		virtual void timer(unsigned long t);
 		virtual void reset();
 		

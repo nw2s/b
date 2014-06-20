@@ -87,6 +87,21 @@ DrumTriggerSequencer* DrumTriggerSequencer::create(std::vector<int>* triggers, i
 	return new DrumTriggerSequencer(triggers, clockdivision, output);
 }
 
+DrumTriggerSequencer* DrumTriggerSequencer::create(aJsonObject* data)
+{
+	static const char triggersNodeName[] = "triggers";
+	
+	TriggerSequenceData* triggers = getIntCollectionFromJSON(data, triggersNodeName);
+	int clockdivision = getDivisionFromJSON(data);
+	PinAnalogOut triggerPin = getAnalogOutputFromJSON(data);
+	
+	DrumTriggerSequencer* seq = new DrumTriggerSequencer(triggers, clockdivision, triggerPin);
+			
+	return seq;
+}
+
+
+
 ProbabilityTriggerSequencer* ProbabilityTriggerSequencer::create(vector<int>* triggers, int clockdivision, PinDigitalOut output)
 {
 	return new ProbabilityTriggerSequencer(triggers, clockdivision, output);
