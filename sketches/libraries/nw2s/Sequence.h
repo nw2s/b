@@ -89,7 +89,7 @@ class nw2s::TriggerSequencer : public nw2s::Sequencer
 class nw2s::DrumTriggerSequencer : public nw2s::Sequencer
 {
 	public: 
-		static DrumTriggerSequencer* create(std::vector<int>* triggers, int clockdivision, PinAnalogOut output);
+		static DrumTriggerSequencer* create(TriggerSequenceData* triggers, int clockdivision, PinAnalogOut output);
 		static DrumTriggerSequencer* create(aJsonObject* data);		
 		virtual void timer(unsigned long t);
 		virtual void reset();
@@ -97,7 +97,7 @@ class nw2s::DrumTriggerSequencer : public nw2s::Sequencer
 	protected:
 		DrumTriggerSequencer(std::vector<int>* triggers, int clockdivision, PinAnalogOut output);
 		DrumTrigger* trigger;
-		std::vector<int>* triggers;
+		TriggerSequenceData* triggers;
 		volatile int sequence_index;
 		volatile bool state;
 };
@@ -105,7 +105,8 @@ class nw2s::DrumTriggerSequencer : public nw2s::Sequencer
 class nw2s::ProbabilityDrumTriggerSequencer : public nw2s::Sequencer
 {
 	public: 
-		static ProbabilityDrumTriggerSequencer* create(std::vector<int>* triggers, std::vector<int>* velocities, int velocityrange, int clockdivision, PinAnalogOut output);
+		static ProbabilityDrumTriggerSequencer* create(TriggerSequenceData* triggers, std::vector<int>* velocities, int velocityrange, int clockdivision, PinAnalogOut output);
+		static ProbabilityDrumTriggerSequencer* create(aJsonObject* data);
 		virtual void timer(unsigned long t);
 		virtual void reset();
 		virtual void calculate();
@@ -113,10 +114,10 @@ class nw2s::ProbabilityDrumTriggerSequencer : public nw2s::Sequencer
 		void setVelocityModifier(PinAnalogIn pin);
 		
 	private:
-		ProbabilityDrumTriggerSequencer(std::vector<int>* triggers, std::vector<int>* velocities, int velocityrange, int clockdivision, PinAnalogOut output);
+		ProbabilityDrumTriggerSequencer(TriggerSequenceData* triggers, std::vector<int>* velocities, int velocityrange, int clockdivision, PinAnalogOut output);
 		DrumTrigger* trigger;
-		std::vector<int>* triggers;
-		std::vector<int>* velocities;
+		TriggerSequenceData* triggers;
+		TriggerSequenceData* velocities;
 		PinAnalogIn velocitymodifierpin;
 		PinAnalogIn probabilitymodifierpin;
 		int velocityrange;
@@ -130,6 +131,7 @@ class nw2s::ProbabilityTriggerSequencer : public nw2s::TriggerSequencer
 {
 	public:
 		static ProbabilityTriggerSequencer* create(std::vector<int>* triggers, int clockdivision, PinDigitalOut output);
+		static ProbabilityTriggerSequencer* create(aJsonObject* data);
 		virtual void reset();
 		virtual void calculate();
 		void setProbabilityModifier(PinAnalogIn pin);

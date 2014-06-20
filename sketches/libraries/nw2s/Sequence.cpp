@@ -83,7 +83,7 @@ TriggerSequencer* TriggerSequencer::create(aJsonObject* data)
 
 
 DrumTriggerSequencer* DrumTriggerSequencer::create(std::vector<int>* triggers, int clockdivision, PinAnalogOut output)
-{
+{	
 	return new DrumTriggerSequencer(triggers, clockdivision, output);
 }
 
@@ -102,15 +102,60 @@ DrumTriggerSequencer* DrumTriggerSequencer::create(aJsonObject* data)
 
 
 
-ProbabilityTriggerSequencer* ProbabilityTriggerSequencer::create(vector<int>* triggers, int clockdivision, PinDigitalOut output)
+ProbabilityTriggerSequencer* ProbabilityTriggerSequencer::create(TriggerSequenceData* triggers, int clockdivision, PinDigitalOut output)
 {
 	return new ProbabilityTriggerSequencer(triggers, clockdivision, output);
 }
 
-ProbabilityDrumTriggerSequencer* ProbabilityDrumTriggerSequencer::create(vector<int>* triggers, vector<int>* velocities, int velocityrange, int clockdivision, PinAnalogOut output)
+ProbabilityTriggerSequencer* ProbabilityTriggerSequencer::create(aJsonObject* data)
+{
+	static const char triggersNodeName[] = "triggers";
+	static const char outputNodeName[] = "digitalOutput";
+	
+	TriggerSequenceData* triggers = getIntCollectionFromJSON(data, triggersNodeName);
+	int clockdivision = getDivisionFromJSON(data);
+	PinDigitalOut triggerPin = getDigitalOutputFromJSON(data, outputNodeName);
+	PinAnalogIn probabilityPin = getAnalogInputFromJSON(data);
+	
+	ProbabilityTriggerSequencer* seq = new ProbabilityTriggerSequencer(triggers, clockdivision, triggerPin);
+			
+	if (probabilityPin != DUE_IN_A_NONE)
+	{
+		seq->setProbabilityModifier(probabilityPin);
+	}		
+	
+	return seq;
+}
+
+ProbabilityDrumTriggerSequencer* ProbabilityDrumTriggerSequencer::create(TriggerSequenceData* triggers, TriggerSequenceData* velocities, int velocityrange, int clockdivision, PinAnalogOut output)
 {
 	return new ProbabilityDrumTriggerSequencer(triggers, velocities, velocityrange, clockdivision, output);
 }
+
+ProbabilityDrumTriggerSequencer* ProbabilityDrumTriggerSequencer::create(aJsonObject* data)
+{
+	static const char probabilityNodeName[] = "probabilityModifier";
+	static const char triggersNodeName[] = "triggers";
+	static const char velocitiesNodeName[] = "velocities";
+	static const char velocityRangeNodeName[] = "velocityRange";
+	
+	TriggerSequenceData* triggers = getIntCollectionFromJSON(data, triggersNodeName);
+	TriggerSequenceData* velocities = getIntCollectionFromJSON(data, velocitiesNodeName);
+	int clockdivision = getDivisionFromJSON(data);
+	int velocityRange = getIntFromJSON(data, velocityRangeNodeName, 0, 1, 5000);
+	PinAnalogOut triggerPin = getAnalogOutputFromJSON(data);
+	PinAnalogIn probabilityPin = getAnalogInputFromJSON(data, probabilityNodeName);
+	
+	ProbabilityDrumTriggerSequencer* seq = new ProbabilityDrumTriggerSequencer(triggers, velocities, velocityRange, clockdivision, triggerPin);
+			
+	if (probabilityPin != DUE_IN_A_NONE)
+	{
+		seq->setProbabilityModifier(probabilityPin);
+	}		
+
+	return seq;
+}
+
 
 NoteSequencer* NoteSequencer::create(vector<SequenceNote>* notes, NoteName key, Scale scale, int clockdivision, PinAnalogOut output, bool randomize_seq)
 {
@@ -611,8 +656,12 @@ void CVSequencer::reset()
 	}
 	else
 	{
-		this->current_value = random(0, 5000);		
+		this->current_value = Entropy::getValue(this->min, this->max);		
 	}
+
+	Serial.println("value: " + String(this->current_value) + " " + String(this->sequence_index));
+	
+	this->output->outputCV(this->current_value);
 
 	if (this->gate != NULL) this->gate->reset();
 }

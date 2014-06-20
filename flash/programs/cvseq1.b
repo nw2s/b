@@ -24,16 +24,7 @@
 					-5000, -4000, -3000, -2000, -1000, 0, 1000, 2000, 3000, 4000, 5000
 															
 				]
-			},
-
-			{
-				"type" : "CVSequencer",
-				"division" : "triplet eighth",
-				"analogOutput" : 3,
-				"min" : -5000,
-				"max" : 5000
-			}		
-					
+			}				
 		]
 	}
 }

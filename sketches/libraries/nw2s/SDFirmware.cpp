@@ -169,6 +169,18 @@ void nw2s::initializeFirmware()
 				Serial.println(String(nodeError));
 			}
 		}
+		else if (strcmp(typeNode->valuestring, "DrumTriggerSequencer") == 0)
+		{
+			if (clockDevice != NULL)
+			{
+				clockDevice->registerDevice(DrumTriggerSequencer::create(deviceNode));
+			}
+			else
+			{
+				static const char nodeError[] = "DrumTriggerSequencer defined with no clock, skipping.";
+				Serial.println(String(nodeError));
+			}
+		}
 		else if (strcmp(typeNode->valuestring, "MorphingNoteSequencer") == 0)
 		{
 			if (clockDevice != NULL)
@@ -193,6 +205,30 @@ void nw2s::initializeFirmware()
 				Serial.println(String(nodeError));
 			}
 		}
+		else if (strcmp(typeNode->valuestring, "ProbabilityDrumTriggerSequencer") == 0)
+		{
+			if (clockDevice != NULL)
+			{
+				clockDevice->registerDevice(ProbabilityDrumTriggerSequencer::create(deviceNode));
+			}
+			else
+			{
+				static const char nodeError[] = "ProbabilityDrumTriggerSequencer defined with no clock, skipping.";
+				Serial.println(String(nodeError));
+			}
+		}
+		else if (strcmp(typeNode->valuestring, "ProbabilityTriggerSequencer") == 0)
+		{
+			if (clockDevice != NULL)
+			{
+				clockDevice->registerDevice(ProbabilityTriggerSequencer::create(deviceNode));
+			}
+			else
+			{
+				static const char nodeError[] = "ProbabilityTriggerSequencer defined with no clock, skipping.";
+				Serial.println(String(nodeError));
+			}
+		}
 		else if (strcmp(typeNode->valuestring, "TriggerSequencer") == 0)
 		{
 			if (clockDevice != NULL)
@@ -202,18 +238,6 @@ void nw2s::initializeFirmware()
 			else
 			{
 				static const char nodeError[] = "TriggerSequencer defined with no clock, skipping.";
-				Serial.println(String(nodeError));
-			}
-		}
-		else if (strcmp(typeNode->valuestring, "DrumTriggerSequencer") == 0)
-		{
-			if (clockDevice != NULL)
-			{
-				clockDevice->registerDevice(DrumTriggerSequencer::create(deviceNode));
-			}
-			else
-			{
-				static const char nodeError[] = "DrumTriggerSequencer defined with no clock, skipping.";
 				Serial.println(String(nodeError));
 			}
 		}
