@@ -157,11 +157,11 @@ void AnalogOut::outputCV(int cv)
 
 	this->spidac.setValue(this->spidac_index, dacval);
 
-	if (b::debugMode) Serial.println("outputCV: " + String(dacval));
+	if (b::debugMode) Serial.println("outputCV: " + String(dacval) + " " + String(cv) + " " + String((dacval < 2000) ? 4000 - (dacval * 2) : (dacval - 2000) * 2));
 
 	if (IOUtils::enableLED)
 	{
-		int ledval = (dacval < 2000) ? 4000 - (dacval * 2) : (dacval - 2000) * 2;
+		int ledval = (cv == 0) ? 0 : (dacval < 2000) ? 4000 - (dacval * 2) : (dacval - 2000) * 2;
 		
 		AnalogOut::ledDriver.setLEDDimmed(this->ledpin, ledval);
 	}

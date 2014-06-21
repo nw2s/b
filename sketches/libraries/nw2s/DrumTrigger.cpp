@@ -23,7 +23,7 @@
 
 using namespace nw2s;
 
-static const int DRUM_TRIGGER_DURATION = 10;
+static const int DRUM_TRIGGER_DURATION = 20;
 
 DrumTrigger* DrumTrigger::create(PinAnalogOut pin, unsigned int amplitude)
 {

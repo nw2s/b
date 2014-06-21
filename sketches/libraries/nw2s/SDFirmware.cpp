@@ -93,19 +93,22 @@ void nw2s::initializeFirmware()
 
     if (program == NULL) 
 	{
-        Serial.println("Program not parsed successfully. Check to see that it's properly formatted JSON." );
+		static const char error[] = "Program not parsed successfully. Check to see that it's properly formatted JSON."; 
+        Serial.println(error);
 		return;
 	}
 	else
 	{
-        Serial.println("Program parsed successfully." );
+		static const char msg[] = "Program parsed successfully.";
+        Serial.println(msg);
 	}
 
 	aJsonObject* programNode = aJson.getObjectItem(program, "program"); 
 
 	if (programNode == NULL)
 	{
-        Serial.println("Program not parsed successfully. 'program' node not found." );
+		static const char msg[] = "Program not parsed successfully. 'program' node not found.";
+        Serial.println(msg);
 		return;
 	}
 

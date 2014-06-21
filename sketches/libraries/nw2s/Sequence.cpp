@@ -342,6 +342,7 @@ void DrumTriggerSequencer::reset()
 	
 	if ((*this->triggers)[this->sequence_index] != 0)
 	{
+		this->trigger->setAmplitude((*this->triggers)[this->sequence_index]);
 		this->trigger->reset();
 	}	
 }
