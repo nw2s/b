@@ -263,6 +263,8 @@ CVSequencer* CVSequencer::create(aJsonObject* data)
 	static const char minNodeName[] = "min";
 	static const char maxNodeName[] = "max";
 	static const char valuesNodeName[] = "values";
+	static const char gateNodeName[] = "gateOutput";
+	static const char durationNodeName[] = "gateLength";
 	
 	CVSequenceData* values = getIntCollectionFromJSON(data, valuesNodeName);
 	bool randomize = getBoolFromJSON(data, randomizeNodeName, false);	
@@ -270,15 +272,14 @@ CVSequencer* CVSequencer::create(aJsonObject* data)
 	PinAnalogOut output = getAnalogOutputFromJSON(data);
 	int min = getIntFromJSON(data, minNodeName, 0, -10000, 10000);
 	int max = getIntFromJSON(data, maxNodeName, 5000, -10000, 10000);
+	PinDigitalOut gatePin = getDigitalOutputFromJSON(data, gateNodeName);
+	int gateDuration = getIntFromJSON(data, durationNodeName, 20, 1, 1000);
 	
-	if (values != NULL)
-	{
-		return new CVSequencer(values, clockdivision, output, randomize);
-	}
-	else
-	{
-		return new CVSequencer(min, max, clockdivision, output);
-	}			
+	CVSequencer* seq = (values != NULL) ? new CVSequencer(values, clockdivision, output, randomize) : new CVSequencer(min, max, clockdivision, output);
+		
+	if (gatePin != DIGITAL_OUT_NONE) seq->setgate(Gate::create(gatePin, gateDuration));
+	
+	return seq;
 }
 
 Sequencer::Sequencer()
@@ -659,8 +660,6 @@ void CVSequencer::reset()
 		this->current_value = Entropy::getValue(this->min, this->max);		
 	}
 
-	Serial.println("value: " + String(this->current_value) + " " + String(this->sequence_index));
-	
 	this->output->outputCV(this->current_value);
 
 	if (this->gate != NULL) this->gate->reset();

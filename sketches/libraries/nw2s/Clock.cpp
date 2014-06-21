@@ -22,6 +22,7 @@
 #include "Clock.h"
 #include <Arduino.h>
 #include "../aJSON/aJSON.h"
+#include "JSONUtil.h"
 
 using namespace std;
 using namespace nw2s;
@@ -130,25 +131,13 @@ FixedClock* FixedClock::create(int tempo, unsigned char beats_per_measure)
 
 FixedClock* FixedClock::create(aJsonObject* data)
 {
-	aJsonObject* tempoNode = aJson.getObjectItem(data, "tempo");
-	aJsonObject* beatsNode = aJson.getObjectItem(data, "beats");
+	const char tempoNodeName[] = "tempo";
+	const char beatsNodeName[] = "beats";
 	
-	if (tempoNode == NULL)
-	{
-		Serial.println("The FixedClock node is missing a tempo definition.");
-		return NULL;
-	}
-	
-	if (beatsNode == NULL)
-	{
-		Serial.println("The FixedClock node is missing a beats definition.");
-		return NULL;
-	}
-	
-	Serial.println("Tempo: " + String(tempoNode->valueint));
-	Serial.println("Beats Per Measure: " + String(beatsNode->valueint));	
-	
-	return new FixedClock(tempoNode->valueint, beatsNode->valueint);
+	int tempo = getIntFromJSON(data, tempoNodeName, 120, 10, 1000);
+	int beats = getIntFromJSON(data, beatsNodeName, 16, 1, 16);
+		
+	return new FixedClock(tempo, beats);
 }
 
 VariableClock* VariableClock::create(int mintempo, int maxtempo, PinAnalogIn input, unsigned char beats_per_measure)
@@ -156,9 +145,37 @@ VariableClock* VariableClock::create(int mintempo, int maxtempo, PinAnalogIn inp
 	return new VariableClock(mintempo, maxtempo, input, beats_per_measure);
 }
 
+VariableClock* VariableClock::create(aJsonObject* data)
+{
+	const char mintempoNodeName[] = "minTempo";
+	const char maxtempoNodeName[] = "maxTempo";
+	const char inputtempoNodeName[] = "tempoInput";
+	const char beatsNodeName[] = "beats";
+	
+	int mintempo = getIntFromJSON(data, mintempoNodeName, 120, 10, 1000);
+	int maxtempo = getIntFromJSON(data, maxtempoNodeName, 120, 10, 1000);
+	PinAnalogIn tempoinput = getAnalogInputFromJSON(data, inputtempoNodeName);
+	int beats = getIntFromJSON(data, beatsNodeName, 16, 1, 16);
+		
+	return new VariableClock(mintempo, maxtempo, tempoinput, beats);
+}
+
 RandomTempoClock* RandomTempoClock::create(int mintempo, int maxtempo, unsigned char beats_per_measure)
 {	
 	return new RandomTempoClock(mintempo, maxtempo, beats_per_measure);
+}
+
+RandomTempoClock* RandomTempoClock::create(aJsonObject* data)
+{
+	const char mintempoNodeName[] = "minTempo";
+	const char maxtempoNodeName[] = "maxTempo";
+	const char beatsNodeName[] = "beats";
+	
+	int mintempo = getIntFromJSON(data, mintempoNodeName, 120, 10, 1000);
+	int maxtempo = getIntFromJSON(data, maxtempoNodeName, 120, 10, 1000);
+	int beats = getIntFromJSON(data, beatsNodeName, 16, 1, 16);
+		
+	return new RandomTempoClock(mintempo, maxtempo, beats);
 }
 
 // RandomDropoutClock* RandomDropoutClock::create(int tempo, unsigned char beats_per_measure, int chaos)

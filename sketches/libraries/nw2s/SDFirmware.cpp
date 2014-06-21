@@ -130,6 +130,16 @@ void nw2s::initializeFirmware()
 			clockDevice = FixedClock::create(clockNode);
 			EventManager::registerDevice(clockDevice);
 		}		
+		else if (strcmp(clockTypeNode->valuestring, "VariableClock") == 0)
+		{
+			clockDevice = VariableClock::create(clockNode);
+			EventManager::registerDevice(clockDevice);
+		}		
+		else if (strcmp(clockTypeNode->valuestring, "RandomTempoClock") == 0)
+		{
+			clockDevice = RandomTempoClock::create(clockNode);
+			EventManager::registerDevice(clockDevice);
+		}		
 	}
 	
 

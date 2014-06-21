@@ -118,6 +118,7 @@ class nw2s::VariableClock : public Clock
 {
 	public:
 		static VariableClock* create(int mintempo, int maxtempo, PinAnalogIn input, unsigned char beats_per_measure);
+		static VariableClock* create(aJsonObject* data);
 
 	private:
 		int mintempo;
@@ -134,6 +135,7 @@ class nw2s::RandomTempoClock : public Clock
 {
 	public:
 		static RandomTempoClock* create(int mintempo, int maxtempo, unsigned char beats_per_measure);
+		static RandomTempoClock* create(aJsonObject* data);
 
 	private:
 		int mintempo;

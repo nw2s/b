@@ -23,6 +23,7 @@
 
 #include "IO.h"
 #include "Clock.h"
+#include "aJson.h"
 
 namespace nw2s
 {		
@@ -35,6 +36,8 @@ class nw2s::Trigger : public nw2s::BeatDevice
 {
 	public:
 		static Trigger* create(PinDigitalOut output, int clock_division);
+		static Trigger* create(aJsonObject* data);
+
 		virtual void timer(unsigned long t);
 		virtual void reset();
 
