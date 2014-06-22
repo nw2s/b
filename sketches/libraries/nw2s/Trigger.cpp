@@ -22,6 +22,7 @@
 #include "Trigger.h"
 #include "IO.h"
 #include "aJson.h"
+#include "JSONUtil.h"
 
 using namespace nw2s;
 
@@ -32,25 +33,12 @@ Trigger* Trigger::create(PinDigitalOut output, int clock_division)
 
 Trigger* Trigger::create(aJsonObject* data)
 {
-	return NULL;
-	// static const char randomizeNodeName[] = "randomize";
-	// static const char gateNodeName[] = "gateOutput";
-	// static const char durationNodeName[] = "gateLength";
-	//
-	// bool randomize = getBoolFromJSON(data, randomizeNodeName, false);
-	// NoteSequenceData* notes = getNotesFromJSON(data);
-	// Scale scale = getScaleFromJSON(data);
-	// NoteName root = getRootFromJSON(data);
-	// int clockdivision = getDivisionFromJSON(data);
-	// PinAnalogOut output = getAnalogOutputFromJSON(data);
-	// PinDigitalOut gatePin = getDigitalOutputFromJSON(data, gateNodeName);
-	// int gateDuration = getIntFromJSON(data, durationNodeName, 20, 1, 1000);
-	//
-	// NoteSequencer* seq = new NoteSequencer(notes, root, scale, clockdivision, output, randomize);
-	//
-	// if (gatePin != DIGITAL_OUT_NONE) seq->setgate(Gate::create(gatePin, gateDuration));
-	//
-	// return seq;
+	static const char outputNodeName[] = "triggerOutput";
+
+	int clock_division = getDivisionFromJSON(data);
+	PinDigitalOut output = getDigitalOutputFromJSON(data, outputNodeName);
+
+	return new Trigger(output, clock_division);
 }
 
 Trigger::Trigger(PinDigitalOut output, int clock_division)

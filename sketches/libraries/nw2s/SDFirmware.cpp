@@ -202,7 +202,7 @@ void nw2s::initializeFirmware()
 			}
 			else
 			{
-				static const char nodeError[] = "NoteSequencer defined with no clock, skipping.";
+				static const char nodeError[] = "MorphingNoteSequencer defined with no clock, skipping.";
 				Serial.println(String(nodeError));
 			}
 		}
@@ -247,6 +247,18 @@ void nw2s::initializeFirmware()
 			if (clockDevice != NULL)
 			{
 				clockDevice->registerDevice(TriggerSequencer::create(deviceNode));
+			}
+			else
+			{
+				static const char nodeError[] = "TriggerSequencer defined with no clock, skipping.";
+				Serial.println(String(nodeError));
+			}
+		}
+		else if (strcmp(typeNode->valuestring, "Trigger") == 0)
+		{
+			if (clockDevice != NULL)
+			{
+				clockDevice->registerDevice(Trigger::create(deviceNode));
 			}
 			else
 			{
