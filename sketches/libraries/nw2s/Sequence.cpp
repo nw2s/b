@@ -111,11 +111,12 @@ ProbabilityTriggerSequencer* ProbabilityTriggerSequencer::create(aJsonObject* da
 {
 	static const char triggersNodeName[] = "triggers";
 	static const char outputNodeName[] = "digitalOutput";
+	static const char probabilityNodeName[] = "probabilityModifier";
 	
 	TriggerSequenceData* triggers = getIntCollectionFromJSON(data, triggersNodeName);
 	int clockdivision = getDivisionFromJSON(data);
 	PinDigitalOut triggerPin = getDigitalOutputFromJSON(data, outputNodeName);
-	PinAnalogIn probabilityPin = getAnalogInputFromJSON(data);
+	PinAnalogIn probabilityPin = getAnalogInputFromJSON(data, probabilityNodeName);
 	
 	ProbabilityTriggerSequencer* seq = new ProbabilityTriggerSequencer(triggers, clockdivision, triggerPin);
 			
@@ -383,7 +384,11 @@ void ProbabilityDrumTriggerSequencer::calculate()
 	int currentvalue = (*this->triggers)[this->sequence_index];
 	int currentvelocity = (*this->velocities)[this->sequence_index];
 	
-	if (currentvalue != 0)
+	if (currentvalue == 0)
+	{
+		this->resetnext = false;
+	}
+	else
 	{		
 		int rnd = Entropy::getValue(100);
 		
@@ -458,11 +463,15 @@ void ProbabilityTriggerSequencer::setProbabilityModifier(PinAnalogIn pin)
 
 void ProbabilityTriggerSequencer::calculate()
 {
-	this->sequence_index = ++(this->sequence_index) % this->triggers->size();
+	this->sequence_index = (this->sequence_index + 1) % this->triggers->size();
 
 	int currentvalue = (*this->triggers)[this->sequence_index];
 
-	if (currentvalue != 0)
+	if (currentvalue == 0)
+	{
+		this->resetnext = false;
+	}
+	else
 	{		
 		int rnd = Entropy::getValue(100);
 

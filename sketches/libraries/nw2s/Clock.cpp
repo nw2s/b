@@ -53,11 +53,11 @@ int nw2s::clockDivisionFromName(char* name)
 	{
 		return DIV_QUARTER_DOT;
 	}
-	if (strcmp("eigth", name) == 0)
+	if (strcmp("eighth", name) == 0)
 	{
 		return DIV_EIGHTH;
 	}
-	if (strcmp("eigth triplet", name) == 0)
+	if (strcmp("eighth triplet", name) == 0)
 	{
 		return DIV_EIGHTH_TRIPLET;
 	}
