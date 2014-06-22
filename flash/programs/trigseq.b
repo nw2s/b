@@ -16,7 +16,7 @@
 			
 			{
 				"type" : "TriggerSequencer",
-				"division" : "eighth",
+				"division" : "sixteenth",
 				"triggerOutput" : 1,
 				"triggers" : [
 					
@@ -27,7 +27,7 @@
 
 			{
 				"type" : "TriggerSequencer",
-				"division" : "eighth",
+				"division" : "sixteenth",
 				"triggerOutput" : 2,
 				"triggers" : [
 					

@@ -16,7 +16,7 @@
 			
 			{
 				"type" : "DrumTriggerSequencer",
-				"division" : "eighth",
+				"division" : "sixteenth",
 				"analogOutput" : 3,
 				"triggers" : [
 					
@@ -27,7 +27,7 @@
 
 			{
 				"type" : "DrumTriggerSequencer",
-				"division" : "eighth",
+				"division" : "sixteenth",
 				"analogOutput" : 4,
 				"triggers" : [
 					
