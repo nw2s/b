@@ -146,6 +146,11 @@ Key::Key(Scale scale, NoteName rootnote)
 	this->rootnote = rootnote;
 }
 
+void Key::setRootNote(NoteName rootnote)
+{
+	this->rootnote = rootnote;
+}
+
 int Key::getNoteMillivolt(int octave, int degree)
 {
 	int rootmV = (octave * 1000) + SEMITONE_MV[this->rootnote];

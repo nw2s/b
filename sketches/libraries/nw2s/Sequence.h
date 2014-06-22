@@ -149,6 +149,7 @@ class nw2s::NoteSequencer : public nw2s::Sequencer
 		static NoteSequencer* create(aJsonObject* data);
 		virtual void timer(unsigned long t);
 		virtual void reset();
+		void setKey(NoteName key);
 	
 	private:
 		bool randomize_seq;

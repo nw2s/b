@@ -540,6 +540,11 @@ void NoteSequencer::reset()
 	}
 }
 
+void NoteSequencer::setKey(NoteName key)
+{
+	this->key->setRootNote(key);
+}
+
 CVNoteSequencer::CVNoteSequencer(NoteSequenceData* notes, NoteName key, Scale scale, PinAnalogOut pin, PinAnalogIn input, bool randomize_seq)
 {	
 	this->key = new Key(scale, key);

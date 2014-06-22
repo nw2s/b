@@ -152,9 +152,13 @@ void AnalogOut::outputCV(int cv)
 	*/
 
 	int dacval = 4095 - (((cv + (b::cvGainMode ? 10000 : 5000)) * 4000UL) / 10000);
-	
-	/* We're not checking for overflow (value > 4095) here - that'll take a few more cycles... */
 
+	// Grr... where is this - could be a single cycle operation!
+	//dacval = __usat(dacval, 12);
+
+	/* Make sure the values are in a 12bit unsigned range */
+	dacval = (dacval < 0) ? 0 : (dacval > 4095) ? 4095 : dacval;
+	
 	this->spidac.setValue(this->spidac_index, dacval);
 
 	if (b::debugMode) Serial.println("outputCV: " + String(dacval) + " " + String(cv) + " " + String((dacval < 2000) ? 4000 - (dacval * 2) : (dacval - 2000) * 2));

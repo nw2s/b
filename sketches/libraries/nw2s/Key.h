@@ -4092,6 +4092,7 @@ class nw2s::Key
 		Key(Scale scale, NoteName rootnote);		
 		int getNoteMillivolt(int octave, int degree);
 		int quantizeOutput(int cv);
+		void setRootNote(NoteName rootnote);
 		
 		
 		/* I'm not making these static const to avoid having to fetch them from NVRAM. */
