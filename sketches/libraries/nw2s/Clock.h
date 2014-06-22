@@ -32,7 +32,8 @@ using namespace std;
 using namespace nw2s;
 
 namespace nw2s
-{		
+{
+	static const int DIV_NEVER = -1;
 	static const int DIV_WHOLE = 4000;
 	static const int DIV_HALF = 2000;
 	static const int DIV_HALF_DOT = 3000;

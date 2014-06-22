@@ -257,7 +257,7 @@ void Clock::timer(unsigned long t)
 	/* Then calculate new time on devices and let them do any work they wanted deferred */
 	for (int i = 0; i < this->devices.size(); i++)
 	{
-		if (this->devices[i]->getNextTime() <= t)
+		if ((this->devices[i]->getclockdivision() != DIV_NEVER) && (this->devices[i]->getNextTime() <= t))
 		{
 			this->devices[i]->setNextTime((((unsigned long)(this->devices[i]->getclockdivision()) * (unsigned long)(this->period)) / 1000UL) + t);
 

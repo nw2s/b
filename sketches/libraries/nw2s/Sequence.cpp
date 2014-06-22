@@ -185,6 +185,34 @@ NoteSequencer* NoteSequencer::create(aJsonObject* data)
 	return seq;
 }
 
+TriggerNoteSequencer* TriggerNoteSequencer::create(vector<SequenceNote>* notes, NoteName key, Scale scale, PinDigitalIn input, PinAnalogOut output, bool randomize_seq)
+{
+	return new TriggerNoteSequencer(notes, key, scale, input, output, randomize_seq);
+}
+
+TriggerNoteSequencer* TriggerNoteSequencer::create(aJsonObject* data)
+{
+	static const char triggerInputNodeName[] = "triggerInput";
+	static const char randomizeNodeName[] = "randomize";
+	static const char gateNodeName[] = "gateOutput";
+	static const char durationNodeName[] = "gateLength";
+	
+	bool randomize = getBoolFromJSON(data, randomizeNodeName, false);	
+	NoteSequenceData* notes = getNotesFromJSON(data);
+	Scale scale = getScaleFromJSON(data);
+	PinDigitalIn triggerInput = getDigitalInputFromJSON(data, triggerInputNodeName);
+	NoteName root = getRootFromJSON(data);
+	PinAnalogOut output = getAnalogOutputFromJSON(data);
+	PinDigitalOut gatePin = getDigitalOutputFromJSON(data, gateNodeName);
+	int gateDuration = getIntFromJSON(data, durationNodeName, 20, 1, 1000);
+	
+	TriggerNoteSequencer* seq = new TriggerNoteSequencer(notes, root, scale, triggerInput, output, randomize);
+		
+	if (gatePin != DIGITAL_OUT_NONE) seq->setgate(Gate::create(gatePin, gateDuration));
+	
+	return seq;
+}
+
 MorphingNoteSequencer* MorphingNoteSequencer::create(vector<SequenceNote>* notes, NoteName key, Scale scale, int chaos, int clockdivision, PinAnalogOut output, PinDigitalIn resetPin)
 {
 	return new MorphingNoteSequencer(notes, key, scale, chaos, clockdivision, output, resetPin);
@@ -505,7 +533,6 @@ void ProbabilityTriggerSequencer::reset()
 	if (this->resetnext) this->trigger->reset();
 }
 
-
 NoteSequencer::NoteSequencer(vector<SequenceNote>* notes, NoteName key, Scale scale, int clockdivision, PinAnalogOut pin, bool randomize_seq)
 {
 	this->key = new Key(scale, key);
@@ -534,7 +561,6 @@ void NoteSequencer::timer(unsigned long t)
 
 void NoteSequencer::reset()
 {
-	//TODO: move to calculate
 	this->sequence_index = (randomize_seq) ? random(this->notes->size()) : ++(this->sequence_index) % this->notes->size();
 
 	/* If there's a HOLD in the sequence, then we don't change the note or trigger any events */
@@ -611,6 +637,11 @@ void CVNoteSequencer::timer(unsigned long t)
 void CVNoteSequencer::reset()
 {
 	
+}
+
+void CVNoteSequencer::setKey(NoteName key)
+{
+	this->key->setRootNote(key);
 }
 
 int CVNoteSequencer::calculatePosition()
@@ -714,6 +745,35 @@ void MorphingNoteSequencer::reset()
 	NoteSequencer::reset();
 }
 
+TriggerNoteSequencer::TriggerNoteSequencer(NoteSequenceData* notes, NoteName key, Scale scale, PinDigitalIn input, PinAnalogOut output, bool randomize_seq) : NoteSequencer(notes, key, scale, DIV_NEVER, output, randomize_seq)
+{
+	this->input = input;
+	this->input_state = false;
+}
+
+void TriggerNoteSequencer::reset()
+{
+	/* Do nothing when someone thinks they want to reset */
+}
+
+void TriggerNoteSequencer::timer(unsigned long t)
+{		
+	//TODO: Debounce logic
+
+	/* Only reset if you see that the trigger input is high */
+	if (!input_state && digitalRead(this->input))
+	{
+		input_state = true;
+		NoteSequencer::reset();
+	}
+	
+	if (input_state && !digitalRead(this->input))
+	{
+		input_state = false;
+	}
+	
+	NoteSequencer::timer(t);
+}
 
 
 
