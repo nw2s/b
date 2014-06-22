@@ -2,13 +2,15 @@
 	"program" : 	
 
 	{
-		"name" : 			"Trigger Demo 1",
+		"name" : 			"Variable Clock Demo 1",
 			
 		"clock" :
 
 		{
-			"type" : "FixedClock",
-			"tempo" : 120,
+			"type" : "VariableClock",
+			"minTempo" : 30,
+			"maxTempo" : 240,
+			"tempoInput" : 1,
 			"beats" : 16			
 		},
 

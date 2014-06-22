@@ -2,13 +2,14 @@
 	"program" : 	
 
 	{
-		"name" : 			"Trigger Demo 1",
+		"name" : 			"Random Tempo Clock Demo 1",
 			
 		"clock" :
 
 		{
-			"type" : "FixedClock",
-			"tempo" : 120,
+			"type" : "RandomTempoClock",
+			"minTempo" : 30,
+			"maxTempo" : 240,
 			"beats" : 16			
 		},
 
