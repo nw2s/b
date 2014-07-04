@@ -2,7 +2,7 @@
 	"program" : 	
 
 	{
-		"name" : 			"Drum Trigger Sequence Demo 1",
+		"name" : 			"Probability Trigger Sequence Demo 1",
 			
 		"clock" :
 
@@ -15,27 +15,60 @@
 		"devices" : [
 			
 			{
-				"type" : "DrumTriggerSequencer",
+				"name" : "snare",
+				"type" : "ProbabilityTriggerSequencer",
 				"division" : "sixteenth",
-				"analogOutput" : 3,
-				"triggers" : [
-					
-					1000, 0, 0, 0, 5000, 0, 2500, 0, 1000, 0, 0, 2500, 0, 1000, 0, 1000
-															
-				]
+				"digitalOutput" : 1,
+				"probabilityModifier" : 1,
+				"triggers" :   [ 0, 5, 0, 5, 80, 0, 0, 15, 0, 0, 0, 5, 80, 5, 5, 0 ]
 			},
 
 			{
-				"type" : "DrumTriggerSequencer",
+				"name" : "hat",
+				"type" : "ProbabilityTriggerSequencer",
 				"division" : "sixteenth",
-				"analogOutput" : 4,
-				"triggers" : [
+				"digitalOutput" : 2,
+				"probabilityModifier" : 2,
+				"triggers" :   [ 0, 0, 0, 0, 0, 0, 5 ]
+			},
+
+			{
+				"name" : "open hat",
+				"type" : "ProbabilityTriggerSequencer",
+				"division" : "sixteenth",
+				"digitalOutput" : 3,
+				"probabilityModifier" : 3,
+				"triggers" :   [ 5, 50, 0, 50, 5, 50, 0, 50, 5, 50, 0, 50, 5, 50, 0 ]
+			},
+
+			{
+				"name" : "kick",
+				"type" : "ProbabilityTriggerSequencer",
+				"division" : "sixteenth",
+				"digitalOutput" : 4,
+				"probabilityModifier" : 4,
+				"triggers" :   [ 90, 0, 0, 5, 0, 0, 5, 5, 90, 0, 0, 5, 0, 5, 0, 5 ]
+			},
+
+			{
+				"type" : "CVSequencer",
+				"division" : "quarter triplet",
+				"analogOutput" : 15,
+				"min" : 0,
+				"max" : 5000
+			},		
 					
-					1000, 0, 0, 0, 5000, 0, 2500, 0, 1000, 0, 0, 2500, 0, 1000, 0
-															
-				]
-			}
+			{
+				"type" : "CVSequencer",
+				"division" : "half",
+				"analogOutput" : 16,
+				"min" : 0,
+				"max" : 5000
+			}		
 					
 		]
 	}
 }
+
+
+
