@@ -1,3 +1,0 @@
-BOSSA_ICON ICON BossaIcon.ico
-
-#include "wx/msw/wx.rc"
