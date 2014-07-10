@@ -1,3 +1,6 @@
+
+
+
 {
 	"program" : 	
 
@@ -24,7 +27,7 @@
 			},
 
 			{
-				"name" : "hat",
+				"name" : "open hat",
 				"type" : "ProbabilityTriggerSequencer",
 				"division" : "sixteenth",
 				"digitalOutput" : 2,
@@ -33,7 +36,7 @@
 			},
 
 			{
-				"name" : "open hat",
+				"name" : "hat",
 				"type" : "ProbabilityTriggerSequencer",
 				"division" : "sixteenth",
 				"digitalOutput" : 3,

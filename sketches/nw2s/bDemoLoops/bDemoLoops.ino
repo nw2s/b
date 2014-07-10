@@ -39,19 +39,16 @@ void setup()
 	EventManager::initialize();
 
 	/* Setup the mechanical noise as a free running loop */
-	SignalData* mechanicalnoise = SignalData::fromSDFile("loops/mech01.raw");
-	Looper* looper2 = Looper::create(DUE_DAC0, mechanicalnoise);
+	Looper* looper2 = Looper::create(DUE_DAC0, "mech", "mech01.raw", SR_24000);
 
+	EventManager::registerDevice(looper2);
 
 	/* Set up the drum loop as a clocked loop. It will reset every two beats */
-	FixedClock* fixedclock = FixedClock::create(128, 16);
-	
-	SignalData* drumloop = SignalData::fromSDFile("loops/loop01.raw");
-	ClockedLooper* looper1 = ClockedLooper::create(DUE_DAC1, drumloop, 2, DIV_QUARTER);
-	
-	fixedclock->registerDevice(looper1);
-	
-	EventManager::registerDevice(fixedclock);
+	FixedClock* fixedclock = FixedClock::create(120, 16);
+
+	Looper* looper1 = Looper::create(DUE_DAC1, "melodic", "ebgtr120.raw", SR_24000);
+
+	EventManager::registerDevice(looper1);
 }
 
 void loop() 

@@ -1,0 +1,29 @@
+
+
+
+drum
+
+bongo120.raw, 24kHz, bongo loop @120bpm
+cap120.raw, 0:02, 12kHz, low shuffled beat @120bpm
+drum01.raw, 0:01, 24kHz, kick snare, looped beat @120bpm
+
+mech
+
+clamp.raw, 10kHz, 0:04, electric motor sound, clamp operation
+pump.raw, 24kHz, 0:45, dry water pump, hand operated
+steps.raw, 24kHz, 0:04, steps on a metallic walkway
+
+noise
+
+crowd.raw, 10kHz, 5:24, large venue, match, noisy
+rain.raw, 24kHz, 1:33, gentle rain
+street.raw, 10kHz, 2:24, street, cars, passers by 
+vinyl.raw, 24kHz, 0:08, vinyl noise with rythmic pop
+
+melodic
+
+ebgtr120.raw, 24kHz, 0:08, E flat loopable bluesy riff @120bpm
+gltchgtr.raw, 44.1kHz, 0:08, glitched guitar loop @120bpm
+musicbox.raw, 24kHz, 0:16, loopable music box melody
+
+

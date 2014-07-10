@@ -28,26 +28,33 @@
 
 namespace nw2s 
 {
+	typedef int SampleRateInterrupt;
+	
+	static const SampleRateInterrupt SR_10000 = 1050; 
+	static const SampleRateInterrupt SR_12000 = 875; 
+	static const SampleRateInterrupt SR_24000 = 437;   // Close enough 
+	static const SampleRateInterrupt SR_48000 = 219;   // Closer... 
+	static const SampleRateInterrupt SR_44100 = 238;   // Really close!  
+	
 	class Looper;
 	class ClockedLooper;
 	class BeatDevice;
 }
 
-class nw2s::Looper : public AudioDevice
+class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 {
 	public:
-		static Looper* create(PinAudioOut pin, SignalData* signalData);
+		static Looper* create(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri);
+		virtual void timer(unsigned long t);
 		virtual void timer_handler();
 			
 	protected:
 		PinAudioOut pin;
-		long currentSample;
-		SignalData* signalData;
+		StreamingSignalData* signalData;
 		int channel;
 		int dac;
-		int size;
 
-		Looper(PinAudioOut pin, SignalData* signalData);
+		Looper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri);
 		
 	private:
 		static boolean initialized;
@@ -56,7 +63,7 @@ class nw2s::Looper : public AudioDevice
 class nw2s::ClockedLooper : public nw2s::Looper, public nw2s::BeatDevice
 {
 	public:
-		static ClockedLooper* create(PinAudioOut pin, SignalData* signalData, int beats, int clockdivision);
+		static ClockedLooper* create(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri, int beats, int clockdivision);
 		virtual void timer(unsigned long t);
 		virtual void reset();
 		
@@ -64,7 +71,7 @@ class nw2s::ClockedLooper : public nw2s::Looper, public nw2s::BeatDevice
 		int beats;
 		int currentbeat;
 		
-		ClockedLooper(PinAudioOut pin, SignalData* signalData, int beats, int clockdivision);
+		ClockedLooper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri, int beats, int clockdivision);
 
 	};
 

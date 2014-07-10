@@ -2,7 +2,7 @@
 	"program" : 	
 
 	{
-		"name" : 			"Probability Trigger Sequence Demo 1",
+		"name" : 			"Drum Trigger Sequence Demo 1",
 			
 		"clock" :
 
@@ -15,23 +15,28 @@
 		"devices" : [
 			
 			{
-				"name" : "kick",
-				"type" : "ProbabilityTriggerSequencer",
-				"division" : "eighth",
-				"digitalOutput" : 3,
-				"probabilityModifier" : 1,
-				"triggers" :   [ 75, 0, 0, 5, 75, 0, 0, 10 ],
+				"type" : "DrumTriggerSequencer",
+				"division" : "sixteenth",
+				"analogOutput" : 3,
+				"triggers" : [
+					
+					1000, 0, 0, 0, 5000, 0, 2500, 0, 1000, 0, 0, 2500, 0, 1000, 0, 1000
+															
+				]
 			},
 
 			{
-				"name" : "snare",
-				"type" : "ProbabilityDrumTriggerSequencer",
-				"division" : "eighth",
-				"digitalOutput" : 4,
-				"probabilityModifier" : 2,
-				"triggers" :   [ 0,	5, 75, 0, 0, 10, 75, 0 ],
+				"type" : "DrumTriggerSequencer",
+				"division" : "sixteenth",
+				"analogOutput" : 4,
+				"triggers" : [
+					
+					1000, 0, 0, 0, 5000, 0, 2500, 0, 1000, 0, 0, 2500, 0, 1000, 0
+															
+				]
 			}
 					
 		]
 	}
 }
+

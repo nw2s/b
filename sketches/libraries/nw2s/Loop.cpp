@@ -27,15 +27,18 @@
 using namespace nw2s;
 
 
-Looper* Looper::create(PinAudioOut pin, SignalData* signalData)
+Looper* Looper::create(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri)
 {
-	Looper* looper = new Looper(pin, signalData);
+	Looper* looper = new Looper(pin, subfoldername, filename, sri);
 
 	return looper;
 }
 
-Looper::Looper(PinAudioOut pin, SignalData* signalData)
+Looper::Looper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri)
 {
+	/* Load the file */
+	this->signalData = StreamingSignalData::fromSDFile("loops", subfoldername, filename, true);
+	
 	/* The event handler needs static references to these devices */
 	if (pin == DUE_DAC0) AudioDevice::device0 = this;
 	if (pin == DUE_DAC1) AudioDevice::device1 = this;
@@ -46,9 +49,6 @@ Looper::Looper(PinAudioOut pin, SignalData* signalData)
 
 	this->pin = pin;
 	this->signalData = signalData;
-	this->size = signalData->getSize();
-	// this->
-	this->currentSample = 0;
 	this->channel = (pin == DUE_DAC0) ? 1 : 2;
 	this->dac = (pin == DUE_DAC0) ? 0 : 1;
 
@@ -59,7 +59,7 @@ Looper::Looper(PinAudioOut pin, SignalData* signalData)
   	pmc_enable_periph_clk(tc_id);
 
   	TC_Configure(TC1, this->channel, TC_CMR_WAVE | TC_CMR_WAVSEL_UP_RC | TC_CMR_TCCLKS_TIMER_CLOCK2);
-  	TC_SetRC(TC1, this->channel, 1050); // sets 10Khz interrupt rate
+  	TC_SetRC(TC1, this->channel, sri);
   	TC_Start(TC1, this->channel);
 
   	/* enable timer interrupts */
@@ -71,22 +71,25 @@ Looper::Looper(PinAudioOut pin, SignalData* signalData)
 
 void Looper::timer_handler()
 {
-	if (this->currentSample > this->size)
-	{
-		this->currentSample = 0;
-	}
-	
  	dacc_set_channel_selection(DACC_INTERFACE, this->dac);
-	dacc_write_conversion_data(DACC_INTERFACE, signalData->getSample(currentSample));
-	this->currentSample++;
+	dacc_write_conversion_data(DACC_INTERFACE, this->signalData->getNextSample());
 }
 
-ClockedLooper* ClockedLooper::create(PinAudioOut pin, SignalData* signalData, int beats, int clockdivision)
+ClockedLooper* ClockedLooper::create(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri, int beats, int clockdivision)
 {
-	return new ClockedLooper(pin, signalData, beats, clockdivision);
+	return new ClockedLooper(pin, subfoldername, filename, sri, beats, clockdivision);
 }
 
-ClockedLooper::ClockedLooper(PinAudioOut pin, SignalData* signalData, int beats, int clockdivision) : Looper(pin, signalData)
+void Looper::timer(unsigned long t)
+{
+	/* Every millisecond, check if it's ready to get more data loaded */
+	if (this->signalData->isReadyForRefresh())
+	{
+		this->signalData->refresh();
+	}
+}
+
+ClockedLooper::ClockedLooper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri, int beats, int clockdivision) : Looper(pin, subfoldername, filename, sri)
 {
 	this->clock_division = clockdivision;
 	this->beats = beats;
@@ -95,7 +98,7 @@ ClockedLooper::ClockedLooper(PinAudioOut pin, SignalData* signalData, int beats,
 
 void ClockedLooper::timer(unsigned long t)
 {
-	
+	Looper::timer(t);
 }
 
 void ClockedLooper::reset()
@@ -104,7 +107,8 @@ void ClockedLooper::reset()
 	
 	if (this->currentbeat >= this->beats)
 	{
-		this->currentSample = 0;
+		Serial.println("resetting...");
+		this->signalData->reset();
 		this->currentbeat = 0;
 	}
 }

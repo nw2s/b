@@ -22,6 +22,8 @@
 #ifndef b_h
 #define b_h
 
+#include <SD.h>
+
 namespace nw2s
 {
 	class b;
@@ -31,7 +33,6 @@ namespace nw2s
 		CV_GAIN_HIGH = 1,  // This is for when you're biasing to -10V and +10V
 		CV_GAIN_LOW = 0,   // This is for when you've biased to -5V to +5V
 	};
-			
 }
 
 class nw2s::b
@@ -39,6 +40,14 @@ class nw2s::b
 	public:
 		static bool debugMode;
 		static bool cvGainMode;
+		
+		static SdFile getSDRoot();
+		
+	private:
+		static SdFile root;
+		static bool rootInitialized;
+		static Sd2Card card;
+		static SdVolume volume;
 };
 
 

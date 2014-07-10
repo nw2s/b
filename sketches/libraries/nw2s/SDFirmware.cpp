@@ -31,6 +31,7 @@
 #include <SD.h>
 #include <ShiftRegister.h>
 #include <aJSON.h>
+#include "b.h"
 #include "../aJSON/aJSON.h"
 #include "SDFirmware.h"
 
@@ -38,8 +39,6 @@ using namespace nw2s;
 
 void nw2s::initializeFirmware()
 {
-	Sd2Card card;
-	SdVolume volume;
 	SdFile root;
 	SdFile programsDir;
 	SdFile programFile;
@@ -49,23 +48,7 @@ void nw2s::initializeFirmware()
 	/* Ensure the proper structure and locate the program definition file */
 	/* Ensure the proper structure and locate the program definition file */
 
-	if (!card.init(SPI_HALF_SPEED, SD_CS)) 
-	{
-	    Serial.println("Initialization failed. Is a card is inserted?");
-	    return;
-	} 
-
-	if (!volume.init(card)) 
-	{
-		Serial.println("Could not find FAT16/FAT32 partition.\nMake sure you've formatted the card");
-	    return;
-	}
-
-	if (!root.openRoot(volume))
-	{
-	    Serial.println("Error opening root folder. Is something wrong with the card?");
-	    return;
-	}
+	root = b::getSDRoot();
 	
 	if (!programsDir.open(root, "PROGRAMS", O_READ))
 	{
@@ -242,6 +225,10 @@ void nw2s::initializeFirmware()
 				Serial.println(String(nodeError));
 			}
 		}
+		else if (strcmp(typeNode->valuestring, "TriggerNoteSequencer") == 0)
+		{
+			EventManager::registerDevice(TriggerNoteSequencer::create(deviceNode));
+		}
 		else if (strcmp(typeNode->valuestring, "TriggerSequencer") == 0)
 		{
 			if (clockDevice != NULL)
@@ -262,7 +249,7 @@ void nw2s::initializeFirmware()
 			}
 			else
 			{
-				static const char nodeError[] = "TriggerSequencer defined with no clock, skipping.";
+				static const char nodeError[] = "Trigger defined with no clock, skipping.";
 				Serial.println(String(nodeError));
 			}
 		}

@@ -20,14 +20,42 @@
 
 #include "ShiftRegister.h"
 #include "Entropy.h"
-
+#include "aJson.h"
 
 //using namepsace nw2s;
 
-nw2s::RandomLoopingShiftRegister* RandomLoopingShiftRegister::create(int size, PinAnalogIn control, int clockdivision)
+RandomLoopingShiftRegister* RandomLoopingShiftRegister::create(int size, PinAnalogIn control, int clockdivision)
 {
 	return new RandomLoopingShiftRegister(size, control, clockdivision);
 }
+
+// RandomLoopingShiftRegister* RandomLoopingShiftRegister::create(aJsonObject* data)
+// {
+// 	static const char sizeNodeName[] = "size";
+// 	static const char controlNodeName[] = "controlInput";
+//
+// 	/* These are the required parameters */
+// 	PinAnalogIn control = getAnalogInputFromJSON(data, controlNodeName);
+// 	int size = getIntFromJSON(data, sizeNodeName);
+// 	int clockdivision = getDivisionFromJSON(data);
+//
+// 	/* These are the optional outputs */
+// 	Scale scale = getScaleFromJSON(data);
+// 	PinDigitalIn triggerInput = getDigitalInputFromJSON(data, triggerInputNodeName);
+// 	NoteName root = getRootFromJSON(data);
+// 	PinDigitalOut gatePin = getDigitalOutputFromJSON(data, gateNodeName);
+// 	int gateDuration = getIntFromJSON(data, durationNodeName, 20, 1, 1000);
+//
+// 	PinAnalogOut output = getAnalogOutputFromJSON(data);
+//
+//
+// 	RandomLoopingShiftRegister* seq = new RandomLoopingShiftRegister(notes, root, scale, triggerInput, output, randomize);
+//
+// 	if (gatePin != DIGITAL_OUT_NONE) seq->setgate(Gate::create(gatePin, gateDuration));
+//
+// 	return seq;
+// }
+
 
 RandomLoopingShiftRegister::RandomLoopingShiftRegister(int size, PinAnalogIn control, int clockdivision)
 {

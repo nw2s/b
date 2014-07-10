@@ -18,6 +18,8 @@
 
 */
 
+#include <SD.h>
+#include "IO.h"
 #include "b.h"
 
 using namespace nw2s;
@@ -25,4 +27,43 @@ using namespace nw2s;
 /* GLOBAL SETTINGS */
 bool b::debugMode = false;
 bool b::cvGainMode = CV_GAIN_LOW;
+bool b::rootInitialized = false;
+
+SdFile b::root;
+Sd2Card b::card;
+SdVolume b::volume;
+
+
+SdFile b::getSDRoot()
+{
+	if (rootInitialized)
+	{
+		return b::root;
+	} 
+	else
+	{
+		if (!card.init(SPI_HALF_SPEED, SD_CS)) 
+		{
+		    Serial.println("Initialization failed. Is a card is inserted?");
+		    return SdFile();
+		} 
+
+		if (!volume.init(card)) 
+		{
+			Serial.println("Could not find FAT16/FAT32 partition.\nMake sure you've formatted the card");
+		    return SdFile();
+		}
+
+		if (!root.openRoot(volume))
+		{
+		    Serial.println("Error opening root folder. Is something wrong with the card?");
+		    return SdFile();
+		}
+		
+		rootInitialized = true;
+		b::root = root;
+		return root;
+	}	
+}
+
 
