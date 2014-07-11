@@ -25,6 +25,7 @@
 #include "SignalData.h"
 #include "AudioDevice.h"
 #include "Clock.h"
+#include "../aJSON/aJSON.h"
 
 namespace nw2s 
 {
@@ -41,10 +42,13 @@ namespace nw2s
 	class BeatDevice;
 }
 
+SampleRateInterrupt sampleRateFromName(char* name);
+
 class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 {
 	public:
 		static Looper* create(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri);
+		static Looper* create(aJsonObject* data);
 		virtual void timer(unsigned long t);
 		virtual void timer_handler();
 			

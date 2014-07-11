@@ -47,7 +47,7 @@ SdFile b::getSDRoot()
 		    Serial.println("Initialization failed. Is a card is inserted?");
 		    return SdFile();
 		} 
-
+		
 		if (!volume.init(card)) 
 		{
 			Serial.println("Could not find FAT16/FAT32 partition.\nMake sure you've formatted the card");

@@ -30,6 +30,7 @@
 #include <Wire.h>
 #include <SD.h>
 #include <ShiftRegister.h>
+#include <Loop.h>
 #include <aJSON.h>
 #include "b.h"
 #include "../aJSON/aJSON.h"
@@ -176,6 +177,10 @@ void nw2s::initializeFirmware()
 				static const char nodeError[] = "DrumTriggerSequencer defined with no clock, skipping.";
 				Serial.println(String(nodeError));
 			}
+		}
+		else if (strcmp(typeNode->valuestring, "Looper") == 0)
+		{
+			EventManager::registerDevice(Looper::create(deviceNode));
 		}
 		else if (strcmp(typeNode->valuestring, "MorphingNoteSequencer") == 0)
 		{

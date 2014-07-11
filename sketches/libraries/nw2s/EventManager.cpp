@@ -37,9 +37,6 @@ bool stringComplete = false;
 void EventManager::initialize()
 {
 	IOUtils::setupPins();
-
-	/* Let's seed the random number generator just to be sure it happens once */
-	//randomSeed(analogRead(0) + analogRead(1) + analogRead(2) + analogRead(3) + digitalRead(0) + digitalRead(1) + digitalRead(2) + digitalRead(3) + micros());
 }
 
 void EventManager::loop()

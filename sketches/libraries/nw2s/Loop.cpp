@@ -21,15 +21,57 @@
 
 
 #include "Loop.h"
+#include "JSONUtil.h"
 #include <Arduino.h>
 
 
 using namespace nw2s;
 
 
+SampleRateInterrupt sampleRateFromName(char* name)
+{
+	if (strcmp(name, "10000") == 0)
+	{
+		return SR_10000;
+	}
+	if (strcmp(name, "12000") == 0)
+	{
+		return SR_12000;
+	}
+	if (strcmp(name, "24000") == 0)
+	{
+		return SR_24000;
+	}
+	if (strcmp(name, "48000") == 0)
+	{
+		return SR_48000;
+	}
+	if (strcmp(name, "44100") == 0)
+	{
+		return SR_44100;
+	}
+	
+	return SR_24000;
+}
+
 Looper* Looper::create(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri)
 {
 	Looper* looper = new Looper(pin, subfoldername, filename, sri);
+
+	return looper;
+}
+
+Looper* Looper::create(aJsonObject* data)
+{
+	static const char subFolderNodeName[] = "subfolder";
+	static const char filenameNodeName[] = "filename";
+	
+	char* subfolder = getStringFromJSON(data, subFolderNodeName);
+	char* filename = getStringFromJSON(data, filenameNodeName);
+	SampleRateInterrupt sri = getSampleRateFromJSON(data);
+	PinAudioOut output = getAudioOutputFromJSON(data);
+		
+	Looper* looper = new Looper(output, subfolder, filename, sri);
 
 	return looper;
 }

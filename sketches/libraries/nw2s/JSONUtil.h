@@ -24,6 +24,7 @@
 #include "IO.h"
 #include "Key.h"
 #include "Sequence.h"
+#include "Loop.h"
 #include "../aJSON/aJSON.h"
 
 namespace nw2s
@@ -48,6 +49,7 @@ namespace nw2s
 	int getBeatsFromJSON(aJsonObject* data);
 	char* getNameFromJSON(aJsonObject* data);
 	std::vector<int>* getIntCollectionFromJSON(aJsonObject* data, const char* nodeName);
+	SampleRateInterrupt getSampleRateFromJSON(aJsonObject* data);
 
 	aJsonObject* getClockFromJSON(aJsonObject* data);
 	aJsonObject* getProgramFromJSON(aJsonObject* data);
@@ -55,6 +57,7 @@ namespace nw2s
 	
 	int getIntFromJSON(aJsonObject* data, const char* nodeName, int defaultVal, int min, int max);
 	bool getBoolFromJSON(aJsonObject* data, const char* nodeName, bool defaultVal);
+	char* getStringFromJSON(aJsonObject* data, const char* nodeName);
 }
 
 #endif

@@ -46,7 +46,8 @@ void setup()
 	/* Set up the drum loop as a clocked loop. It will reset every two beats */
 	FixedClock* fixedclock = FixedClock::create(120, 16);
 
-	Looper* looper1 = Looper::create(DUE_DAC1, "melodic", "ebgtr120.raw", SR_24000);
+	//Looper* looper1 = Looper::create(DUE_DAC1, "melodic", "ebgtr120.raw", SR_24000);
+	Looper* looper1 = Looper::create(DUE_DAC1, "test", "sin220.raw", SR_24000);
 
 	EventManager::registerDevice(looper1);
 }

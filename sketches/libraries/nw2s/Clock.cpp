@@ -225,7 +225,7 @@ void Clock::timer(unsigned long t)
 	/* Call reset on devices first */
 	for (int i = 0; i < this->devices.size(); i++)
 	{
-		if (this->devices[i]->getNextTime() == t)
+		if (this->devices[i]->getNextTime() <= t)
 		{
 			this->devices[i]->reset();
 		}

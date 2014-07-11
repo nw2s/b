@@ -152,7 +152,7 @@ ProbabilityDrumTriggerSequencer* ProbabilityDrumTriggerSequencer::create(aJsonOb
 	if (probabilityPin != DUE_IN_A_NONE)
 	{
 		seq->setProbabilityModifier(probabilityPin);
-	}		
+	}
 
 	return seq;
 }

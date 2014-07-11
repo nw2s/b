@@ -29,7 +29,8 @@ namespace nw2s
 	class SignalData;
 	class StreamingSignalData;
 
-	static const int STREAM_BUFFER_SIZE = 2048;
+	static const int STREAM_BUFFER_SIZE = 4096;
+	static const int READ_BUFFER_SIZE = STREAM_BUFFER_SIZE * 2;
 
 	static const unsigned int SIGNAL_SAW[600] = 
 	{
@@ -1271,10 +1272,10 @@ class nw2s::StreamingSignalData
 		
 	private:
 		short unsigned int buffer[2][nw2s::STREAM_BUFFER_SIZE];
-		short unsigned int readbufferindex;
-		short unsigned int writebufferindex;
+		short volatile unsigned int readbufferindex;
+		short volatile unsigned int writebufferindex;
 		int size[2];
-		int nextsampleindex;
+		volatile int nextsampleindex;
 		bool available;
 		bool loop;
 		SdFile file;

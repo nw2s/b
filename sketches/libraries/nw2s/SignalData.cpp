@@ -164,7 +164,7 @@ bool StreamingSignalData::isReadyForRefresh()
 
 void StreamingSignalData::refresh()
 {
-	unsigned char d[STREAM_BUFFER_SIZE * 2];
+	unsigned char d[READ_BUFFER_SIZE];
 	int dsize = 0;
 
 	/* If we're not looping and have reached eof, then stop */
@@ -177,18 +177,18 @@ void StreamingSignalData::refresh()
 	/* If we're reading from a different buffer, fill up the write buffer */
 	if (this->readbufferindex != this->writebufferindex)
 	{
-		/* Fill the current read buffer up as much as possible */		
+		/* Fill the current write buffer up as much as possible */		
 		if (this->available)
 		{
 			/* Read up to the buffer size number of bytes */
-			dsize = this->file.read(d, STREAM_BUFFER_SIZE * 2);
-			this->available = dsize > 0;
+			dsize = this->file.read(d, READ_BUFFER_SIZE);
+			this->available = dsize > -1;
 
 			/* If we're looping and didn't get enough bytes, rewind and start over */
-			while (loop && available && dsize < STREAM_BUFFER_SIZE * 2)
+			while (loop && available && dsize < READ_BUFFER_SIZE)
 			{
 				this->file.rewind();
-				dsize += this->file.read(&(d[dsize]), (STREAM_BUFFER_SIZE * 2) - dsize);
+				dsize += this->file.read(&(d[dsize]), READ_BUFFER_SIZE - dsize);
 			}
 
 			/* Convert from signed little endian */
@@ -202,12 +202,12 @@ void StreamingSignalData::refresh()
 				int value = ((d1 << 8) | d0) + UNSIGNED_OFFSET;
 
 				/* We're throwing 4 bits away to make 12 bit audio - for now */
-				this->buffer[writebufferindex][i / 2] = ((unsigned short int)shifted >> 4);
+				this->buffer[writebufferindex][i / 2] = ((unsigned short int)value >> 4);
 			}
 		}
 	
-		this->writebufferindex = !this->writebufferindex;
 		this->size[writebufferindex] = dsize / 2;	
+		this->writebufferindex = !this->writebufferindex;
 	}
 }
 

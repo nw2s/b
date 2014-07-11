@@ -64,6 +64,23 @@ bool nw2s::getBoolFromJSON(aJsonObject* data, const char* nodeName, bool default
 	return node->valuebool;
 }
 
+char* nw2s::getStringFromJSON(aJsonObject* data, const char* nodeName)
+{
+	aJsonObject* node = aJson.getObjectItem(data, nodeName);
+	
+	if (node == NULL)
+	{
+		static const char nodeError[] = "Missing ";
+		Serial.println(String(nodeError) + String(nodeName));
+		return NULL;
+	}
+		
+	static const char info[] = ": ";
+	Serial.println(String(nodeName) + String(info) + node->valuestring);
+
+	return node->valuestring;
+}
+
 PinAnalogOut nw2s::getAnalogOutputFromJSON(aJsonObject* data)
 {
 	static const char nodeName[] = "analogOutput";
@@ -159,6 +176,23 @@ int nw2s::getDivisionFromJSON(aJsonObject* data)
 	Serial.println(String(info) + String(divisionNode->valuestring));
 
 	return clockDivisionFromName(divisionNode->valuestring);
+}
+
+SampleRateInterrupt nw2s::getSampleRateFromJSON(aJsonObject* data)
+{
+	aJsonObject* samplerateNode = aJson.getObjectItem(data, "samplerate");
+
+	if (samplerateNode == NULL)
+	{
+		static const char nodeError[] = "Missing samplerate definition. Assume 24000";
+		Serial.println(String(nodeError));
+		return SR_24000;
+	}
+
+	static const char info[] = "Sample Rate: ";
+	Serial.println(String(info) + String(samplerateNode->valuestring));
+
+	return sampleRateFromName(samplerateNode->valuestring);
 }
 
 NoteSequenceData* nw2s::getNotesFromJSON(aJsonObject* data)
