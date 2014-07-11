@@ -39,6 +39,7 @@ namespace nw2s
 	
 	class Looper;
 	class ClockedLooper;
+	class EFLooper;
 	class BeatDevice;
 }
 
@@ -49,10 +50,16 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 	public:
 		static Looper* create(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri);
 		static Looper* create(aJsonObject* data);
+		void setGlitchTrigger(PinDigitalIn glitchTrigger);
+		void setReverseTrigger(PinDigitalIn reverseTrigger);
 		virtual void timer(unsigned long t);
 		virtual void timer_handler();
 			
 	protected:
+		PinDigitalIn glitchTrigger;
+		PinDigitalIn reverseTrigger;
+		bool glitched;
+		bool reversed;
 		PinAudioOut pin;
 		StreamingSignalData* signalData;
 		int channel;
@@ -62,6 +69,27 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		
 	private:
 		static boolean initialized;
+};
+
+class nw2s::EFLooper : public nw2s::TimeBasedDevice
+{
+	public:
+		static EFLooper* create(PinAnalogOut pin, PinAnalogIn windowsize, PinAnalogIn scale, PinAnalogIn threshold, char* subfoldername, char* filename);
+		static EFLooper* create(aJsonObject* data);
+		virtual void timer(unsigned long t);
+			
+	private:
+		AnalogOut* output;
+		PinAnalogIn thresholdin;
+		PinAnalogIn scalein;
+		PinAnalogIn windowsizein;
+		StreamingSignalData* signalData;
+		
+		int threshold;
+		int scale;
+		int windowsize;
+
+		EFLooper(PinAnalogOut pin, PinAnalogIn windowsize, PinAnalogIn scale, PinAnalogIn threshold, char* subfoldername, char* filename);	
 };
 
 class nw2s::ClockedLooper : public nw2s::Looper, public nw2s::BeatDevice

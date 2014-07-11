@@ -1269,6 +1269,8 @@ class nw2s::StreamingSignalData
 		bool isReadyForRefresh();
 		void refresh();
 		void reset();
+		void seekRandom();
+		void reverse();
 		
 	private:
 		short unsigned int buffer[2][nw2s::STREAM_BUFFER_SIZE];
@@ -1278,6 +1280,7 @@ class nw2s::StreamingSignalData
 		volatile int nextsampleindex;
 		bool available;
 		bool loop;
+		bool reversed;
 		SdFile file;
 		
 		StreamingSignalData(char *foldername, char* subfoldername, char *filename, bool loop = false);

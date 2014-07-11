@@ -24,6 +24,7 @@
 #include "b.h"
 #include "IO.h"
 #include "SignalData.h"
+#include "Entropy.h"
 
 using namespace nw2s;
 
@@ -113,6 +114,8 @@ StreamingSignalData* StreamingSignalData::fromSDFile(char* foldername, char* sub
 
 StreamingSignalData::StreamingSignalData(char* foldername, char* subfoldername, char *filename, bool loop)
 {
+	this->reversed = false;
+	
 	SdFile root;
 	SdFile samplesDir;
 	SdFile subDir;
@@ -139,6 +142,7 @@ StreamingSignalData::StreamingSignalData(char* foldername, char* subfoldername, 
 	}
 			
 	this->loop = loop;
+	this->reversed = false;
 	this->available = file.fileSize() > 0;
 	this->size[0] = 0;
 	this->size[1] = 0;
@@ -235,6 +239,11 @@ short unsigned int StreamingSignalData::getNextSample()
 	return nextsample;
 }
 
+void StreamingSignalData::reverse()
+{
+	this->reversed = !this->reversed;
+}
+
 void StreamingSignalData::reset()
 {
 	this->writebufferindex = !this->readbufferindex;
@@ -244,5 +253,17 @@ void StreamingSignalData::reset()
 
 	this->readbufferindex = this->writebufferindex;
 	this->nextsampleindex = 0;	
+}
+
+void StreamingSignalData::seekRandom()
+{
+	/* We have to end up on an even word, and not on the last byte */
+	this->file.seekSet((Entropy::getValue(2, this->file.fileSize() / 2) * 2) - 2);
+	
+	this->writebufferindex = !this->readbufferindex;
+	this->refresh();
+
+	this->readbufferindex = this->writebufferindex;
+	this->nextsampleindex = 0;
 }
 

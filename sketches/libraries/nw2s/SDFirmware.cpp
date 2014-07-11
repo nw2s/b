@@ -178,6 +178,10 @@ void nw2s::initializeFirmware()
 				Serial.println(String(nodeError));
 			}
 		}
+		else if (strcmp(typeNode->valuestring, "EFLooper") == 0)
+		{
+			EventManager::registerDevice(EFLooper::create(deviceNode));
+		}
 		else if (strcmp(typeNode->valuestring, "Looper") == 0)
 		{
 			EventManager::registerDevice(Looper::create(deviceNode));

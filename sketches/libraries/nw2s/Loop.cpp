@@ -19,7 +19,7 @@
 */
 
 
-
+#include "IO.h"
 #include "Loop.h"
 #include "JSONUtil.h"
 #include <Arduino.h>
@@ -65,15 +65,98 @@ Looper* Looper::create(aJsonObject* data)
 {
 	static const char subFolderNodeName[] = "subfolder";
 	static const char filenameNodeName[] = "filename";
+	static const char glitchNodeName[] = "glitch";
+	static const char reverseNodeName[] = "reverse";
 	
 	char* subfolder = getStringFromJSON(data, subFolderNodeName);
 	char* filename = getStringFromJSON(data, filenameNodeName);
 	SampleRateInterrupt sri = getSampleRateFromJSON(data);
 	PinAudioOut output = getAudioOutputFromJSON(data);
+	PinDigitalIn glitch = getDigitalInputFromJSON(data, glitchNodeName);
 		
 	Looper* looper = new Looper(output, subfolder, filename, sri);
 
+	if (glitch != DIGITAL_IN_NONE)
+	{
+		looper->setGlitchTrigger(glitch);
+	}
+
 	return looper;
+}
+
+EFLooper* EFLooper::create(PinAnalogOut pin, PinAnalogIn windowsize, PinAnalogIn scale, PinAnalogIn threshold, char* subfoldername, char* filename)
+{
+	EFLooper* looper = new EFLooper(pin, windowsize, scale, threshold, subfoldername, filename);
+
+	return looper;
+}
+
+EFLooper* EFLooper::create(aJsonObject* data)
+{
+	static const char subFolderNodeName[] = "subfolder";
+	static const char filenameNodeName[] = "filename";
+	static const char windowsizeNodeName[] = "windowsize";
+	static const char scaleNodeName[] = "scale";
+	static const char fthresholdNodeName[] = "threshold";
+	
+	char* subfolder = getStringFromJSON(data, subFolderNodeName);
+	char* filename = getStringFromJSON(data, filenameNodeName);
+	PinAnalogOut output = getAnalogOutputFromJSON(data);
+	PinAnalogIn windowsize = getAnalogInputFromJSON(data, windowsizeNodeName);
+	PinAnalogIn scale = getAnalogInputFromJSON(data, scaleNodeName);
+	PinAnalogIn threshold = getAnalogInputFromJSON(data, fthresholdNodeName);
+		
+	EFLooper* looper = new EFLooper(output, windowsize, scale, threshold, subfolder, filename);
+
+	return looper;
+}
+
+EFLooper::EFLooper(PinAnalogOut pin, PinAnalogIn windowsize, PinAnalogIn scale, PinAnalogIn threshold, char* subfoldername, char* filename)
+{
+	this->output = AnalogOut::create(pin);
+	this->thresholdin = threshold;
+	this->windowsizein = windowsize;
+	this->scalein = scale;
+	this->signalData = StreamingSignalData::fromSDFile("loops", subfoldername, filename, true);	
+
+	this->windowsize = analogReadmV(this->windowsizein, 0, 5000) / 10;
+	this->threshold = analogReadmV(this->thresholdin, 0, 5000) / 2;
+	this->scale = analogReadmV(this->scalein, 0, 5000) / 2;
+}
+
+void EFLooper::timer(unsigned long t)
+{
+	if (t % 100 == 0)
+	{
+		/* Only read the knobs every 100ms */
+		this->windowsize = analogReadmV(this->windowsizein, 0, 5000) / 10;
+		this->threshold = analogReadmV(this->thresholdin, 0, 5000) / 2;
+		this->scale = analogReadmV(this->scalein, 0, 5000) / 2;		
+	}
+	
+	/* Accumulate as many samples as are in the window, abs and average them and that's our output */	
+	unsigned long a = 0;
+	
+	for (int i = 0; i < this->windowsize; i++)
+	{
+		/* Convert the unsigned data coming out back into signed */
+		int b = this->signalData->getNextSample() - 2048;
+		a += (b > 0) ? b : b * -1;
+	}
+	
+	/* Scale, convert to a 12-bit value and clip at 5000 */
+	a = (a < this->threshold) ? 0 : a;
+
+	short int c = (a * this->scale) / (windowsize * 100);
+
+	c = (c > 5000) ? 5000 : c;
+		
+	this->output->outputCV(c);
+	
+	if (this->signalData->isReadyForRefresh())
+	{
+		this->signalData->refresh();
+	}
 }
 
 Looper::Looper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri)
@@ -109,6 +192,11 @@ Looper::Looper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateI
   	TC1->TC_CHANNEL[this->channel].TC_IDR = ~TC_IER_CPCS;  
 
   	NVIC_EnableIRQ(tc_irq);
+	
+	this->glitchTrigger = DIGITAL_IN_NONE;
+	this->reverseTrigger = DIGITAL_IN_NONE;
+	this->glitched = false;
+	this->reversed = false;
 }
 
 void Looper::timer_handler()
@@ -124,11 +212,38 @@ ClockedLooper* ClockedLooper::create(PinAudioOut pin, char* subfoldername, char*
 
 void Looper::timer(unsigned long t)
 {
-	/* Every millisecond, check if it's ready to get more data loaded */
-	if (this->signalData->isReadyForRefresh())
+	if ((reverseTrigger != DIGITAL_IN_NONE) && !reversed && digitalRead(reverseTrigger))
 	{
-		this->signalData->refresh();
+		this->reversed = true;
+		this->signalData->reverse();
 	}
+	
+	if ((reverseTrigger != DIGITAL_IN_NONE) && reversed && !digitalRead(reverseTrigger))
+	{
+		this->reversed = false;
+	}
+	
+	if ((glitchTrigger != DIGITAL_IN_NONE) && !glitched && digitalRead(glitchTrigger))
+	{
+		this->glitched = true;
+		this->signalData->seekRandom();
+	}
+	else if (this->signalData->isReadyForRefresh())
+	{
+		/* Every millisecond, check if it's ready to get more data loaded */
+		this->signalData->refresh();
+		this->glitched = false;
+	}
+}
+
+void Looper::setGlitchTrigger(PinDigitalIn glitchTrigger)
+{
+	this->glitchTrigger = glitchTrigger;
+}
+
+void Looper::setReverseTrigger(PinDigitalIn reverseTrigger)
+{
+	this->reverseTrigger = reverseTrigger;
 }
 
 ClockedLooper::ClockedLooper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri, int beats, int clockdivision) : Looper(pin, subfoldername, filename, sri)

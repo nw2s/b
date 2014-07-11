@@ -13,7 +13,39 @@
 		},
 
 		"devices" : [
+						
+			{
+				"type" : "CVSequencer",
+				"division" : "eighth",
+				"analogOutput" : 16,
+				"min" : 0,
+				"max" : 5000
+			},		
 			
+			{
+				"type" : "CVSequencer",
+				"division" : "quarter",
+				"analogOutput" : 14,
+				"min" : 0,
+				"max" : 5000
+			},
+					
+			{
+				"type" : "CVSequencer",
+				"division" : "dotted eighth",
+				"analogOutput" : 15,
+				"min" : 0,
+				"max" : 5000
+			},
+					
+			{
+				"type" : "CVSequencer",
+				"division" : "half",
+				"analogOutput" : 13,
+				"min" : 0,
+				"max" : 5000
+			},
+					
 			{
 				"type" : "Looper",
 				"subfolder" : "melodic",
@@ -28,38 +60,9 @@
 				"filename" : "rain.raw",
 				"samplerate" : "24000",
 				"dacOutput" : 2
-			},	
-			
-			{
-				"type" : "CVSequencer",
-				"division" : "eighth",
-				"analogOutput" : 16,
-				"gateOutput" : 16,
-				"gateLength" : 125,
-				"min" : 0,
-				"max" : 5000
-			},		
-			
-			{
-				"type" : "CVSequencer",
-				"division" : "whole",
-				"analogOutput" : 15,
-				"gateOutput" : 15,
-				"gateLength" : 125,
-				"min" : 0,
-				"max" : 5000
-			},		
-
-			{
-				"type" : "CVSequencer",
-				"division" : "quarter",
-				"analogOutput" : 14,
-				"gateOutput" : 14,
-				"gateLength" : 125,
-				"min" : 0,
-				"max" : 5000
-			}		
+			}
 							
 		]
 	}
 }
+

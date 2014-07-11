@@ -103,7 +103,6 @@ void setup()
 	Clock* randomclock = RandomTempoClock::create(10, 100, 8);
 	
 	Sequencer* cvsequencer = CVSequencer::create(800, 1000, DIV_QUARTER, DUE_SPI_4822_03);
-	cvsequencer->setslew(LinearSlew::create(50));
 	
 	randomclock->registerDevice(cvsequencer);
 	
