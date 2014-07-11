@@ -13,16 +13,7 @@
 		},
 
 		"devices" : [
-						
-					
-			{
-				"type" : "ProbabilityTriggerSequencer",
-				"division" : "quarter",
-				"digitalOutput" : 1,
-				"probabilityModifier" : 1,
-				"triggers" :   [ 10 ]
-			},
-
+											
 			{
 				"type" : "ProbabilityTriggerSequencer",
 				"division" : "quarter",
@@ -38,15 +29,6 @@
 				"samplerate" : "24000",
 				"glitch" : 1,
 				"dacOutput" : 1
-			},
-
-			{
-				"type" : "Looper",
-				"subfolder" : "drum",
-				"filename" : "drum01.raw",
-				"samplerate" : "24000",
-				"glitch" : 2,
-				"dacOutput" : 2
 			}
 							
 		]
