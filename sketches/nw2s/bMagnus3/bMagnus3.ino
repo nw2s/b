@@ -38,9 +38,9 @@ void setup()
 	NoteSequenceData* notes3 = new NoteSequenceData(notelist3, notelist3 + 5);
 
 	/* Build our note-based seuqnce */
-	sequencer1 = TriggerNoteSequencer::create(notes1, C, Key::SCALE_MAJOR, DUE_IN_D0, DUE_SPI_4822_15);
-	sequencer2 = TriggerNoteSequencer::create(notes2, C, Key::SCALE_MAJOR, DUE_IN_D0, DUE_SPI_4822_14);
-	sequencer3 = TriggerNoteSequencer::create(notes3, C, Key::SCALE_MAJOR, DUE_IN_D0, DUE_SPI_4822_13, true);
+	sequencer1 = TriggeredNoteSequencer::create(notes1, C, Key::SCALE_MAJOR, DUE_IN_D0, DUE_SPI_4822_15);
+	sequencer2 = TriggeredNoteSequencer::create(notes2, C, Key::SCALE_MAJOR, DUE_IN_D0, DUE_SPI_4822_14);
+	sequencer3 = TriggeredNoteSequencer::create(notes3, C, Key::SCALE_MAJOR, DUE_IN_D0, DUE_SPI_4822_13, true);
 
 	sequencer1->setgate(Gate::create(DUE_OUT_D00, 75));
 

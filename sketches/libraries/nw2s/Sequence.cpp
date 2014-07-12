@@ -185,12 +185,12 @@ NoteSequencer* NoteSequencer::create(aJsonObject* data)
 	return seq;
 }
 
-TriggerNoteSequencer* TriggerNoteSequencer::create(vector<SequenceNote>* notes, NoteName key, Scale scale, PinDigitalIn input, PinAnalogOut output, bool randomize_seq)
+TriggeredNoteSequencer* TriggeredNoteSequencer::create(vector<SequenceNote>* notes, NoteName key, Scale scale, PinDigitalIn input, PinAnalogOut output, bool randomize_seq)
 {
-	return new TriggerNoteSequencer(notes, key, scale, input, output, randomize_seq);
+	return new TriggeredNoteSequencer(notes, key, scale, input, output, randomize_seq);
 }
 
-TriggerNoteSequencer* TriggerNoteSequencer::create(aJsonObject* data)
+TriggeredNoteSequencer* TriggeredNoteSequencer::create(aJsonObject* data)
 {
 	static const char triggerInputNodeName[] = "triggerInput";
 	static const char randomizeNodeName[] = "randomize";
@@ -206,7 +206,7 @@ TriggerNoteSequencer* TriggerNoteSequencer::create(aJsonObject* data)
 	PinDigitalOut gatePin = getDigitalOutputFromJSON(data, gateNodeName);
 	int gateDuration = getIntFromJSON(data, durationNodeName, 20, 1, 1000);
 	
-	TriggerNoteSequencer* seq = new TriggerNoteSequencer(notes, root, scale, triggerInput, output, randomize);
+	TriggeredNoteSequencer* seq = new TriggeredNoteSequencer(notes, root, scale, triggerInput, output, randomize);
 		
 	if (gatePin != DIGITAL_OUT_NONE) seq->setgate(Gate::create(gatePin, gateDuration));
 	
@@ -745,18 +745,18 @@ void MorphingNoteSequencer::reset()
 	NoteSequencer::reset();
 }
 
-TriggerNoteSequencer::TriggerNoteSequencer(NoteSequenceData* notes, NoteName key, Scale scale, PinDigitalIn input, PinAnalogOut output, bool randomize_seq) : NoteSequencer(notes, key, scale, DIV_NEVER, output, randomize_seq)
+TriggeredNoteSequencer::TriggeredNoteSequencer(NoteSequenceData* notes, NoteName key, Scale scale, PinDigitalIn input, PinAnalogOut output, bool randomize_seq) : NoteSequencer(notes, key, scale, DIV_NEVER, output, randomize_seq)
 {
 	this->input = input;
 	this->input_state = false;
 }
 
-void TriggerNoteSequencer::reset()
+void TriggeredNoteSequencer::reset()
 {
 	/* Do nothing when someone thinks they want to reset */
 }
 
-void TriggerNoteSequencer::timer(unsigned long t)
+void TriggeredNoteSequencer::timer(unsigned long t)
 {		
 	//TODO: Debounce logic
 

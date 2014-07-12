@@ -234,9 +234,9 @@ void nw2s::initializeFirmware()
 				Serial.println(String(nodeError));
 			}
 		}
-		else if (strcmp(typeNode->valuestring, "TriggerNoteSequencer") == 0)
+		else if (strcmp(typeNode->valuestring, "TriggeredNoteSequencer") == 0)
 		{
-			EventManager::registerDevice(TriggerNoteSequencer::create(deviceNode));
+			EventManager::registerDevice(TriggeredNoteSequencer::create(deviceNode));
 		}
 		else if (strcmp(typeNode->valuestring, "TriggerSequencer") == 0)
 		{

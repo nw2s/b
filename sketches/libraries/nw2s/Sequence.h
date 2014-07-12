@@ -43,7 +43,7 @@ namespace nw2s
 
 	class Sequencer;
 	class NoteSequencer;
-	class TriggerNoteSequencer;
+	class TriggeredNoteSequencer;
 	class CVNoteSequencer;
 	class CVSequencer;
 	class MorphingNoteSequencer;
@@ -227,11 +227,11 @@ class nw2s::MorphingNoteSequencer : public NoteSequencer
 		MorphingNoteSequencer(NoteSequenceData* notes, NoteName key, Scale scale, int chaos, int clockdivision, PinAnalogOut output, PinDigitalIn reset);
 };
 
-class nw2s::TriggerNoteSequencer : public NoteSequencer
+class nw2s::TriggeredNoteSequencer : public NoteSequencer
 {
 	public:
-		static TriggerNoteSequencer* create(NoteSequenceData* notes, NoteName key, Scale scale, PinDigitalIn input, PinAnalogOut output, bool randomize_seq = false);
-		static TriggerNoteSequencer* create(aJsonObject* data);
+		static TriggeredNoteSequencer* create(NoteSequenceData* notes, NoteName key, Scale scale, PinDigitalIn input, PinAnalogOut output, bool randomize_seq = false);
+		static TriggeredNoteSequencer* create(aJsonObject* data);
 		virtual void reset();
 		virtual void timer(unsigned long t);
 		
@@ -240,7 +240,7 @@ class nw2s::TriggerNoteSequencer : public NoteSequencer
 		bool randomize_seq;
 		bool input_state;
 
-		TriggerNoteSequencer(NoteSequenceData* notes, NoteName key, Scale scale, PinDigitalIn input, PinAnalogOut output, bool randomize_seq);
+		TriggeredNoteSequencer(NoteSequenceData* notes, NoteName key, Scale scale, PinDigitalIn input, PinAnalogOut output, bool randomize_seq);
 };
 
 
