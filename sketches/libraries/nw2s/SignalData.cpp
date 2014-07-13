@@ -184,6 +184,20 @@ void StreamingSignalData::refresh()
 		/* Fill the current write buffer up as much as possible */		
 		if (this->available)
 		{
+			/* If we're reversed, seek to a point earlier in the file */
+			if (reversed)
+			{
+				/* If we're closer to the beginning than what we need to read, just skip to the end */
+				if (this->file.curPosition() < (READ_BUFFER_SIZE * 2))
+				{
+					this->file.seekSet(this->file.fileSize() - READ_BUFFER_SIZE - 2);
+				}
+				else
+				{
+					this->file.seekSet(this->file.curPosition() - (READ_BUFFER_SIZE * 2));
+				}
+			}
+			
 			/* Read up to the buffer size number of bytes */
 			dsize = this->file.read(d, READ_BUFFER_SIZE);
 			this->available = dsize > -1;
@@ -226,14 +240,21 @@ short unsigned int StreamingSignalData::getNextSample()
 	short unsigned int nextsample = this->buffer[readbufferindex][nextsampleindex];
 
 	/* If we're at the end of a buffer, move to the next */
-	if (this->nextsampleindex == (this->size[readbufferindex] - 1))
+	if ((!reversed && (this->nextsampleindex == (this->size[readbufferindex] - 1))) || (reversed && (this->nextsampleindex == 0)))
 	{
 		this->readbufferindex = !this->readbufferindex;
-		this->nextsampleindex = 0;
+		this->nextsampleindex = reversed ? this->size[readbufferindex] - 1 : 0;
 	}
 	else
 	{
-		this->nextsampleindex++;		
+		if (!reversed) 
+		{
+			this->nextsampleindex++;		
+		}
+		else
+		{
+			this->nextsampleindex--;
+		}
 	}	
 
 	return nextsample;

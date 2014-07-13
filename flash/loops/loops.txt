@@ -26,4 +26,11 @@ ebgtr120.raw, 24kHz, 0:08, E flat loopable bluesy riff @120bpm
 gltchgtr.raw, 44.1kHz, 0:08, glitched guitar loop @120bpm
 musicbox.raw, 24kHz, 0:16, loopable music box melody
 
+vocal
+
+german.raw, 24kHz, 0:12, German male vox
+
+test
+
+sin220.raw, 24kHz, 0:06, 220Hz sin from an ARP 2600
 

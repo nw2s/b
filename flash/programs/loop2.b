@@ -1,8 +1,9 @@
+
 {
 	"program" : 	
 
 	{
-		"name" : 			"Sample Looper Demo 1",
+		"name" : 			"Sample Looper Demo 2",
 			
 		"clock" :
 

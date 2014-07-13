@@ -73,12 +73,18 @@ Looper* Looper::create(aJsonObject* data)
 	SampleRateInterrupt sri = getSampleRateFromJSON(data);
 	PinAudioOut output = getAudioOutputFromJSON(data);
 	PinDigitalIn glitch = getDigitalInputFromJSON(data, glitchNodeName);
+	PinDigitalIn reverse = getDigitalInputFromJSON(data, reverseNodeName);
 		
 	Looper* looper = new Looper(output, subfolder, filename, sri);
 
 	if (glitch != DIGITAL_IN_NONE)
 	{
 		looper->setGlitchTrigger(glitch);
+	}
+
+	if (reverse != DIGITAL_IN_NONE)
+	{
+		looper->setReverseTrigger(reverse);
 	}
 
 	return looper;
