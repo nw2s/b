@@ -25,6 +25,7 @@
 #include "Clock.h"
 #include "Trigger.h"
 #include "Gate.h"
+#include "../aJSON/aJSON.h"
 
 namespace nw2s
 {
@@ -35,6 +36,7 @@ class nw2s::RandomLoopingShiftRegister : public nw2s::BeatDevice
 {
 	public:
 		static RandomLoopingShiftRegister* create(int size, PinAnalogIn control, int clockdivision);
+		static RandomLoopingShiftRegister* create(aJsonObject* data);
 		virtual void calculate();
 		virtual void timer(unsigned long t);
 		virtual void reset();
@@ -43,8 +45,6 @@ class nw2s::RandomLoopingShiftRegister : public nw2s::BeatDevice
 		void setKey(NoteName root, Scale scale);
 		void setNoteOut(PinAnalogOut pinout);
 		void setDelayedNoteOut(PinAnalogOut pinout, int ticks);
-		// void setWriteZero(PinDigitalIn pinin);
-		// void setWriteOne(PinDigitalIn pinin);
 		void setTriggerOut(int position, PinDigitalOut pinout);
 		void setGateOut(int position, PinDigitalOut pinout, int duration);
 		void setLogicalOrTrigger(PinDigitalOut pinout, int p1, int p2, int p3 = -1, int p4 = -1);
@@ -55,6 +55,8 @@ class nw2s::RandomLoopingShiftRegister : public nw2s::BeatDevice
 		void setSequencerScaleInput(PinAnalogIn pin);
 		void setSequencerCVOut(PinAnalogOut pinout);
 		void setSequencerNoteOut(PinAnalogOut pinout);
+		// void setWriteZero(PinDigitalIn pinin);
+		// void setWriteOne(PinDigitalIn pinin);
 
 	private:
 		int nextCV;

@@ -20,7 +20,8 @@
 
 #include "ShiftRegister.h"
 #include "Entropy.h"
-#include "aJson.h"
+#include "../aJSON/aJSON.h"
+#include "JSONUtil.h"
 
 //using namepsace nw2s;
 
@@ -29,32 +30,121 @@ RandomLoopingShiftRegister* RandomLoopingShiftRegister::create(int size, PinAnal
 	return new RandomLoopingShiftRegister(size, control, clockdivision);
 }
 
-// RandomLoopingShiftRegister* RandomLoopingShiftRegister::create(aJsonObject* data)
-// {
-// 	static const char sizeNodeName[] = "size";
-// 	static const char controlNodeName[] = "controlInput";
-//
-// 	/* These are the required parameters */
-// 	PinAnalogIn control = getAnalogInputFromJSON(data, controlNodeName);
-// 	int size = getIntFromJSON(data, sizeNodeName);
-// 	int clockdivision = getDivisionFromJSON(data);
-//
-// 	/* These are the optional outputs */
-// 	Scale scale = getScaleFromJSON(data);
-// 	PinDigitalIn triggerInput = getDigitalInputFromJSON(data, triggerInputNodeName);
-// 	NoteName root = getRootFromJSON(data);
-// 	PinDigitalOut gatePin = getDigitalOutputFromJSON(data, gateNodeName);
-// 	int gateDuration = getIntFromJSON(data, durationNodeName, 20, 1, 1000);
-//
-// 	PinAnalogOut output = getAnalogOutputFromJSON(data);
-//
-//
-// 	RandomLoopingShiftRegister* seq = new RandomLoopingShiftRegister(notes, root, scale, triggerInput, output, randomize);
-//
-// 	if (gatePin != DIGITAL_OUT_NONE) seq->setgate(Gate::create(gatePin, gateDuration));
-//
-// 	return seq;
-// }
+RandomLoopingShiftRegister* RandomLoopingShiftRegister::create(aJsonObject* data)
+{
+	static const char sizeNodeName[] = "size";
+	static const char controlNodeName[] = "controlInput";
+	static const char delayedNodeName[] = "delayedOutput";
+	static const char delayNodeName[] = "delay";
+	static const char trigger1NodeName[] = "triggerOutput1";
+	static const char trigger2NodeName[] = "triggerOutput2";
+	static const char trigger3NodeName[] = "triggerOutput3";
+	static const char trigger4NodeName[] = "triggerOutput4";
+	static const char trigger5NodeName[] = "triggerOutput5";
+	static const char trigger6NodeName[] = "triggerOutput6";
+	static const char trigger7NodeName[] = "triggerOutput7";
+	static const char trigger8NodeName[] = "triggerOutput8";
+	static const char trigger9NodeName[] = "logicalAND1";
+	static const char trigger10NodeName[] = "logicalAND2";
+	static const char trigger11NodeName[] = "logicalAND3";
+	static const char trigger12NodeName[] = "logicalAND4";
+
+	/* These are the required parameters */
+	PinAnalogIn control = getAnalogInputFromJSON(data, controlNodeName);
+	int size = getIntFromJSON(data, sizeNodeName, 16, 8, 128);
+	int clockdivision = getDivisionFromJSON(data);
+	PinAnalogOut output = getAnalogOutputFromJSON(data);
+
+	/* These are the optional outputs */
+	PinAnalogOut delayedoutput = getAnalogOutputFromJSON(data, delayedNodeName);
+	int delay = getIntFromJSON(data, delayNodeName, 4, 0, 32);
+	PinDigitalOut trigger1 = getDigitalOutputFromJSON(data, trigger1NodeName);
+	PinDigitalOut trigger2 = getDigitalOutputFromJSON(data, trigger2NodeName);
+	PinDigitalOut trigger3 = getDigitalOutputFromJSON(data, trigger3NodeName);
+	PinDigitalOut trigger4 = getDigitalOutputFromJSON(data, trigger4NodeName);
+	PinDigitalOut trigger5 = getDigitalOutputFromJSON(data, trigger5NodeName);
+	PinDigitalOut trigger6 = getDigitalOutputFromJSON(data, trigger6NodeName);
+	PinDigitalOut trigger7 = getDigitalOutputFromJSON(data, trigger7NodeName);
+	PinDigitalOut trigger8 = getDigitalOutputFromJSON(data, trigger8NodeName);
+	PinDigitalOut logicalAndOutput1 = getDigitalOutputFromJSON(data, trigger9NodeName);
+	PinDigitalOut logicalAndOutput2 = getDigitalOutputFromJSON(data, trigger10NodeName);
+	PinDigitalOut logicalAndOutput3 = getDigitalOutputFromJSON(data, trigger11NodeName);
+	PinDigitalOut logicalAndOutput4 = getDigitalOutputFromJSON(data, trigger12NodeName);
+	
+	RandomLoopingShiftRegister* reg = new RandomLoopingShiftRegister(size, control, clockdivision);
+
+	if (output != ANALOG_OUT_NONE)
+	{
+		reg->setCVOut(output);
+	}
+	
+	if (delayedoutput != ANALOG_OUT_NONE)
+	{
+		reg->setDelayedCVOut(delayedoutput, delay);
+	}
+	
+	if (trigger1 != DIGITAL_OUT_NONE)
+	{
+		reg->setTriggerOut(0, trigger1);
+	}
+
+	if (trigger2 != DIGITAL_OUT_NONE)
+	{
+		reg->setTriggerOut(1, trigger2);
+	}
+
+	if (trigger3 != DIGITAL_OUT_NONE)
+	{
+		reg->setTriggerOut(2, trigger3);
+	}
+
+	if (trigger4 != DIGITAL_OUT_NONE)
+	{
+		reg->setTriggerOut(3, trigger4);
+	}
+
+	if (trigger5 != DIGITAL_OUT_NONE)
+	{
+		reg->setTriggerOut(4, trigger5);
+	}
+
+	if (trigger6 != DIGITAL_OUT_NONE)
+	{
+		reg->setTriggerOut(5, trigger6);
+	}
+
+	if (trigger7 != DIGITAL_OUT_NONE)
+	{
+		reg->setTriggerOut(6, trigger7);
+	}
+
+	if (trigger8 != DIGITAL_OUT_NONE)
+	{
+		reg->setTriggerOut(7, trigger8);
+	}
+
+	if (logicalAndOutput1 != DIGITAL_OUT_NONE)
+	{
+		reg->setLogicalAndTrigger(logicalAndOutput1, 0, 2, -1, -1);
+	}
+
+	if (logicalAndOutput2 != DIGITAL_OUT_NONE)
+	{
+		reg->setLogicalAndTrigger(logicalAndOutput2, 0, 3, -1, -1);
+	}
+
+	if (logicalAndOutput3 != DIGITAL_OUT_NONE)
+	{
+		reg->setLogicalAndTrigger(logicalAndOutput3, 0, 2, 4, -1);
+	}
+
+	if (logicalAndOutput4 != DIGITAL_OUT_NONE)
+	{
+		reg->setLogicalAndTrigger(logicalAndOutput4, 0, 1, 3, 7);
+	}
+
+	return reg;
+}
 
 
 RandomLoopingShiftRegister::RandomLoopingShiftRegister(int size, PinAnalogIn control, int clockdivision)

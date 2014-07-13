@@ -2,15 +2,16 @@
 	"program" : 	
 
 	{
-		"name" : 			"Random Tempo Clock Demo 1",
+		"name" : 			"Variable Tempo Clock Demo 1",
 			
 		"clock" :
 
 		{
-			"type" : "RandomTempoClock",
-			"minTempo" : 30,
-			"maxTempo" : 240,
-			"beats" : 16			
+	        "type" : "VariableClock",
+	        "minTempo" : 30,
+	        "maxTempo" : 240,
+	        "tempoInput" : 1,
+	        "beats" : 16            
 		},
 
 		"devices" : [

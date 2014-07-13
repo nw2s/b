@@ -234,6 +234,18 @@ void nw2s::initializeFirmware()
 				Serial.println(String(nodeError));
 			}
 		}
+		else if (strcmp(typeNode->valuestring, "RandomLoopingShiftRegister") == 0)
+		{
+			if (clockDevice != NULL)
+			{
+				clockDevice->registerDevice(RandomLoopingShiftRegister::create(deviceNode));
+			}
+			else
+			{
+				static const char nodeError[] = "RandomLoopingShiftRegister defined with no clock, skipping.";
+				Serial.println(String(nodeError));
+			}
+		}
 		else if (strcmp(typeNode->valuestring, "TriggeredNoteSequencer") == 0)
 		{
 			EventManager::registerDevice(TriggeredNoteSequencer::create(deviceNode));

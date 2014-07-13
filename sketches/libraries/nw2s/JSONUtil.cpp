@@ -90,6 +90,13 @@ PinAnalogOut nw2s::getAnalogOutputFromJSON(aJsonObject* data)
 	
 }
 
+PinAnalogOut nw2s::getAnalogOutputFromJSON(aJsonObject* data, const char* nodeName)
+{
+	int val = getIntFromJSON(data, nodeName, 0, 1, 16);
+
+	return INDEX_ANALOG_OUT[val];	
+}
+
 PinAnalogIn nw2s::getAnalogInputFromJSON(aJsonObject* data)
 {
 	static const char nodeName[] = "analogInput";

@@ -36,6 +36,7 @@ namespace nw2s
 	*/
 	
 	PinAudioOut getAudioOutputFromJSON(aJsonObject* data);
+	PinAnalogOut getAnalogOutputFromJSON(aJsonObject* data, const char* nodeName);
 	PinAnalogOut getAnalogOutputFromJSON(aJsonObject* data);
 	PinAnalogIn getAnalogInputFromJSON(aJsonObject* data);
 	PinAnalogIn getAnalogInputFromJSON(aJsonObject* data, const char* nodeName);
