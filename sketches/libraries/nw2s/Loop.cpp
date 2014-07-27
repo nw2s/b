@@ -22,6 +22,7 @@
 #include "IO.h"
 #include "Loop.h"
 #include "JSONUtil.h"
+#include "Entropy.h"
 #include <Arduino.h>
 
 
@@ -67,6 +68,7 @@ Looper* Looper::create(aJsonObject* data)
 	static const char filenameNodeName[] = "filename";
 	static const char glitchNodeName[] = "glitch";
 	static const char reverseNodeName[] = "reverse";
+	static const char densityNodeName[] = "density";
 	
 	char* subfolder = getStringFromJSON(data, subFolderNodeName);
 	char* filename = getStringFromJSON(data, filenameNodeName);
@@ -74,6 +76,7 @@ Looper* Looper::create(aJsonObject* data)
 	PinAudioOut output = getAudioOutputFromJSON(data);
 	PinDigitalIn glitch = getDigitalInputFromJSON(data, glitchNodeName);
 	PinDigitalIn reverse = getDigitalInputFromJSON(data, reverseNodeName);
+	PinAnalogIn density = getAnalogInputFromJSON(data, densityNodeName);
 		
 	Looper* looper = new Looper(output, subfolder, filename, sri);
 
@@ -85,6 +88,11 @@ Looper* Looper::create(aJsonObject* data)
 	if (reverse != DIGITAL_IN_NONE)
 	{
 		looper->setReverseTrigger(reverse);
+	}
+
+	if (density != ANALOG_IN_NONE)
+	{
+		looper->setDensityInput(density);
 	}
 
 	return looper;
@@ -169,6 +177,8 @@ Looper::Looper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateI
 {
 	/* Load the file */
 	this->signalData = StreamingSignalData::fromSDFile("loops", subfoldername, filename, true);
+	this->density = ANALOG_IN_NONE;
+	this->muted = false;
 	
 	/* The event handler needs static references to these devices */
 	if (pin == DUE_DAC0) AudioDevice::device0 = this;
@@ -201,14 +211,18 @@ Looper::Looper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateI
 	
 	this->glitchTrigger = DIGITAL_IN_NONE;
 	this->reverseTrigger = DIGITAL_IN_NONE;
-	this->glitched = false;
+	this->glitched = 0;
+	this->glitched_bounce = false;
 	this->reversed = false;
 }
 
 void Looper::timer_handler()
 {
- 	dacc_set_channel_selection(DACC_INTERFACE, this->dac);
-	dacc_write_conversion_data(DACC_INTERFACE, this->signalData->getNextSample());
+	if (!this->muted)
+	{
+	 	dacc_set_channel_selection(DACC_INTERFACE, this->dac);
+		dacc_write_conversion_data(DACC_INTERFACE, this->signalData->getNextSample());
+	}
 }
 
 ClockedLooper* ClockedLooper::create(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri, int beats, int clockdivision)
@@ -229,17 +243,37 @@ void Looper::timer(unsigned long t)
 		this->reversed = false;
 	}
 	
-	if ((glitchTrigger != DIGITAL_IN_NONE) && !glitched && digitalRead(glitchTrigger))
+	if ((glitchTrigger != DIGITAL_IN_NONE) && !glitched_bounce && digitalRead(glitchTrigger))
 	{
-		this->glitched = true;
+		this->glitched_bounce = true;
+		this->glitched = t;
 		this->signalData->seekRandom();
+		
+		/* If density is set, see if we should even play anything this glitch */
+		if (this->density != ANALOG_IN_NONE)
+		{
+			int val = analogReadmV(this->density, 0, 5000);
+			int randval = Entropy::getValue(0, 4800);
+			
+			this->muted = randval > val;
+		}
 	}
 	else if (this->signalData->isReadyForRefresh())
 	{
 		/* Every millisecond, check if it's ready to get more data loaded */
 		this->signalData->refresh();
-		this->glitched = false;
 	}
+		
+	if (this->glitched_bounce && t > (this->glitched + 100))
+	{
+		/* This only debounces sub millisecond bounces. Need to fix that */
+		this->glitched_bounce = false;
+	}
+}
+
+void Looper::setDensityInput(PinAnalogIn density)
+{
+	this->density = density;
 }
 
 void Looper::setGlitchTrigger(PinDigitalIn glitchTrigger)

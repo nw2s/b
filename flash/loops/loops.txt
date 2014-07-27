@@ -28,7 +28,9 @@ musicbox.raw, 24kHz, 0:16, loopable music box melody
 
 vocal
 
+chess.raw, 24kHz, 4:32, T.S. Eliot's A Game of Chess, male, librivox
 german.raw, 24kHz, 0:12, German male vox
+waste.raw, 24kHz, 25:04, T.S. Eliot's The Wasteland, female, librivox
 
 test
 

@@ -52,23 +52,24 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		static Looper* create(aJsonObject* data);
 		void setGlitchTrigger(PinDigitalIn glitchTrigger);
 		void setReverseTrigger(PinDigitalIn reverseTrigger);
+		void setDensityInput(PinAnalogIn density);
 		virtual void timer(unsigned long t);
 		virtual void timer_handler();
 			
 	protected:
 		PinDigitalIn glitchTrigger;
 		PinDigitalIn reverseTrigger;
-		bool glitched;
+		PinAnalogIn density;
+		bool glitched_bounce;
+		unsigned long glitched;
 		bool reversed;
+		bool muted;
 		PinAudioOut pin;
 		StreamingSignalData* signalData;
 		int channel;
 		int dac;
 
-		Looper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri);
-		
-	private:
-		static boolean initialized;
+		Looper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri);		
 };
 
 class nw2s::EFLooper : public nw2s::TimeBasedDevice
