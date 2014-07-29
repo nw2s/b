@@ -37,6 +37,24 @@ namespace nw2s
 	static const SampleRateInterrupt SR_48000 = 219;   // Closer... 
 	static const SampleRateInterrupt SR_44100 = 238;   // Really close!  
 	
+	struct LoopPath
+	{
+		char* subfoldername;
+		char* filename;
+	};
+	
+	enum MixMode
+	{
+		MIXMODE_NONE,
+		MIXMODE_TOGGLE,
+		MIXMODE_BLEND,
+		MIXMODE_GLITCH,
+		MIXMODE_MIN,
+		MIXMODE_AND,
+		MIXMODE_XOR,
+		MIXMODE_RING
+	};
+	
 	class Looper;
 	class ClockedLooper;
 	class EFLooper;
@@ -48,11 +66,14 @@ SampleRateInterrupt sampleRateFromName(char* name);
 class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 {
 	public:
-		static Looper* create(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri);
+		static Looper* create(PinAudioOut pin, LoopPath loops[], unsigned int loopcount, SampleRateInterrupt sri);
 		static Looper* create(aJsonObject* data);
 		void setGlitchTrigger(PinDigitalIn glitchTrigger);
 		void setReverseTrigger(PinDigitalIn reverseTrigger);
 		void setDensityInput(PinAnalogIn density);
+		void setMixControl(PinAnalogIn mixcontrol);
+		void setMixTrigger(PinDigitalIn mixtrigger);
+		void setMixMode(MixMode mixmode);
 		virtual void timer(unsigned long t);
 		virtual void timer_handler();
 			
@@ -60,16 +81,28 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		PinDigitalIn glitchTrigger;
 		PinDigitalIn reverseTrigger;
 		PinAnalogIn density;
+		PinAnalogIn mixcontrol;
+		bool mixtrigger_bounce;
+		PinDigitalIn mixtrigger;
+		MixMode mixmode;
+		
+		unsigned int loopcount;
+		unsigned int mixfactor;
+		unsigned int loop1index;
+		unsigned int loop2index;
 		bool glitched_bounce;
+		bool glitchmode_stream;
 		unsigned long glitched;
 		bool reversed;
 		bool muted;
 		PinAudioOut pin;
-		StreamingSignalData* signalData;
+		std::vector<StreamingSignalData*> signalData;
 		int channel;
 		int dac;
 
-		Looper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri);		
+		Looper(PinAudioOut pin, LoopPath loops[], unsigned int loopcount,  SampleRateInterrupt sri);	
+		
+		void initializeTimer(PinAudioOut pin, SampleRateInterrupt sri);	
 };
 
 class nw2s::EFLooper : public nw2s::TimeBasedDevice

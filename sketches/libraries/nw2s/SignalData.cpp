@@ -30,7 +30,6 @@ using namespace nw2s;
 
 
 static const int MAX_MEM_BUFFER_WORDS = 4000;
-static const short int UNSIGNED_OFFSET = 0b0111111111111111;
 
 
 bool SignalData::initialized = false;
@@ -57,15 +56,15 @@ SignalData* SignalData::fromSDFile(char *filepath)
 		Serial.println("Loading Loop. Size: " + String(filebytes));
 
 		/* Allocate as much space as we have reported by file size */
-	 	unsigned short int *data = new unsigned short int[filewords];
+	 	short int *data = new short int[filewords];
 
 		for (int i = 0; i < filewords; i++)
 		{
 			/* Read two bytes and make a word, little endian */
 			unsigned char d0 = file.read();
-			unsigned short int d1 = file.read();
+			unsigned char d1 = file.read();
 			
-			data[i] = ((d1 << 8) + d0) >> 4;
+			data[i] = (d1 << 8) | d0;
 		}
 
 		file.close();
@@ -78,19 +77,19 @@ SignalData* SignalData::fromSDFile(char *filepath)
 	} 
 }
 
-SignalData* SignalData::fromArray(unsigned short int* source, long size)
-{
- 	unsigned short int *data = new unsigned short int[size];
+// SignalData* SignalData::fromArray(unsigned short int* source, long size)
+// {
+//  	unsigned short int *data = new unsigned short int[size];
+//
+// 	for (int i = 0; i < size; i++)
+// 	{
+// 		data[i] = source[i];
+// 	}
+//
+// 	return new SignalData(data, size);
+// }
 
-	for (int i = 0; i < size; i++)
-	{
-		data[i] = source[i];
-	}
-	
-	return new SignalData(data, size);
-}
-
-SignalData::SignalData(short unsigned int *data, long size)
+SignalData::SignalData(short int *data, long size)
 {
 	this->data = data;
 	this->size = size;
@@ -101,7 +100,7 @@ long SignalData::getSize()
 	return this->size;
 }
 
-unsigned short int SignalData::getSample(long sample)
+short int SignalData::getSample(long sample)
 {
 	return this->data[sample];
 }
@@ -216,11 +215,11 @@ void StreamingSignalData::refresh()
 				unsigned char d0 = d[i];
 				unsigned short int d1 = d[i + 1];
 	
-				/* Get a signed value and make it unsigned */
-				int value = ((d1 << 8) | d0) + UNSIGNED_OFFSET;
+				/* We were making this unsigned, but need to keep it signed */
+				/* We were also making it 12 bit, but let's leave that to the very end */
+				short int value = (d1 << 8) | d0;
 
-				/* We're throwing 4 bits away to make 12 bit audio - for now */
-				this->buffer[writebufferindex][i / 2] = ((unsigned short int)value >> 4);
+				this->buffer[writebufferindex][i / 2] = value;
 			}
 		}
 	
@@ -229,7 +228,7 @@ void StreamingSignalData::refresh()
 	}
 }
 
-short unsigned int StreamingSignalData::getNextSample()
+short int StreamingSignalData::getNextSample()
 {
 	if (!available)
 	{
@@ -237,7 +236,7 @@ short unsigned int StreamingSignalData::getNextSample()
 	}
 	
 	/* Get the next sample and hold on to it */
-	short unsigned int nextsample = this->buffer[readbufferindex][nextsampleindex];
+	short int nextsample = this->buffer[readbufferindex][nextsampleindex];
 
 	/* If we're at the end of a buffer, move to the next */
 	if ((!reversed && (this->nextsampleindex == (this->size[readbufferindex] - 1))) || (reversed && (this->nextsampleindex == 0)))

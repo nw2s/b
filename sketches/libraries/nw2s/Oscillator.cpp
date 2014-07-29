@@ -164,11 +164,13 @@ VCSamplingFrequencyOscillator::VCSamplingFrequencyOscillator(PinAudioOut pinout,
 	/* Initialize 1:1 array */
 	for (int i = 0; i < 600; i++)
 	{
-		w[i] = SIGNAL_SAW[i] / 100;
-		source[i] = SIGNAL_SAW[i];
+		//TODO: Load from SD instead
+		//w[i] = SIGNAL_SAW[i] / 100;
+		//source[i] = SIGNAL_SAW[i];
 	}
 	
-	this->wave = SignalData::fromArray(w, 600);
+	//TODO: load from SD instead
+	//this->wave = SignalData::fromArray(w, 600);
 	this->wave2 = decimate(source, 600, 100, 300); 
 	this->wave3 = decimate(source, 600, 100, 150);
 	this->wave4 = decimate(source, 600, 100, 75);
@@ -198,7 +200,9 @@ SignalData* VCSamplingFrequencyOscillator::decimate(unsigned int* source, int si
 		destination[i] = accumulator / (factor * sourcescale);
 	}
 	
-	return SignalData::fromArray(destination, targetsize);
+	//TODO: load from SD instead
+	return NULL;
+	//return SignalData::fromArray(destination, targetsize);
 }
 
 

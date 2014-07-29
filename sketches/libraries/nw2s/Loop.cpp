@@ -55,9 +55,9 @@ SampleRateInterrupt sampleRateFromName(char* name)
 	return SR_24000;
 }
 
-Looper* Looper::create(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri)
+Looper* Looper::create(PinAudioOut pin, LoopPath loops[], unsigned int loopcount, SampleRateInterrupt sri)
 {
-	Looper* looper = new Looper(pin, subfoldername, filename, sri);
+	Looper* looper = new Looper(pin, loops, loopcount, sri);
 
 	return looper;
 }
@@ -69,6 +69,10 @@ Looper* Looper::create(aJsonObject* data)
 	static const char glitchNodeName[] = "glitch";
 	static const char reverseNodeName[] = "reverse";
 	static const char densityNodeName[] = "density";
+	static const char loopsNodeName[] = "loops";
+	static const char mixmodeNodeName[] = "mixmode";
+	static const char mixcontrolNodeName[] = "mixcontrol";
+	static const char mixtriggerNodeName[] = "mixtrigger";
 	
 	char* subfolder = getStringFromJSON(data, subFolderNodeName);
 	char* filename = getStringFromJSON(data, filenameNodeName);
@@ -76,23 +80,94 @@ Looper* Looper::create(aJsonObject* data)
 	PinAudioOut output = getAudioOutputFromJSON(data);
 	PinDigitalIn glitch = getDigitalInputFromJSON(data, glitchNodeName);
 	PinDigitalIn reverse = getDigitalInputFromJSON(data, reverseNodeName);
+	PinDigitalIn mixtrigger = getDigitalInputFromJSON(data, mixtriggerNodeName);
 	PinAnalogIn density = getAnalogInputFromJSON(data, densityNodeName);
-		
-	Looper* looper = new Looper(output, subfolder, filename, sri);
+	PinAnalogIn mixcontrol = getAnalogInputFromJSON(data, mixcontrolNodeName);
+	char* mixmodeVal = getStringFromJSON(data, mixmodeNodeName);
 
+	aJsonObject* loops = aJson.getObjectItem(data, loopsNodeName);
+		
+	Looper* looper;	
+		
+	if (loops != NULL)
+	{
+		int loopcount = aJson.getArraySize(loops);
+		LoopPath loopPaths[loopcount];
+		
+		for (int i = 0; i < loopcount; i++)
+		{
+			aJsonObject* loopPathNode = aJson.getArrayItem(loops, i);
+
+			char* subfolder = getStringFromJSON(loopPathNode, subFolderNodeName);
+			char* filename = getStringFromJSON(loopPathNode, filenameNodeName);
+			
+			loopPaths[i] = { subfolder, filename };
+		}
+
+		looper = new Looper(output, loopPaths, loopcount, sri);
+	}
+	else
+	{
+		//TODO: error if we can't find the nodes/filenames
+		LoopPath lp[] = { { subfolder, filename } };
+			
+		looper = new Looper(output, lp, 1, sri);
+	}
+	
+	/* GLITCH TRIGGER */
 	if (glitch != DIGITAL_IN_NONE)
 	{
 		looper->setGlitchTrigger(glitch);
 	}
 
+	/* MIX TRIGGER */
+	if (mixtrigger != DIGITAL_IN_NONE)
+	{
+		looper->setMixTrigger(glitch);
+	}
+
+	/* REVERSE TRIGGER */
 	if (reverse != DIGITAL_IN_NONE)
 	{
 		looper->setReverseTrigger(reverse);
 	}
 
+	/* DENSITY INPUT */
 	if (density != ANALOG_IN_NONE)
 	{
 		looper->setDensityInput(density);
+	}
+	
+	/* DENSITY INPUT */
+	if (mixcontrol != ANALOG_IN_NONE)
+	{
+		looper->setMixControl(mixcontrol);
+	}
+	
+	/* MIXMODE */
+	if (strcmp(mixmodeVal, "toggle") == 0)
+	{
+		looper->setMixMode(MIXMODE_TOGGLE);
+	}
+	else if (strcmp(mixmodeVal, "blend") == 0)
+	{
+		looper->setMixMode(MIXMODE_BLEND);
+	}
+	else if (strcmp(mixmodeVal, "glitch") == 0)
+	{
+		looper->setMixMode(MIXMODE_GLITCH);
+	}
+	else if (strcmp(mixmodeVal, "xor") == 0)
+	{
+		looper->setMixMode(MIXMODE_XOR);
+	}
+	else if (strcmp(mixmodeVal, "and") == 0)
+	{
+		looper->setMixMode(MIXMODE_AND);
+	}
+	else if (strcmp(mixmodeVal, "ring") == 0)
+	{
+		looper->setMixMode(MIXMODE_RING);
 	}
 
 	return looper;
@@ -153,8 +228,7 @@ void EFLooper::timer(unsigned long t)
 	
 	for (int i = 0; i < this->windowsize; i++)
 	{
-		/* Convert the unsigned data coming out back into signed */
-		int b = this->signalData->getNextSample() - 2048;
+		int b = this->signalData->getNextSample();
 		a += (b > 0) ? b : b * -1;
 	}
 	
@@ -173,13 +247,39 @@ void EFLooper::timer(unsigned long t)
 	}
 }
 
-Looper::Looper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri)
+Looper::Looper(PinAudioOut pin, LoopPath loops[], unsigned int loopcount, SampleRateInterrupt sri)
 {
-	/* Load the file */
-	this->signalData = StreamingSignalData::fromSDFile("loops", subfoldername, filename, true);
+	/* Load the file(s) */
+	for (int i = 0; i < loopcount; i++)
+	{
+		this->signalData.push_back(StreamingSignalData::fromSDFile("loops", loops[i].subfoldername, loops[i].filename, true));
+	}
+
 	this->density = ANALOG_IN_NONE;
 	this->muted = false;
 	
+	this->glitchTrigger = DIGITAL_IN_NONE;
+	this->reverseTrigger = DIGITAL_IN_NONE;
+	this->glitched = 0;
+	this->glitched_bounce = false;
+	this->mixtrigger_bounce = false;
+	this->reversed = false;	
+	
+	this->loopcount = loopcount;
+	this->loop1index = 0;
+	this->loop2index = 1;
+	this->mixfactor = 64;
+	this->glitchmode_stream = 0;
+	this->mixmode = MIXMODE_NONE;
+	
+	this->mixcontrol = ANALOG_IN_NONE;
+	this->mixtrigger = DIGITAL_IN_NONE;
+		
+	this->initializeTimer(pin, sri);
+}
+
+void Looper::initializeTimer(PinAudioOut pin, SampleRateInterrupt sri)
+{
 	/* The event handler needs static references to these devices */
 	if (pin == DUE_DAC0) AudioDevice::device0 = this;
 	if (pin == DUE_DAC1) AudioDevice::device1 = this;
@@ -189,7 +289,7 @@ Looper::Looper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateI
   	analogWrite(pin, 0);
 
 	this->pin = pin;
-	this->signalData = signalData;
+	// this->signalData = signalData;
 	this->channel = (pin == DUE_DAC0) ? 1 : 2;
 	this->dac = (pin == DUE_DAC0) ? 0 : 1;
 
@@ -207,27 +307,66 @@ Looper::Looper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateI
   	TC1->TC_CHANNEL[this->channel].TC_IER = TC_IER_CPCS;
   	TC1->TC_CHANNEL[this->channel].TC_IDR = ~TC_IER_CPCS;  
 
-  	NVIC_EnableIRQ(tc_irq);
-	
-	this->glitchTrigger = DIGITAL_IN_NONE;
-	this->reverseTrigger = DIGITAL_IN_NONE;
-	this->glitched = 0;
-	this->glitched_bounce = false;
-	this->reversed = false;
+  	NVIC_EnableIRQ(tc_irq);	
 }
 
 void Looper::timer_handler()
 {
+	/* Would it be better to just turn off the timer while muted? */
 	if (!this->muted)
 	{
+		int outputval = 0;
+		
 	 	dacc_set_channel_selection(DACC_INTERFACE, this->dac);
-		dacc_write_conversion_data(DACC_INTERFACE, this->signalData->getNextSample());
+		if (this->loopcount == 1)
+		{
+			outputval = this->signalData[0]->getNextSample();
+		}
+		else
+		{
+			/* Mix the two according to the current mix mode */
+			if (this->mixmode == MIXMODE_TOGGLE)
+			{
+				outputval = this->signalData[loop1index]->getNextSample();			
+			}
+			else if (this->mixmode == MIXMODE_AND)
+			{
+				outputval = this->signalData[loop1index]->getNextSample() & this->signalData[loop2index]->getNextSample();
+			}
+			else if (this->mixmode == MIXMODE_XOR)
+			{
+				outputval = this->signalData[loop1index]->getNextSample() ^ this->signalData[loop2index]->getNextSample();
+			}
+			else if (this->mixmode == MIXMODE_BLEND)
+			{
+				int val1 = (this->signalData[loop1index]->getNextSample() * (128 - this->mixfactor)) >> 7;
+				int val2 = (this->signalData[loop2index]->getNextSample() * this->mixfactor) >> 7;
+				
+				outputval = val1 + val2;
+			}
+			else if (this->mixmode == MIXMODE_GLITCH)
+			{
+				int sample1 = this->signalData[loop1index]->getNextSample();
+				int sample2 = this->signalData[loop2index]->getNextSample();
+				
+				if (sample1 == sample2)
+				{
+					/* Toggle from one stream to the other if the second-most unsigned significant bit is 1 in both samples, flip stream */
+					this->glitchmode_stream = !this->glitchmode_stream;
+				}
+				
+				outputval = (this->glitchmode_stream) ? sample2 : sample1;
+			}
+			else if (this->mixmode == MIXMODE_RING)
+			{
+				long val1 = this->signalData[loop1index]->getNextSample() * this->signalData[loop2index]->getNextSample();
+				
+				outputval = val1 >> 16;
+			}
+		}
+		
+		dacc_write_conversion_data(DACC_INTERFACE, (outputval + 0x7FFF) >> 4);
 	}
-}
-
-ClockedLooper* ClockedLooper::create(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri, int beats, int clockdivision)
-{
-	return new ClockedLooper(pin, subfoldername, filename, sri, beats, clockdivision);
 }
 
 void Looper::timer(unsigned long t)
@@ -235,9 +374,18 @@ void Looper::timer(unsigned long t)
 	if ((reverseTrigger != DIGITAL_IN_NONE) && !reversed && digitalRead(reverseTrigger))
 	{
 		this->reversed = true;
-		this->signalData->reverse();
+
+		for(int i = 0; i < this->loopcount; i++)
+		{
+			this->signalData[i]->reverse();
+		}
 	}
 	
+	if ((mixcontrol != ANALOG_IN_NONE) && (t % 10 == 0))
+	{
+		this->mixfactor = analogRead(this->mixcontrol) >> 5;
+	}
+
 	if ((reverseTrigger != DIGITAL_IN_NONE) && reversed && !digitalRead(reverseTrigger))
 	{
 		this->reversed = false;
@@ -247,24 +395,53 @@ void Looper::timer(unsigned long t)
 	{
 		this->glitched_bounce = true;
 		this->glitched = t;
-		this->signalData->seekRandom();
-		
+
+		/* Randomize either one or the two that we're currently playing */
+		if (this->loopcount == 1)
+		{
+			this->signalData[0]->seekRandom();
+		}
+		else
+		{
+			this->signalData[loop1index]->seekRandom();
+			this->signalData[loop2index]->seekRandom();
+		}
+
 		/* If density is set, see if we should even play anything this glitch */
 		if (this->density != ANALOG_IN_NONE)
 		{
 			int val = analogReadmV(this->density, 0, 5000);
 			int randval = Entropy::getValue(0, 4800);
-			
+
 			this->muted = randval > val;
 		}
 	}
-	else if (this->signalData->isReadyForRefresh())
+	
+	if (this->mixmode != MIXMODE_NONE && !mixtrigger_bounce && digitalRead(mixtrigger))
+	{
+		mixtrigger_bounce = true;
+		loop1index = (loop1index + 1) % loopcount;
+	}
+	else if (mixtrigger_bounce && !digitalRead(mixtrigger))
+	{
+		mixtrigger_bounce = false;
+	}
+	
+	if (this->signalData[loop1index]->isReadyForRefresh())
 	{
 		/* Every millisecond, check if it's ready to get more data loaded */
-		this->signalData->refresh();
+		this->signalData[loop1index]->refresh();
 	}
 		
-	if (this->glitched_bounce && t > (this->glitched + 100))
+	/* Check the other one too */
+	if (loopcount > 1 && this->signalData[loop2index]->isReadyForRefresh())
+	{
+		/* Every millisecond, check if it's ready to get more data loaded */
+		this->signalData[loop2index]->refresh();
+	}
+		
+	/* Debounce the glitch every 1000 milliseconds */
+	if (this->glitched_bounce && t > (this->glitched + 1000))
 	{
 		/* This only debounces sub millisecond bounces. Need to fix that */
 		this->glitched_bounce = false;
@@ -274,6 +451,11 @@ void Looper::timer(unsigned long t)
 void Looper::setDensityInput(PinAnalogIn density)
 {
 	this->density = density;
+}
+
+void Looper::setMixControl(PinAnalogIn mixcontrol)
+{
+	this->mixcontrol = mixcontrol;
 }
 
 void Looper::setGlitchTrigger(PinDigitalIn glitchTrigger)
@@ -286,27 +468,42 @@ void Looper::setReverseTrigger(PinDigitalIn reverseTrigger)
 	this->reverseTrigger = reverseTrigger;
 }
 
-ClockedLooper::ClockedLooper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri, int beats, int clockdivision) : Looper(pin, subfoldername, filename, sri)
+void Looper::setMixTrigger(PinDigitalIn mixtrigger)
 {
-	this->clock_division = clockdivision;
-	this->beats = beats;
-	this->currentbeat = 0;
+	this->mixtrigger = mixtrigger;
 }
 
-void ClockedLooper::timer(unsigned long t)
+void Looper::setMixMode(MixMode mixmode)
 {
-	Looper::timer(t);
+	this->mixmode = mixmode;
 }
 
-void ClockedLooper::reset()
-{
-	this->currentbeat++;
-	
-	if (this->currentbeat >= this->beats)
-	{
-		Serial.println("resetting...");
-		this->signalData->reset();
-		this->currentbeat = 0;
-	}
-}
+// ClockedLooper* ClockedLooper::create(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri, int beats, int clockdivision)
+// {
+// 	return new ClockedLooper(pin, subfoldername, filename, sri, beats, clockdivision);
+// }
+//
+// ClockedLooper::ClockedLooper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri, int beats, int clockdivision) : Looper(pin, subfoldername, filename, sri)
+// {
+// 	this->clock_division = clockdivision;
+// 	this->beats = beats;
+// 	this->currentbeat = 0;
+// }
+//
+// void ClockedLooper::timer(unsigned long t)
+// {
+// 	Looper::timer(t);
+// }
+//
+// void ClockedLooper::reset()
+// {
+// 	this->currentbeat++;
+//
+// 	if (this->currentbeat >= this->beats)
+// 	{
+// 		Serial.println("resetting...");
+// 		this->signalData->reset();
+// 		this->currentbeat = 0;
+// 	}
+// }
 
