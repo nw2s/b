@@ -26,64 +26,9 @@ using namespace nw2s;
 bool Entropy::seeded = false;
 
 
-#ifdef __AVR__
-
 bool Entropy::getBit()
 {
-	if (!seeded)
-	{
-		randomSeed(micros());
-		Entropy::seeded = true;
-	}
-
-	return (random(0, 1) > 0) ? true : false;
-}
-
-int Entropy::getValue()
-{
-	if (!seeded)
-	{
-		randomSeed(micros());
-		Entropy::seeded = true;
-	}
-	
-	return random(2147483647);
-}
-
-int Entropy::getValue(long max)
-{
-	if (!seeded)
-	{
-		randomSeed(micros());
-		Entropy::seeded = true;
-	}
-	
-	return random(max);
-}
-
-long Entropy::getValue(long min, long max)
-{
-	if (!seeded)
-	{
-		randomSeed(micros());
-		Entropy::seeded = true;
-	}
-	
-	return random(min, max);
-}
-
-
-#else
-
-bool Entropy::getBit()
-{
-	if (!seeded)
-	{
-		randomSeed(micros());
-		Entropy::seeded = true;
-	}
-
-	return (digitalRead(DUE_IN_DIGITAL_NOISE) ^ random(0, 1) > 0) ? true : false;
+	return digitalRead(DUE_IN_DIGITAL_NOISE) ? true : false;
 }
 
 long Entropy::getValue()
@@ -121,4 +66,3 @@ long Entropy::getValue(long min, long max)
 	return (min + (getValue() % (max - min + 1)));
 }
 
-#endif

@@ -123,7 +123,7 @@ Looper* Looper::create(aJsonObject* data)
 	/* MIX TRIGGER */
 	if (mixtrigger != DIGITAL_IN_NONE)
 	{
-		looper->setMixTrigger(glitch);
+		looper->setMixTrigger(mixtrigger);
 	}
 
 	/* REVERSE TRIGGER */
@@ -268,7 +268,7 @@ Looper::Looper(PinAudioOut pin, LoopPath loops[], unsigned int loopcount, Sample
 	this->loopcount = loopcount;
 	this->loop1index = 0;
 	this->loop2index = 1;
-	this->mixfactor = 64;
+	this->mixfactor = 2048;
 	this->glitchmode_stream = 0;
 	this->mixmode = MIXMODE_NONE;
 	
@@ -289,7 +289,6 @@ void Looper::initializeTimer(PinAudioOut pin, SampleRateInterrupt sri)
   	analogWrite(pin, 0);
 
 	this->pin = pin;
-	// this->signalData = signalData;
 	this->channel = (pin == DUE_DAC0) ? 1 : 2;
 	this->dac = (pin == DUE_DAC0) ? 0 : 1;
 
@@ -339,21 +338,20 @@ void Looper::timer_handler()
 			}
 			else if (this->mixmode == MIXMODE_BLEND)
 			{
-				int val1 = (this->signalData[loop1index]->getNextSample() * (128 - this->mixfactor)) >> 7;
-				int val2 = (this->signalData[loop2index]->getNextSample() * this->mixfactor) >> 7;
-				
-				outputval = val1 + val2;
+				//TODO: Really, we should be mixing across the range of waves 
+				int val1 = (this->signalData[loop1index]->getNextSample() * (4096 - this->mixfactor)) >> 12;
+				int val2 = (this->signalData[loop2index]->getNextSample() * this->mixfactor) >> 12;
+
+				/* Sum and dither */
+				outputval = (val1 + val2) ^ Entropy::getBit();
 			}
 			else if (this->mixmode == MIXMODE_GLITCH)
 			{
 				int sample1 = this->signalData[loop1index]->getNextSample();
 				int sample2 = this->signalData[loop2index]->getNextSample();
 				
-				if (sample1 == sample2)
-				{
-					/* Toggle from one stream to the other if the second-most unsigned significant bit is 1 in both samples, flip stream */
-					this->glitchmode_stream = !this->glitchmode_stream;
-				}
+				/* Toggle from one stream to the other if the samples are equal */
+				this->glitchmode_stream = this->glitchmode_stream ^ (sample1 == sample2);
 				
 				outputval = (this->glitchmode_stream) ? sample2 : sample1;
 			}
@@ -365,12 +363,14 @@ void Looper::timer_handler()
 			}
 		}
 		
+		/* For now, we're doing all audio as 12 bit unsigned, so we have to do the conversion before writing the register */
 		dacc_write_conversion_data(DACC_INTERFACE, (outputval + 0x7FFF) >> 4);
 	}
 }
 
 void Looper::timer(unsigned long t)
 {
+	/* If the reverse trigger is high, reverse direction of the loop playback */
 	if ((reverseTrigger != DIGITAL_IN_NONE) && !reversed && digitalRead(reverseTrigger))
 	{
 		this->reversed = true;
@@ -381,69 +381,72 @@ void Looper::timer(unsigned long t)
 		}
 	}
 	
-	if ((mixcontrol != ANALOG_IN_NONE) && (t % 10 == 0))
-	{
-		this->mixfactor = analogRead(this->mixcontrol) >> 5;
-	}
-
+	/* Unset the reversal flag if the signal is no longer high */
 	if ((reverseTrigger != DIGITAL_IN_NONE) && reversed && !digitalRead(reverseTrigger))
 	{
 		this->reversed = false;
 	}
-	
+
+	/* Every 10ms, read the analog input of the mix control */
+	if ((mixcontrol != ANALOG_IN_NONE) && (t % 10 == 0))
+	{
+		/* Get the mix factor between 0 and 4096 for 0-5V */
+		this->mixfactor = (analogRead(this->mixcontrol) - 2048) << 1;
+		if (this->mixfactor < 0)
+		{
+			this->mixfactor = 0;
+		}	
+	}
+
+	/* If the glitch trigger is high, seek to a random location */
 	if ((glitchTrigger != DIGITAL_IN_NONE) && !glitched_bounce && digitalRead(glitchTrigger))
 	{
 		this->glitched_bounce = true;
 		this->glitched = t;
 
 		/* Randomize either one or the two that we're currently playing */
-		if (this->loopcount == 1)
+		this->signalData[loop1index]->seekRandom();
+
+		if (this->loopcount > 1)
 		{
-			this->signalData[0]->seekRandom();
-		}
-		else
-		{
-			this->signalData[loop1index]->seekRandom();
 			this->signalData[loop2index]->seekRandom();
 		}
 
 		/* If density is set, see if we should even play anything this glitch */
 		if (this->density != ANALOG_IN_NONE)
 		{
-			int val = analogReadmV(this->density, 0, 5000);
-			int randval = Entropy::getValue(0, 4800);
-
-			this->muted = randval > val;
+			this->muted = Entropy::getValue(0, 4000) > analogRead(this->density);
 		}
 	}
 	
+	/* If we're in a mix mode and the trigger is high, then iterate over the list of loops */
 	if (this->mixmode != MIXMODE_NONE && !mixtrigger_bounce && digitalRead(mixtrigger))
 	{
 		mixtrigger_bounce = true;
 		loop1index = (loop1index + 1) % loopcount;
+		loop2index = (loop2index + 1) % loopcount;
 	}
 	else if (mixtrigger_bounce && !digitalRead(mixtrigger))
 	{
+		/* Don't do it again until the signal goes low */
 		mixtrigger_bounce = false;
 	}
 	
+	/* Every millisecond, check if it's ready to get more data loaded */
 	if (this->signalData[loop1index]->isReadyForRefresh())
 	{
-		/* Every millisecond, check if it's ready to get more data loaded */
 		this->signalData[loop1index]->refresh();
 	}
 		
 	/* Check the other one too */
 	if (loopcount > 1 && this->signalData[loop2index]->isReadyForRefresh())
 	{
-		/* Every millisecond, check if it's ready to get more data loaded */
 		this->signalData[loop2index]->refresh();
 	}
 		
 	/* Debounce the glitch every 1000 milliseconds */
 	if (this->glitched_bounce && t > (this->glitched + 1000))
 	{
-		/* This only debounces sub millisecond bounces. Need to fix that */
 		this->glitched_bounce = false;
 	}
 }
