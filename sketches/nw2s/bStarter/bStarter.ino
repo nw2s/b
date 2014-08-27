@@ -32,6 +32,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <ShiftRegister.h> 
 #include <aJSON.h> 
 #include <SDFirmware.h> 
+#include <b.h>
+
 
 using namespace nw2s; 
 
@@ -46,6 +48,8 @@ void setup()
 	Serial.begin(19200); 
 
 	EventManager::initialize(); 
+	
+	b::cvGainMode = CV_GAIN_HIGH;
 
 	/* Put your setup() code here */ 
 	out1 = AnalogOut::create(DUE_SPI_4822_01); 
