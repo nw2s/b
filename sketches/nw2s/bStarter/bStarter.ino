@@ -50,7 +50,7 @@ void setup()
 	EventManager::initialize(); 
 	
 	b::cvGainMode = CV_GAIN_HIGH;
-
+ 
 	/* Put your setup() code here */ 
 	out1 = AnalogOut::create(DUE_SPI_4822_01); 
 
