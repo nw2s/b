@@ -327,4 +327,81 @@ uint8_t USBGrid::setLineCoding(const LineCoding *dataptr)
 	return ( pUsb->ctrlReq(bAddress, 0, USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE, CDC_SET_LINE_CODING, 0x00, 0x00, bControlIface, sizeof (LineCoding), sizeof (LineCoding), (uint8_t*)dataptr, NULL));
 }
 
+USBGridController::USBGridController(uint8_t columnCount)
+{
+	this->columnCount = columnCount;
+	this->columns = new uint8_t[columnCount];	
+}
+
+void USBGridController::setGrid(uint8_t *columns)
+{		
+	memcpy(this->columns, columns, this->columnCount);
+
+	/* Hardcoding the max size into the stack so I don't pollute the heap */
+	uint8_t gridCommand[16];
+
+	for (uint8_t i = 0; i < this->columnCount; i++)
+	{
+		gridCommand[i * 2] = 0x80 | i;
+		gridCommand[(i * 2) + 1] = this->columns[i];
+	}
+
+	this->write(this->columnCount * 2, gridCommand);
+}
+
+void USBGridController::setColumn(uint8_t column, uint8_t value)
+{		
+	this->columns[column] = value;
+
+	uint8_t columnCommand[] = { 0x80 | (column & 0x0F), value };
+
+	this->write(2, columnCommand);
+}
+
+void USBGridController::setLED(uint8_t column, uint8_t row)
+{
+	this->columns[column] = this->columns[column] | (1 << row);
+
+	uint8_t setCommand[] = { 0x21, (row << 4) | (column & 0x0F) };
+
+	this->write(2, setCommand);
+}
+
+void USBGridController::clearLED(uint8_t column, uint8_t row)
+{
+	this->columns[column] = this->columns[column] | (1 << row);
+
+	uint8_t setCommand[] = { 0x20, (row << 4) | (column & 0x0F) };
+
+	this->write(2, setCommand);
+}
+
+uint8_t USBGridController::getColumnCount()
+{
+	return this->columnCount;
+}
+
+uint8_t getRowCount()
+{
+	return 8;
+}
+
+bool USBGridController::isSet(uint8_t column, uint8_t row)
+{
+	return this->columns[column] & (1 << row);
+}
+
+uint8_t USBGridController::getColumn(uint8_t column)
+{
+	return this->columns[column];
+}
+
+
+
+
+
+
+
+
+
 
