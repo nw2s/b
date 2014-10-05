@@ -3,27 +3,10 @@
 
 #include "Grid.h"
 
+const uint32_t USBGrid128::epDataInIndex  = 1;
+const uint32_t USBGrid128::epDataOutIndex = 2;
 
-/* These are all identification attribtues. I'm not sure if we need them or not */
-char applicationName[] = "grid"; 
-char accessoryName[] = "nw2s-b"; 
-char companyName[] = "nw2s";
-char versionNumber[] = "1.0";
-char serialNumber[] = "1";
-char url[] = "http://nw2s.net";
-
-
-
-const uint32_t USBGrid::epDataInIndex  = 1;
-const uint32_t USBGrid::epDataOutIndex = 2;
-
-USBGrid::USBGrid(USBHost *p) :
-		manufacturer(companyName),
-		model(accessoryName),
-		description(accessoryName),
-		version(versionNumber),
-		uri(url),
-		serial(serialNumber),
+USBGrid128::USBGrid128(USBHost *p) :
 		pUsb(p),
 		bAddress(0),
 		bNumEP(1),
@@ -47,7 +30,7 @@ USBGrid::USBGrid(USBHost *p) :
 }
 
 
-uint32_t USBGrid::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
+uint32_t USBGrid128::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 {
 	uint8_t		buf[sizeof(USB_DEVICE_DESCRIPTOR)];
 	uint32_t	rcode = 0;
@@ -233,7 +216,7 @@ uint32_t USBGrid::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 
 
 
-void USBGrid::EndpointXtract(uint32_t conf, uint32_t iface, uint32_t alt, uint32_t proto, const USB_ENDPOINT_DESCRIPTOR *pep)
+void USBGrid128::EndpointXtract(uint32_t conf, uint32_t iface, uint32_t alt, uint32_t proto, const USB_ENDPOINT_DESCRIPTOR *pep)
 {	
 	Serial.println("");
 	Serial.println("Xtracting: ");
@@ -296,7 +279,7 @@ void USBGrid::EndpointXtract(uint32_t conf, uint32_t iface, uint32_t alt, uint32
 }
 
 
-uint32_t USBGrid::Release()
+uint32_t USBGrid128::Release()
 {
 	UHD_Pipe_Free(epInfo[epDataInIndex].hostPipeNum);
 	UHD_Pipe_Free(epInfo[epDataOutIndex].hostPipeNum);
@@ -313,25 +296,25 @@ uint32_t USBGrid::Release()
 	return 0;
 }
 
-uint32_t USBGrid::read(uint32_t *nreadbytes, uint32_t datalen, uint8_t *dataptr)
+uint32_t USBGrid128::read(uint32_t *nreadbytes, uint32_t datalen, uint8_t *dataptr)
 {
 	*nreadbytes = datalen;
 	return pUsb->inTransfer(bAddress, epInfo[epDataInIndex].deviceEpNum, nreadbytes, dataptr);
 }
 
-uint32_t USBGrid::write(uint32_t datalen, uint8_t *dataptr)
+uint32_t USBGrid128::write(uint32_t datalen, uint8_t *dataptr)
 {
 	return pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].deviceEpNum, datalen, dataptr);
 }
 
-uint8_t USBGrid::SetControlLineState(uint8_t state) 
+uint8_t USBGrid128::SetControlLineState(uint8_t state) 
 {
-	return ( pUsb->ctrlReq(bAddress, 0, bmREQ_CDCOUT, CDC_SET_CONTROL_LINE_STATE, state, 0, bControlIface, 0, 0, NULL, NULL));
+	return ( pUsb->ctrlReq(bAddress, 0, USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE, CDC_SET_CONTROL_LINE_STATE, state, 0, bControlIface, 0, 0, NULL, NULL));
 }
 
-uint8_t USBGrid::SetLineCoding(const LINE_CODING *dataptr) 
+uint8_t USBGrid128::SetLineCoding(const LINE_CODING *dataptr) 
 {
-	return ( pUsb->ctrlReq(bAddress, 0, bmREQ_CDCOUT, CDC_SET_LINE_CODING, 0x00, 0x00, bControlIface, sizeof (LINE_CODING), sizeof (LINE_CODING), (uint8_t*)dataptr, NULL));
+	return ( pUsb->ctrlReq(bAddress, 0, USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE, CDC_SET_LINE_CODING, 0x00, 0x00, bControlIface, sizeof (LINE_CODING), sizeof (LINE_CODING), (uint8_t*)dataptr, NULL));
 }
 
 

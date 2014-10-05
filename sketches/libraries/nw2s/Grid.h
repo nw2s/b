@@ -9,28 +9,27 @@
 
 #define MAX_ENDPOINTS 3
 
-
-#define bmREQ_CDCOUT                    USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE
-
-typedef struct {
+typedef struct 
+{
         uint32_t dwDTERate; // Data Terminal Rate in bits per second
         uint8_t bCharFormat; // 0 - 1 stop bit, 1 - 1.5 stop bits, 2 - 2 stop bits
         uint8_t bParityType; // 0 - None, 1 - Odd, 2 - Even, 3 - Mark, 4 - Space
         uint8_t bDataBits; // Data bits (5, 6, 7, 8 or 16)
-} LINE_CODING;
+} 
+LINE_CODING;
 
 
-class USBGrid : public USBDeviceConfig, public UsbConfigXtracter
+class USBGrid128 : public USBDeviceConfig, public UsbConfigXtracter
 {
 	private:
 		
 		/* ID strings */
-		const char* manufacturer;
-		const char* model;
-		const char* description;
-		const char* version;
-		const char* uri;
-		const char* serial;
+		// const char* manufacturer;
+		// const char* model;
+		// const char* description;
+		// const char* version;
+		// const char* uri;
+		// const char* serial;
 
 	protected:
 
@@ -50,7 +49,7 @@ class USBGrid : public USBDeviceConfig, public UsbConfigXtracter
 
 	public:
 		
-		USBGrid(USBHost *pUsb);
+		USBGrid128(USBHost *pUsb);
 
 		// Methods for receiving and sending data
 		//TODO: Once it's working, we should abstract the data layer?
