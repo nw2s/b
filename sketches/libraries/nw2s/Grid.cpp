@@ -197,6 +197,34 @@ uint32_t USBGrid::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 		return rcode;
 	}
 
+	/* Assume for now that the control interface is 0 */
+	bControlIface = 0;
+
+	/* Send the line control information */
+    rcode = SetControlLineState(3);
+
+    if (rcode)
+    {
+		Serial.print("SetControlLineState failed: ");
+		Serial.println(rcode);
+        return rcode;
+    }
+	
+    LINE_CODING	lc;
+    lc.dwDTERate	= 115200;
+    lc.bCharFormat	= 0;
+    lc.bParityType	= 0;
+    lc.bDataBits	= 8;
+
+    rcode = SetLineCoding(&lc);
+
+    if (rcode)
+	{
+		Serial.print("SetLineCoding failed: ");
+		Serial.println(rcode);
+		return rcode;
+	}
+	
 	Serial.println("Device configured successfully");
 	ready = true;
 
@@ -295,4 +323,15 @@ uint32_t USBGrid::write(uint32_t datalen, uint8_t *dataptr)
 {
 	return pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].deviceEpNum, datalen, dataptr);
 }
+
+uint8_t USBGrid::SetControlLineState(uint8_t state) 
+{
+	return ( pUsb->ctrlReq(bAddress, 0, bmREQ_CDCOUT, CDC_SET_CONTROL_LINE_STATE, state, 0, bControlIface, 0, 0, NULL, NULL));
+}
+
+uint8_t USBGrid::SetLineCoding(const LINE_CODING *dataptr) 
+{
+	return ( pUsb->ctrlReq(bAddress, 0, bmREQ_CDCOUT, CDC_SET_LINE_CODING, 0x00, 0x00, bControlIface, sizeof (LINE_CODING), sizeof (LINE_CODING), (uint8_t*)dataptr, NULL));
+}
+
 
