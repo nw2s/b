@@ -1,4 +1,34 @@
+/*
 
+	nw2s::b - A microcontroller-based modular synth control framework
+	Copyright (C) 2013 Scott Wilson (thomas.scott.wilson@gmail.com)
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
+/* 
+
+	Note: This code is based on and would not be possible without the USB Host code
+	which was partially ported to Arduino. I've taken their further development and 
+	adapted it to enable Arduino Due to USB CDC class devices such as the Ardiono
+	Leonardo. https://github.com/felis/USB_Host_Shield_2.0
+
+	The other half of this code is based on and would not be possible without
+	the development of the monome. http://monome.org/
+
+*/
 
 #ifndef GRID_H
 #define GRID_H
@@ -9,28 +39,25 @@
 
 #define MAX_ENDPOINTS 3
 
-typedef struct 
+namespace nw2s
 {
-        uint32_t dwDTERate; // Data Terminal Rate in bits per second
-        uint8_t bCharFormat; // 0 - 1 stop bit, 1 - 1.5 stop bits, 2 - 2 stop bits
-        uint8_t bParityType; // 0 - None, 1 - Odd, 2 - Even, 3 - Mark, 4 - Space
-        uint8_t bDataBits; // Data bits (5, 6, 7, 8 or 16)
-} 
-LINE_CODING;
+	
+	typedef struct 
+	{
+        uint32_t dwDTERate; 
+        uint8_t bCharFormat; 
+        uint8_t bParityType; 
+        uint8_t bDataBits;
+	} 
+	LineCoding;
 
+	class USBGrid;
+	class USBGrid128;
 
-class USBGrid128 : public USBDeviceConfig, public UsbConfigXtracter
+}
+
+class nw2s::USBGrid : public USBDeviceConfig, public UsbConfigXtracter
 {
-	private:
-		
-		/* ID strings */
-		// const char* manufacturer;
-		// const char* model;
-		// const char* description;
-		// const char* version;
-		// const char* uri;
-		// const char* serial;
-
 	protected:
 
 		static const uint32_t epDataInIndex;			// DataIn endpoint index
@@ -49,25 +76,32 @@ class USBGrid128 : public USBDeviceConfig, public UsbConfigXtracter
 
 	public:
 		
-		USBGrid128(USBHost *pUsb);
+		USBGrid();
 
-		// Methods for receiving and sending data
-		//TODO: Once it's working, we should abstract the data layer?
+		void task();
+
+		/* Basic IO */
 		uint32_t read(uint32_t *nreadbytes, uint32_t datalen, uint8_t *dataptr);
 		uint32_t write(uint32_t datalen, uint8_t *dataptr);
 
-        uint8_t SetLineCoding(const LINE_CODING *dataptr);
-        uint8_t SetControlLineState(uint8_t state);
+		/* Line control setup */
+        uint8_t setLineCoding(const LineCoding *dataptr);
+        uint8_t setControlLineState(uint8_t state);
 
-		// USBDeviceConfig implementation
+		/* USBDeviceConfig implementation */
 		virtual uint32_t Init(uint32_t parent, uint32_t port, uint32_t lowspeed);
 		virtual uint32_t Release();
 		virtual uint32_t Poll() { return 0; };	// not implemented
 		virtual uint32_t GetAddress() { return bAddress; };
 		virtual bool isReady() { return ready; };
 
-		// UsbConfigXtracter implementation
+		/* UsbConfigXtracter implementation */
 		virtual void EndpointXtract(uint32_t conf, uint32_t iface, uint32_t alt, uint32_t proto, const USB_ENDPOINT_DESCRIPTOR *ep);
+};
+
+class nw2s::USBGrid128  : public USBGrid
+{
+	
 };
 
 #endif

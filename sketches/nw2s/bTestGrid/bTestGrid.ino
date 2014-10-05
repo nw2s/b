@@ -15,17 +15,19 @@
 #include <aJSON.h>
 
 
-USBHost usb;
-USBGrid128 grid(&usb);
+using namespace nw2s;
+
+USBGrid* grid;
 
 void setup()
 {
 	Serial.begin(9600);
 	
-	
-  cpu_irq_enable();
-  Serial.println("testing...");
-  delay(200);
+	grid = new USBGrid();
+
+	Serial.println("testing...");
+
+	delay(200);
 }
 
 #define RCVSIZE 64
@@ -54,9 +56,9 @@ void loop()
 							
 	uint8_t columns128[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-  usb.Task();
+  grid->task();
 
-  if (grid.isReady())
+  if (grid->isReady())
   {
 	  for (int i = 0; i < 16; i++)
 	  {
@@ -64,12 +66,12 @@ void loop()
 	  }
 	 	  
     /* Write hello string to ADK */
-	grid.write(32, helloworld);
+	grid->write(32, helloworld);
 
     delay(100);
 
     /* Read data from ADK and print to UART */
-    int rcode = grid.read(&nbread, RCVSIZE, buf);
+    int rcode = grid->read(&nbread, RCVSIZE, buf);
 	
 	if (rcode > 1)
 	{

@@ -1,18 +1,49 @@
+/*
 
+	nw2s::b - A microcontroller-based modular synth control framework
+	Copyright (C) 2013 Scott Wilson (thomas.scott.wilson@gmail.com)
 
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
+/* 
+
+	Note: This code is based on and would not be possible without the USB Host code
+	which was partially ported to Arduino. I've taken their further development and 
+	adapted it to enable Arduino Due to USB CDC class devices such as the Ardiono
+	Leonardo. https://github.com/felis/USB_Host_Shield_2.0
+
+	The other half of this code is based on and would not be possible without
+	the development of the monome. http://monome.org/
+
+*/
 
 #include "Grid.h"
 
-const uint32_t USBGrid128::epDataInIndex  = 1;
-const uint32_t USBGrid128::epDataOutIndex = 2;
+using namespace nw2s;
 
-USBGrid128::USBGrid128(USBHost *p) :
-		pUsb(p),
-		bAddress(0),
-		bNumEP(1),
-		ready(false)
+const uint32_t nw2s::USBGrid::epDataInIndex  = 1;
+const uint32_t nw2s::USBGrid::epDataOutIndex = 2;
+
+USBHost usbHost;
+
+
+USBGrid::USBGrid() : pUsb(&usbHost), bAddress(0), bNumEP(1), ready(false)
 {
-	
+
+	/* Setup an empty set of endpoints */
 	for (uint32_t i = 0; i < MAX_ENDPOINTS; ++i)
 	{
 		epInfo[i].deviceEpNum	= 0;
@@ -22,15 +53,21 @@ USBGrid128::USBGrid128(USBHost *p) :
 		epInfo[i].bmNakPower  	= (i) ? USB_NAK_NOWAIT : USB_NAK_MAX_POWER;
 	}
 
-	// Register in USB subsystem
+	/* Register ourselves in USB subsystem */
 	if (pUsb)
 	{
 		pUsb->RegisterDeviceClass(this);
 	}
 }
 
+void USBGrid::task()
+{
+	/* This must be run every loop() */
+	pUsb->Task();
+}
 
-uint32_t USBGrid128::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
+
+uint32_t USBGrid::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 {
 	uint8_t		buf[sizeof(USB_DEVICE_DESCRIPTOR)];
 	uint32_t	rcode = 0;
@@ -41,8 +78,6 @@ uint32_t USBGrid128::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 
 	/* Get memory address of USB device address pool */
 	AddressPool	&addrPool = pUsb->GetAddressPool();
-
-	Serial.println("USBGrid::Init");
 
     /* Check if address has already been assigned to an instance */
     if (bAddress)
@@ -93,9 +128,6 @@ uint32_t USBGrid128::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 	/* Extract Max Packet Size from device descriptor */
 	epInfo[0].maxPktSize = (uint8_t)((USB_DEVICE_DESCRIPTOR*)buf)->bMaxPacketSize0;
 
-	Serial.print("Max packet size: ");
-	Serial.println(epInfo[0].maxPktSize);
-
 	/* Assign new address to the device */
 	rcode = pUsb->setAddr(0, 0, bAddress);
 
@@ -136,9 +168,6 @@ uint32_t USBGrid128::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 
 	/* Go through configurations, find first bulk-IN, bulk-OUT EP, fill epInfo and quit */
 	num_of_conf = ((USB_DEVICE_DESCRIPTOR*)buf)->bNumConfigurations;
-
-	Serial.print("Found a number of configurarions: ");
-	Serial.println(num_of_conf);
 
 	for (uint32_t i = 0; i < num_of_conf; ++i)
 	{
@@ -184,7 +213,7 @@ uint32_t USBGrid128::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 	bControlIface = 0;
 
 	/* Send the line control information */
-    rcode = SetControlLineState(3);
+    rcode = setControlLineState(3);
 
     if (rcode)
     {
@@ -193,13 +222,13 @@ uint32_t USBGrid128::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
         return rcode;
     }
 	
-    LINE_CODING	lc;
+    LineCoding	lc;
     lc.dwDTERate	= 115200;
     lc.bCharFormat	= 0;
     lc.bParityType	= 0;
     lc.bDataBits	= 8;
 
-    rcode = SetLineCoding(&lc);
+    rcode = setLineCoding(&lc);
 
     if (rcode)
 	{
@@ -207,8 +236,7 @@ uint32_t USBGrid128::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 		Serial.println(rcode);
 		return rcode;
 	}
-	
-	Serial.println("Device configured successfully");
+
 	ready = true;
 
 	return 0;
@@ -216,16 +244,8 @@ uint32_t USBGrid128::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 
 
 
-void USBGrid128::EndpointXtract(uint32_t conf, uint32_t iface, uint32_t alt, uint32_t proto, const USB_ENDPOINT_DESCRIPTOR *pep)
-{	
-	Serial.println("");
-	Serial.println("Xtracting: ");
-	Serial.print("     address: ");
-	Serial.println(pep->bEndpointAddress, HEX);
-	Serial.print("   attribute: ");
-	Serial.println(pep->bmAttributes, HEX);
-	Serial.println("");
-	
+void USBGrid::EndpointXtract(uint32_t conf, uint32_t iface, uint32_t alt, uint32_t proto, const USB_ENDPOINT_DESCRIPTOR *pep)
+{		
 	if (pep->bmAttributes != 2) return;
 	
 	if (bNumEP == MAX_ENDPOINTS)
@@ -246,16 +266,6 @@ void USBGrid128::EndpointXtract(uint32_t conf, uint32_t iface, uint32_t alt, uin
 	/* Fill in the endpoint info structure */
 	epInfo[index].deviceEpNum = pep->bEndpointAddress & 0x0F;
 	epInfo[index].maxPktSize = pep->wMaxPacketSize;
-
-
-	Serial.println("Found new endpoint");
-	Serial.print(" deviceEpNum: ");
-	Serial.println(epInfo[index].deviceEpNum);
-	Serial.print(" maxPktSize: "); 
-	Serial.println(epInfo[index].maxPktSize);
-	Serial.print(" index: "); 
-	Serial.println(index);
-
 
 	if (index == epDataInIndex)
 	{
@@ -279,15 +289,15 @@ void USBGrid128::EndpointXtract(uint32_t conf, uint32_t iface, uint32_t alt, uin
 }
 
 
-uint32_t USBGrid128::Release()
+uint32_t USBGrid::Release()
 {
 	UHD_Pipe_Free(epInfo[epDataInIndex].hostPipeNum);
 	UHD_Pipe_Free(epInfo[epDataOutIndex].hostPipeNum);
 
-	// Free allocated USB address
+	/* Free allocated USB address */
 	pUsb->GetAddressPool().FreeAddress(bAddress);
 
-	// Must have to be reset to 1
+	/* Must have to be reset to 1 */
 	bNumEP = 1;
 
 	bAddress = 0;
@@ -296,25 +306,25 @@ uint32_t USBGrid128::Release()
 	return 0;
 }
 
-uint32_t USBGrid128::read(uint32_t *nreadbytes, uint32_t datalen, uint8_t *dataptr)
+uint32_t USBGrid::read(uint32_t *nreadbytes, uint32_t datalen, uint8_t *dataptr)
 {
 	*nreadbytes = datalen;
 	return pUsb->inTransfer(bAddress, epInfo[epDataInIndex].deviceEpNum, nreadbytes, dataptr);
 }
 
-uint32_t USBGrid128::write(uint32_t datalen, uint8_t *dataptr)
+uint32_t USBGrid::write(uint32_t datalen, uint8_t *dataptr)
 {
 	return pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].deviceEpNum, datalen, dataptr);
 }
 
-uint8_t USBGrid128::SetControlLineState(uint8_t state) 
+uint8_t USBGrid::setControlLineState(uint8_t state) 
 {
 	return ( pUsb->ctrlReq(bAddress, 0, USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE, CDC_SET_CONTROL_LINE_STATE, state, 0, bControlIface, 0, 0, NULL, NULL));
 }
 
-uint8_t USBGrid128::SetLineCoding(const LINE_CODING *dataptr) 
+uint8_t USBGrid::setLineCoding(const LineCoding *dataptr) 
 {
-	return ( pUsb->ctrlReq(bAddress, 0, USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE, CDC_SET_LINE_CODING, 0x00, 0x00, bControlIface, sizeof (LINE_CODING), sizeof (LINE_CODING), (uint8_t*)dataptr, NULL));
+	return ( pUsb->ctrlReq(bAddress, 0, USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE, CDC_SET_LINE_CODING, 0x00, 0x00, bControlIface, sizeof (LineCoding), sizeof (LineCoding), (uint8_t*)dataptr, NULL));
 }
 
 
