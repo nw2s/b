@@ -32,7 +32,9 @@
 #include <Wire.h>
 #include <ShiftRegister.h>
 #include <aJSON.h>
-
+#include <Usb.h>
+#include <GridTrigger.h>
+#include <Grid.h>
 
 
 using namespace nw2s;

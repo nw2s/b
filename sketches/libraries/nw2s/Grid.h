@@ -78,7 +78,7 @@ class nw2s::USBGrid : public USBDeviceConfig, public UsbConfigXtracter
 		
 		USBGrid();
 
-		void task();
+		virtual void task();
 
 		/* Basic IO */
 		uint32_t read(uint32_t *nreadbytes, uint32_t datalen, uint8_t *dataptr);
@@ -105,22 +105,28 @@ class nw2s::USBGridController : public USBGrid
 		
 		uint8_t columnCount;
 		uint8_t* columns;
+		uint8_t beat;
+
 		void setGrid(uint8_t *columns);
 		void setColumn(uint8_t column, uint8_t value);
 		void setLED(uint8_t column, uint8_t row);
 		void clearLED(uint8_t column, uint8_t row);
 		
-		virtual void buttonPressed(uint8_t column, uint8_t row);
-		virtual void buttonReleased(uint8_t column, uint8_t row);
+		virtual void buttonPressed(uint8_t column, uint8_t row) = 0;
+		virtual void buttonReleased(uint8_t column, uint8_t row) = 0;
 
 	public:
 
 		USBGridController(uint8_t columns);
 
+		virtual void task();
+
 		uint8_t getColumnCount();
 		uint8_t getRowCount();
 		bool isSet(uint8_t column, uint8_t row);
 		uint8_t getColumn(uint8_t column);
+		
+		
 };
 
 #endif

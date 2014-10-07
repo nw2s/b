@@ -43,6 +43,8 @@ USBHost usbHost;
 USBGrid::USBGrid() : pUsb(&usbHost), bAddress(0), bNumEP(1), ready(false)
 {
 
+	Serial.println("USBGrid ctor");
+
 	/* Setup an empty set of endpoints */
 	for (uint32_t i = 0; i < MAX_ENDPOINTS; ++i)
 	{
@@ -62,8 +64,10 @@ USBGrid::USBGrid() : pUsb(&usbHost), bAddress(0), bNumEP(1), ready(false)
 
 void USBGrid::task()
 {
+	if (!isReady()) Serial.println("not ready");
+	
 	/* This must be run every loop() */
-	pUsb->Task();
+	pUsb->Task();	
 }
 
 
@@ -238,6 +242,8 @@ uint32_t USBGrid::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 	}
 
 	ready = true;
+	
+	Serial.println("Grid configured.");
 
 	return 0;
 }
@@ -396,6 +402,57 @@ uint8_t USBGridController::getColumn(uint8_t column)
 	return this->columns[column];
 }
 
+void USBGridController::task()
+{
+	USBGrid::task();
+
+	uint32_t nbread = 0;
+    uint8_t buf[64];
+
+	if (isReady())
+	{
+		/* See if there is any data to read */
+	    int rcode = read(&nbread, 64, buf);
+	
+		if (rcode > 1)
+		{
+			Serial.print("Read error: ");
+			Serial.println(rcode, HEX);
+		}
+
+			// 	    if (nbread > 0)
+			// 	    {
+			// Serial.print("RCV: ");
+			//
+			// for (uint32_t i = 0; i < nbread; ++i)
+			// {
+			// Serial.print(buf[i], HEX);
+			// }
+			//
+			// Serial.println();
+			// 	    }
+		
+		for (uint8_t i = 0; i < nbread / 2; i++)
+		{
+			uint8_t command = buf[i * 2];
+			uint8_t data = buf[(i * 2) + 1];
+			
+			if (command == 0x00)
+			{
+				Serial.println("release");
+			}
+			else if (command = 0x01)
+			{
+				Serial.println("press");
+			}
+			else
+			{
+				Serial.print("Unknown command: ");
+				Serial.println(command, HEX);
+			}
+		}
+	}	
+}
 
 
 
