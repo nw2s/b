@@ -41,6 +41,12 @@
 
 namespace nw2s
 {
+	enum GridDialect {
+		
+		DIALECT_40H = 0,
+		DIALECT_SERIES = 1,
+		DIALECT_GRIDS = 2
+	};
 	
 	typedef struct 
 	{
@@ -104,20 +110,26 @@ class nw2s::USBGridController : public USBGrid
 	protected:
 		
 		uint8_t columnCount;
+		uint8_t rowCount;
 		uint8_t* columns;
 		uint8_t beat;
+		
+		uint8_t lastpress[2] = {0, 0};
+		uint8_t lastrelease[2] = {0, 0};
+		bool initialized = false;
 
 		void setGrid(uint8_t *columns);
 		void setColumn(uint8_t column, uint8_t value);
 		void setLED(uint8_t column, uint8_t row);
 		void clearLED(uint8_t column, uint8_t row);
+		void toggleLED(uint8_t column, uint8_t row);
 		
 		virtual void buttonPressed(uint8_t column, uint8_t row) = 0;
 		virtual void buttonReleased(uint8_t column, uint8_t row) = 0;
 
 	public:
 
-		USBGridController(uint8_t columns);
+		USBGridController(uint8_t columns, uint8_t rows);
 
 		virtual void task();
 

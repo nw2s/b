@@ -49,12 +49,9 @@ void setup()
 	/* Setup a variable clock */
 	Clock* vclock = VariableClock::create(10, 240, DUE_IN_A00, 16);
 
-	Trigger* trigger0 = Trigger::create(DUE_OUT_D08, DIV_QUARTER);
-	vclock->registerDevice(trigger0);
+	grid = GridTriggerController::create(16, DIV_SIXTEENTH, DUE_OUT_D00, DUE_OUT_D01, DUE_OUT_D02, DUE_OUT_D03, DUE_OUT_D04, DUE_OUT_D05, DUE_OUT_D06);
 
-	grid = GridTriggerController::create(16, DIV_SIXTEENTH, DUE_OUT_D00, DUE_OUT_D01, DUE_OUT_D02, DUE_OUT_D03, DUE_OUT_D04, DUE_OUT_D05, DUE_OUT_D06, DUE_OUT_D07);
-
-	//vclock->registerDevice(grid);
+	vclock->registerDevice(grid);
 	EventManager::registerDevice(vclock);
 
 }

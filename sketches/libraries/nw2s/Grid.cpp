@@ -42,9 +42,6 @@ USBHost usbHost;
 
 USBGrid::USBGrid() : pUsb(&usbHost), bAddress(0), bNumEP(1), ready(false)
 {
-
-	Serial.println("USBGrid ctor");
-
 	/* Setup an empty set of endpoints */
 	for (uint32_t i = 0; i < MAX_ENDPOINTS; ++i)
 	{
@@ -340,14 +337,13 @@ USBGridController::USBGridController(uint8_t columnCount)
 }
 
 void USBGridController::setGrid(uint8_t *columns)
-{		
-	memcpy(this->columns, columns, this->columnCount);
-
+{	
 	/* Hardcoding the max size into the stack so I don't pollute the heap */
-	uint8_t gridCommand[16];
+	uint8_t gridCommand[32];
 
 	for (uint8_t i = 0; i < this->columnCount; i++)
 	{
+		this->columns[i] = columns[i];
 		gridCommand[i * 2] = 0x80 | i;
 		gridCommand[(i * 2) + 1] = this->columns[i];
 	}
@@ -368,16 +364,16 @@ void USBGridController::setLED(uint8_t column, uint8_t row)
 {
 	this->columns[column] = this->columns[column] | (1 << row);
 
-	uint8_t setCommand[] = { 0x21, (row << 4) | (column & 0x0F) };
+	uint8_t setCommand[] = { 0x21, (column << 4) | (row & 0x0F) };
 
 	this->write(2, setCommand);
 }
 
 void USBGridController::clearLED(uint8_t column, uint8_t row)
 {
-	this->columns[column] = this->columns[column] | (1 << row);
+	this->columns[column] = this->columns[column] & ~(1 << row);
 
-	uint8_t setCommand[] = { 0x20, (row << 4) | (column & 0x0F) };
+	uint8_t setCommand[] = { 0x20, (column << 4) | (row & 0x0F) };
 
 	this->write(2, setCommand);
 }
@@ -411,6 +407,15 @@ void USBGridController::task()
 
 	if (isReady())
 	{
+		if (!initialized)
+		{
+			/* As soon as it's ready, clear it the first time */			
+			uint8_t zeroGrid[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+			this->setGrid(zeroGrid);
+			
+			initialized = true;
+		}
+		
 		/* See if there is any data to read */
 	    int rcode = read(&nbread, 64, buf);
 	
@@ -419,31 +424,29 @@ void USBGridController::task()
 			Serial.print("Read error: ");
 			Serial.println(rcode, HEX);
 		}
-
-			// 	    if (nbread > 0)
-			// 	    {
-			// Serial.print("RCV: ");
-			//
-			// for (uint32_t i = 0; i < nbread; ++i)
-			// {
-			// Serial.print(buf[i], HEX);
-			// }
-			//
-			// Serial.println();
-			// 	    }
 		
+		/* If we don't get an even number at once, we'll drop the last half */
 		for (uint8_t i = 0; i < nbread / 2; i++)
 		{
 			uint8_t command = buf[i * 2];
 			uint8_t data = buf[(i * 2) + 1];
 			
-			if (command == 0x00)
+			uint8_t column = data >> 4;
+			uint8_t row = data & 0x0F;
+
+			if (command == 0x01)
 			{
-				Serial.println("release");
+				this->lastrelease[0] = column;
+				this->lastrelease[1] = row;
+				
+				this->buttonPressed(column, row);
 			}
-			else if (command = 0x01)
+			else if (command = 0x00)
 			{
-				Serial.println("press");
+				this->lastpress[0] = column;
+				this->lastpress[1] = row;
+				
+				this->buttonReleased(column, row);
 			}
 			else
 			{
