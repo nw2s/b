@@ -48,6 +48,11 @@ GridTriggerController::GridTriggerController(uint8_t columnCount, uint8_t rowCou
 	delay(200);	
 }
 
+void GridTriggerController::setShuffleToggle(PinDigitalIn input)
+{
+	this->shuffleInput = input;
+}
+
 void GridTriggerController::timer(unsigned long t)
 {
 	for (uint8_t i = 1; i < 8; i++)
@@ -57,6 +62,8 @@ void GridTriggerController::timer(unsigned long t)
 	
 	if (this->shuffleInput != DIGITAL_IN_NONE && !this->shuffleState && digitalRead(this->shuffleInput))
 	{
+		Serial.println(lastpress[1]);
+		
 		this->shuffleState = true;
 
 		if (this->lastpress[1] != 0)
@@ -82,7 +89,10 @@ void GridTriggerController::reset()
 		}
 	}
 
-	this->shuffleState = false;
+	if (!digitalRead(this->shuffleInput))
+	{
+		this->shuffleState = false;
+	}
 }
 
 void GridTriggerController::buttonPressed(uint8_t column, uint8_t row)
@@ -112,67 +122,57 @@ void GridTriggerController::shuffleRow(uint8_t rowIndex)
 {
 	/* Pseudo random shuffling of triggers, but keeping the same number of them set */
 	
-	/* 50% chance that we swap bits across the midpoint  12344321   */
+	/* 75% chance that we swap bits across the midpoint  12344321   */
 	for (uint8_t i = 0; i < this->columnCount / 2; i++)
 	{		
-		if (Entropy::getBit())
+		if (Entropy::getBit() | Entropy::getBit())
 		{
 			uint8_t position1 = i;
 			uint8_t position2 = columnCount - 1 - i;
 
-			bool isSet1 = getValue(this->currentPage, position1, rowIndex);
-			bool isSet2 = getValue(this->currentPage, position2, rowIndex);
+			uint8_t value1 = getValue(this->currentPage, position1, rowIndex);
+			uint8_t value2 = getValue(this->currentPage, position2, rowIndex);
 			
-			if (isSet1)
-			{
-				setLED(this->currentPage, position2, rowIndex, 1);
-			}
-			else
-			{
-				clearLED(this->currentPage, position2, rowIndex);
-			}
-
-			if (isSet2)
-			{
-				setLED(this->currentPage, position1, rowIndex, 1);
-			}
-			else
-			{
-				clearLED(this->currentPage, position1, rowIndex);
-			}			
+			this->cells[this->currentPage][position2][rowIndex] = value1;
+			this->cells[this->currentPage][position1][rowIndex] = value2;
 		}
 	}
 		
-	/* 50% chance that we flip a bit with its pair across the middle 12341234 */
+	/* 75% chance that we flip a bit with its pair across the middle 12341234 */
 	for (uint8_t i = 0; i < this->columnCount / 2; i++)
 	{
-		if (Entropy::getBit())
+		if (Entropy::getBit() | Entropy::getBit())
 		{
 			uint8_t position1 = i;
 			uint8_t position2 = i + this->columnCount / 2;
 
-			bool isSet1 = getValue(this->currentPage, position1, rowIndex);
-			bool isSet2 = getValue(this->currentPage, position2, rowIndex);
+			uint8_t value1 = getValue(this->currentPage, position1, rowIndex);
+			uint8_t value2 = getValue(this->currentPage, position2, rowIndex);
 			
-			if (isSet1)
-			{
-				setLED(this->currentPage, position2, rowIndex, 1);
-			}
-			else
-			{
-				clearLED(this->currentPage, position2, rowIndex);
-			}
-
-			if (isSet2)
-			{
-				setLED(this->currentPage, position1, rowIndex, 1);
-			}
-			else
-			{
-				clearLED(this->currentPage, position1, rowIndex);
-			}			
+			this->cells[this->currentPage][position2][rowIndex] = value1;
+			this->cells[this->currentPage][position1][rowIndex] = value2;			
 		}
 	}
+	
+	/* 75% chance that we flip a bit with its neighbor 11223344 */
+	for (uint8_t i = 0; i < this->columnCount / 2; i++)
+	{
+		if (Entropy::getBit() | Entropy::getBit())
+		{
+			uint8_t position1 = i * 2;
+			uint8_t position2 = (i * 2) + 1;
+
+			uint8_t value1 = getValue(this->currentPage, position1, rowIndex);
+			uint8_t value2 = getValue(this->currentPage, position2, rowIndex);
+			
+			this->cells[this->currentPage][position2][rowIndex] = value1;
+			this->cells[this->currentPage][position1][rowIndex] = value2;			
+		}
+	}
+	
+	//TODO: Make sure at least _something_ gets moved */
+		
+	this->refreshGrid();
 }
 
 

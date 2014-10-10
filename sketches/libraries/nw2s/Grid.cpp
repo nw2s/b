@@ -483,15 +483,15 @@ void USBGridController::task()
 			if (command == 0x01)
 			{
 				//TODO: refactor to a struct
-				this->lastrelease[0] = column;
-				this->lastrelease[1] = row;
+				this->lastpress[0] = column;
+				this->lastpress[1] = row;
 				
 				this->buttonPressed(column, row);
 			}
-			else if (command = 0x00)
+			else if (command == 0x00)
 			{
-				this->lastpress[0] = column;
-				this->lastpress[1] = row;
+				this->lastrelease[0] = column;
+				this->lastrelease[1] = row;
 				
 				this->buttonReleased(column, row);
 			}

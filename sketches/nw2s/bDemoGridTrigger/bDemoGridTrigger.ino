@@ -49,7 +49,9 @@ void setup()
 	/* Setup a variable clock */
 	Clock* vclock = VariableClock::create(10, 240, DUE_IN_A00, 16);
 
-	grid = GridTriggerController::create(16, DIV_SIXTEENTH, DUE_OUT_D00, DUE_OUT_D01, DUE_OUT_D02, DUE_OUT_D03, DUE_OUT_D04, DUE_OUT_D05, DUE_OUT_D06);
+	grid = GridTriggerController::create(16, 8, DIV_SIXTEENTH, DUE_OUT_D00, DUE_OUT_D01, DUE_OUT_D02, DUE_OUT_D03, DUE_OUT_D04, DUE_OUT_D05, DUE_OUT_D06);
+
+	grid->setShuffleToggle(DUE_IN_D0);
 
 	vclock->registerDevice(grid);
 	EventManager::registerDevice(vclock);
