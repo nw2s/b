@@ -317,6 +317,8 @@ uint32_t USBGrid::read(uint32_t *nreadbytes, uint32_t datalen, uint8_t *dataptr)
 
 uint32_t USBGrid::write(uint32_t datalen, uint8_t *dataptr)
 {
+	if (datalen > 255) Serial.println("WARNING: Trying to send more than 255 bytes down the USB pipe!");
+
 	return pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].deviceEpNum, datalen, dataptr);
 }
 
@@ -330,52 +332,52 @@ uint8_t USBGrid::setLineCoding(const LineCoding *dataptr)
 	return ( pUsb->ctrlReq(bAddress, 0, USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE, CDC_SET_LINE_CODING, 0x00, 0x00, bControlIface, sizeof (LineCoding), sizeof (LineCoding), (uint8_t*)dataptr, NULL));
 }
 
-USBGridController::USBGridController(uint8_t columnCount)
+USBGridController::USBGridController(uint8_t columnCount, uint8_t rowCount)
 {
 	this->columnCount = columnCount;
-	this->columns = new uint8_t[columnCount];	
+	this->rowCount = rowCount;
 }
 
-void USBGridController::setGrid(uint8_t *columns)
-{	
-	/* Hardcoding the max size into the stack so I don't pollute the heap */
-	uint8_t gridCommand[32];
-
-	for (uint8_t i = 0; i < this->columnCount; i++)
+void USBGridController::setLED(uint8_t page, uint8_t column, uint8_t row, uint8_t value)
+{
+	if (!value)
 	{
-		this->columns[i] = columns[i];
-		gridCommand[i * 2] = 0x80 | i;
-		gridCommand[(i * 2) + 1] = this->columns[i];
+		this->clearLED(page, column, row);
+		return;
 	}
 
-	this->write(this->columnCount * 2, gridCommand);
+	this->cells[page][column][row] = value;
+
+	if (page == this->currentPage)
+	{
+		switch (this->dialect)
+		{
+			case DIALECT_40H:
+
+				uint8_t setCommand[] = { 0x21, (column << 4) | (row & 0x0F) };
+				this->write(2, setCommand);
+				
+				break;
+		}
+	}
 }
 
-void USBGridController::setColumn(uint8_t column, uint8_t value)
-{		
-	this->columns[column] = value;
-
-	uint8_t columnCommand[] = { 0x80 | (column & 0x0F), value };
-
-	this->write(2, columnCommand);
-}
-
-void USBGridController::setLED(uint8_t column, uint8_t row)
+void USBGridController::clearLED(uint8_t page, uint8_t column, uint8_t row)
 {
-	this->columns[column] = this->columns[column] | (1 << row);
+	this->cells[page][column][row] = 0;
 
-	uint8_t setCommand[] = { 0x21, (column << 4) | (row & 0x0F) };
-
-	this->write(2, setCommand);
-}
-
-void USBGridController::clearLED(uint8_t column, uint8_t row)
-{
-	this->columns[column] = this->columns[column] & ~(1 << row);
-
-	uint8_t setCommand[] = { 0x20, (column << 4) | (row & 0x0F) };
-
-	this->write(2, setCommand);
+	if (page == this->currentPage)
+	{
+		switch (this->dialect)
+		{
+			case DIALECT_40H:
+			
+				uint8_t setCommand[] = { 0x20, (column << 4) | (row & 0x0F) };
+				this->write(2, setCommand);
+				
+				break;
+		}
+	}
 }
 
 uint8_t USBGridController::getColumnCount()
@@ -383,19 +385,49 @@ uint8_t USBGridController::getColumnCount()
 	return this->columnCount;
 }
 
-uint8_t getRowCount()
+uint8_t USBGridController::getRowCount()
 {
-	return 8;
+	return this->rowCount;
 }
 
-bool USBGridController::isSet(uint8_t column, uint8_t row)
+uint8_t USBGridController::getValue(uint8_t page, uint8_t column, uint8_t row)
 {
-	return this->columns[column] & (1 << row);
+	return this->cells[page][column][row];
 }
 
-uint8_t USBGridController::getColumn(uint8_t column)
+void USBGridController::switchPage(uint8_t page)
 {
-	return this->columns[column];
+	this->currentPage = page;
+
+	this->refreshGrid();
+}
+
+void USBGridController::refreshGrid()
+{	
+	switch (this->dialect)
+	{
+		case DIALECT_40H:
+		
+			uint8_t gridCommand[32];
+		
+			for (uint8_t column = 0; column < this->columnCount; column++)
+			{
+				gridCommand[column * 2] = 0x80 | column;
+				gridCommand[(column * 2) + 1] = 0;
+				
+				for (uint8_t row = 1; row < this->rowCount; row++)
+				{
+					if (this->cells[this->currentPage][column][row])
+					{
+						gridCommand[(column * 2) + 1] = gridCommand[(column * 2) + 1] | (1 << (this->rowCount - 1) - row);
+					}
+				}
+			}
+		
+			this->write(this->columnCount * 2, gridCommand);
+			
+			break;
+	}
 }
 
 void USBGridController::task()
@@ -405,15 +437,29 @@ void USBGridController::task()
 	uint32_t nbread = 0;
     uint8_t buf[64];
 
-	if (isReady())
+	if (!memoryInitialized)
 	{
-		if (!initialized)
+		for (uint8_t page = 0; page < 16; page++)
 		{
-			/* As soon as it's ready, clear it the first time */			
-			uint8_t zeroGrid[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-			this->setGrid(zeroGrid);
+			for (uint8_t column = 0; column < 16; column++)
+			{
+				for (uint8_t row = 0; row < 16; row++)
+				{
+					this->cells[page][column][row] = 0;
+				}
+			}
+		}
+		
+		memoryInitialized = true;
+	}
+
+	if (isReady())
+	{		
+		if (!gridInitialized)
+		{			
+			this->refreshGrid();
 			
-			initialized = true;
+			gridInitialized = true;
 		}
 		
 		/* See if there is any data to read */
@@ -424,8 +470,8 @@ void USBGridController::task()
 			Serial.print("Read error: ");
 			Serial.println(rcode, HEX);
 		}
-		
-		/* If we don't get an even number at once, we'll drop the last half */
+			
+		/* Only problem, if we don't get an even number at once, we'll drop the last half */
 		for (uint8_t i = 0; i < nbread / 2; i++)
 		{
 			uint8_t command = buf[i * 2];
@@ -436,6 +482,7 @@ void USBGridController::task()
 
 			if (command == 0x01)
 			{
+				//TODO: refactor to a struct
 				this->lastrelease[0] = column;
 				this->lastrelease[1] = row;
 				

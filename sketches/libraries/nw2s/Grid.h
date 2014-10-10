@@ -109,21 +109,27 @@ class nw2s::USBGridController : public USBGrid
 {
 	protected:
 		
+		uint8_t beat = 0;
 		uint8_t columnCount;
 		uint8_t rowCount;
-		uint8_t* columns;
-		uint8_t beat;
+		uint8_t pages = 16;
 		
+		GridDialect dialect = DIALECT_40H;
+
+		/* Just allocate the max value and work with it - [page][column][row] */
+		uint8_t cells[16][16][16];
+				
+		bool gridInitialized = false;
+		bool memoryInitialized = false;
 		uint8_t lastpress[2] = {0, 0};
 		uint8_t lastrelease[2] = {0, 0};
-		bool initialized = false;
+		uint8_t currentPage = 0;
 
-		void setGrid(uint8_t *columns);
-		void setColumn(uint8_t column, uint8_t value);
-		void setLED(uint8_t column, uint8_t row);
-		void clearLED(uint8_t column, uint8_t row);
-		void toggleLED(uint8_t column, uint8_t row);
-		
+		void setLED(uint8_t page, uint8_t column, uint8_t row, uint8_t value);
+		void clearLED(uint8_t page, uint8_t column, uint8_t row);
+		void switchPage(uint8_t page);
+		void refreshGrid();
+			
 		virtual void buttonPressed(uint8_t column, uint8_t row) = 0;
 		virtual void buttonReleased(uint8_t column, uint8_t row) = 0;
 
@@ -135,7 +141,7 @@ class nw2s::USBGridController : public USBGrid
 
 		uint8_t getColumnCount();
 		uint8_t getRowCount();
-		bool isSet(uint8_t column, uint8_t row);
+		uint8_t getValue(uint8_t page, uint8_t column, uint8_t row);
 		uint8_t getColumn(uint8_t column);
 		
 		
