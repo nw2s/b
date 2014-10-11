@@ -118,6 +118,8 @@ void GridTriggerController::timer(unsigned long t)
 		}
 		
 		this->refreshGrid();
+
+		this->setLED(this->currentPage, this->currentPage, 0, 1);
 	}
 	
 	/* Next page trigger is rising */
