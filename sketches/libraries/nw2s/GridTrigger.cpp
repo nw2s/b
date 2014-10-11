@@ -53,6 +53,26 @@ void GridTriggerController::setShuffleToggle(PinDigitalIn input)
 	this->shuffleInput = input;
 }
 
+void GridTriggerController::setShuffleScopeInput(PinDigitalIn input)
+{
+	this->shuffleScopeInput = input;
+}
+
+void GridTriggerController::setNextPageToggle(PinDigitalIn input)
+{
+	this->nextPageInput = input;
+}
+
+void GridTriggerController::setResetPageToggle(PinDigitalIn input)
+{
+	this->resetPageInput = input;
+}
+
+void GridTriggerController::setClockInput(PinDigitalIn input)
+{
+	this->clockInput = input;
+}
+
 void GridTriggerController::timer(unsigned long t)
 {
 	for (uint8_t i = 1; i < 8; i++)
@@ -60,10 +80,23 @@ void GridTriggerController::timer(unsigned long t)
 		this->gates[i]->timer(t);
 	}
 	
-	if (this->shuffleInput != DIGITAL_IN_NONE && !this->shuffleState && digitalRead(this->shuffleInput))
+	/* Clock is rising */
+	if (this->clockInput != DIGITAL_IN_NONE && !this->clockState && digitalRead(this->clockInput))
 	{
-		Serial.println(lastpress[1]);
-		
+		this->clockState = t;
+
+		/* Simulate a clock pulse */
+		this->reset();
+	}
+	
+	/* Clock is falling and at least 20ms after rising */
+	if (this->clockInput != DIGITAL_IN_NONE && (this->clockState != 0) && ((this->clockState + 20) < t) && !digitalRead(this->clockInput))
+	{
+		this->clockState = 0;
+	}
+	
+	if (this->shuffleInput != DIGITAL_IN_NONE && !this->shuffleState && digitalRead(this->shuffleInput))
+	{		
 		this->shuffleState = true;
 
 		if (this->lastpress[1] != 0)
@@ -153,7 +186,7 @@ void GridTriggerController::shuffleRow(uint8_t rowIndex)
 			this->cells[this->currentPage][position1][rowIndex] = value2;			
 		}
 	}
-	
+
 	/* 75% chance that we flip a bit with its neighbor 11223344 */
 	for (uint8_t i = 0; i < this->columnCount / 2; i++)
 	{
@@ -166,12 +199,10 @@ void GridTriggerController::shuffleRow(uint8_t rowIndex)
 			uint8_t value2 = getValue(this->currentPage, position2, rowIndex);
 			
 			this->cells[this->currentPage][position2][rowIndex] = value1;
-			this->cells[this->currentPage][position1][rowIndex] = value2;			
+			this->cells[this->currentPage][position1][rowIndex] = value2;
 		}
 	}
-	
-	//TODO: Make sure at least _something_ gets moved */
-		
+
 	this->refreshGrid();
 }
 

@@ -53,7 +53,11 @@ void setup()
 
 	grid->setShuffleToggle(DUE_IN_D0);
 
-	vclock->registerDevice(grid);
+	//vclock->registerDevice(grid);
+	
+	grid->setClockInput(DUE_IN_D1);
+	EventManager::registerDevice(grid);
+
 	EventManager::registerDevice(vclock);
 
 }

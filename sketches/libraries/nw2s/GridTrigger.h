@@ -27,7 +27,6 @@
 namespace nw2s
 {
 	class GridTriggerController;
-	
 }
 
 
@@ -42,6 +41,10 @@ class nw2s::GridTriggerController : public BeatDevice, public USBGridController
 		virtual void reset();
 		
 		void setShuffleToggle(PinDigitalIn input);
+		void setNextPageToggle(PinDigitalIn input);
+		void setResetPageToggle(PinDigitalIn input);	
+		void setShuffleScopeInput(PinDigitalIn input);	
+		void setClockInput(PinDigitalIn input);	
 
 	protected:
 		
@@ -56,6 +59,12 @@ class nw2s::GridTriggerController : public BeatDevice, public USBGridController
 
 		Gate* gates[8];	
 		bool shuffleState = false;
+		unsigned long clockState = 0;
+		
 		PinDigitalIn shuffleInput = DIGITAL_IN_NONE;
+		PinDigitalIn shuffleScopeInput = DIGITAL_IN_NONE;
+		PinDigitalIn resetPageInput = DIGITAL_IN_NONE;
+		PinDigitalIn nextPageInput = DIGITAL_IN_NONE;
+		PinDigitalIn clockInput = DIGITAL_IN_NONE;
 		
 };
