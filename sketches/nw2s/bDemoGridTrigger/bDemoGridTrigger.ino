@@ -52,11 +52,13 @@ void setup()
 	grid = GridTriggerController::create(16, 8, DIV_SIXTEENTH, DUE_OUT_D00, DUE_OUT_D01, DUE_OUT_D02, DUE_OUT_D03, DUE_OUT_D04, DUE_OUT_D05, DUE_OUT_D06);
 
 	grid->setShuffleToggle(DUE_IN_D0);
+	grid->setShuffleScopeInput(DUE_IN_D1);
+	grid->setNextPageToggle(DUE_IN_D2);
 
-	//vclock->registerDevice(grid);
+	vclock->registerDevice(grid);
 	
-	grid->setClockInput(DUE_IN_D1);
-	EventManager::registerDevice(grid);
+	//grid->setClockInput(DUE_IN_D1);
+	//EventManager::registerDevice(grid);
 
 	EventManager::registerDevice(vclock);
 

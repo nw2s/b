@@ -59,7 +59,9 @@ class nw2s::GridTriggerController : public BeatDevice, public USBGridController
 
 		Gate* gates[8];	
 		bool shuffleState = false;
+		bool resetPageState = false;
 		unsigned long clockState = 0;
+		unsigned long nextPageState = 0;
 		
 		PinDigitalIn shuffleInput = DIGITAL_IN_NONE;
 		PinDigitalIn shuffleScopeInput = DIGITAL_IN_NONE;

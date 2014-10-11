@@ -58,11 +58,13 @@ void GridTriggerController::setShuffleScopeInput(PinDigitalIn input)
 	this->shuffleScopeInput = input;
 }
 
+//TODO: when other toggles happen, the page led doesn't get set
 void GridTriggerController::setNextPageToggle(PinDigitalIn input)
 {
 	this->nextPageInput = input;
 }
 
+//TODO
 void GridTriggerController::setResetPageToggle(PinDigitalIn input)
 {
 	this->resetPageInput = input;
@@ -95,20 +97,52 @@ void GridTriggerController::timer(unsigned long t)
 		this->clockState = 0;
 	}
 	
+	/* Shuffle input signal rising */
 	if (this->shuffleInput != DIGITAL_IN_NONE && !this->shuffleState && digitalRead(this->shuffleInput))
 	{		
 		this->shuffleState = true;
 
-		if (this->lastpress[1] != 0)
+		if (!digitalRead(this->shuffleScopeInput))
 		{
-			this->shuffleRow(this->lastpress[1]);
+			if (this->lastpress[1] != 0)
+			{
+				this->shuffleRow(this->lastpress[1]);
+			}
 		}
+		else
+		{
+			for (uint8_t i = 1; i < rowCount; i++)
+			{
+				this->shuffleRow(i);
+			}
+		}
+		
+		this->refreshGrid();
 	}
+	
+	/* Next page trigger is rising */
+	if (this->nextPageInput != DIGITAL_IN_NONE && !this->nextPageState && digitalRead(this->nextPageInput))
+	{
+		this->nextPageState = t;		
+		this->currentPage = (this->currentPage + 1) % this->columnCount;
+
+		this->refreshGrid();
+		
+		this->setLED(this->currentPage, this->currentPage, 0, 1);
+	}
+	
+	/* Next page trigger is falling and at least 20ms after rising */
+	if (this->nextPageInput != DIGITAL_IN_NONE && (this->nextPageState != 0) && ((this->nextPageState + 20) < t) && !digitalRead(this->nextPageInput))
+	{
+		this->nextPageState = 0;
+	}
+	
+	
 }
 
 void GridTriggerController::reset()
 {
-	if (isReady()) this->clearLED(this->currentPage, beat, 0);
+	if (isReady() && this->currentPage != this->beat) this->clearLED(this->currentPage, beat, 0);
 
 	beat = (beat + 1) % columnCount;
 
@@ -130,10 +164,14 @@ void GridTriggerController::reset()
 
 void GridTriggerController::buttonPressed(uint8_t column, uint8_t row)
 {	
+	Serial.println("here");
+	
 	/* Top row is reserved for the clock - pressing sets the current page */
 	if (row == 0) 
 	{
 		this->switchPage(column);
+		
+		this->setLED(this->currentPage, this->currentPage, 0, 1);
 	}	
 	else if (!getValue(this->currentPage, column, row))
 	{
@@ -202,8 +240,6 @@ void GridTriggerController::shuffleRow(uint8_t rowIndex)
 			this->cells[this->currentPage][position1][rowIndex] = value2;
 		}
 	}
-
-	this->refreshGrid();
 }
 
 
