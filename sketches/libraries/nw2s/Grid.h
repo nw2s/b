@@ -37,15 +37,22 @@
 #include "Usb.h"
 #include "confdescparser.h"
 
-#define MAX_ENDPOINTS 3
+//define MAX_ENDPOINTS 3
+
+#define bmREQ_FTDI_OUT  0x40
+#define bmREQ_FTDI_IN   0xc0
+#define FTDI_SIO_SET_BAUD_RATE 3
+#define FTDI_SIO_SET_FLOW_CTRL 2
+#define FTDI_SIO_DISABLE_FLOW_CTRL 0x0
+
 
 namespace nw2s
 {
-	enum GridDialect {
+	enum GridDevice {
 		
-		DIALECT_40H = 0,
-		DIALECT_SERIES = 1,
-		DIALECT_GRIDS = 2
+		DEVICE_40H_TRELLIS = 0,
+		DEVICE_SERIES = 1,
+		DEVICE_GRIDS = 2
 	};
 	
 	typedef struct 
@@ -82,9 +89,12 @@ class nw2s::USBGrid : public USBDeviceConfig, public UsbConfigXtracter
 
 	public:
 		
-		USBGrid();
+		USBGrid(GridDevice deviceType);
 
 		virtual void task();
+
+		/* Support multiple types, but you have to tell me what it is */
+		GridDevice deviceType = DEVICE_40H_TRELLIS;
 
 		/* Basic IO */
 		uint32_t read(uint32_t *nreadbytes, uint32_t datalen, uint8_t *dataptr);
@@ -114,8 +124,6 @@ class nw2s::USBGridController : public USBGrid
 		uint8_t rowCount;
 		uint8_t pages = 16;
 		
-		GridDialect dialect = DIALECT_40H;
-
 		/* Just allocate the max value and work with it - [page][column][row] */
 		uint8_t cells[16][16][16];
 				
@@ -135,7 +143,7 @@ class nw2s::USBGridController : public USBGrid
 
 	public:
 
-		USBGridController(uint8_t columns, uint8_t rows);
+		USBGridController(GridDevice deviceType, uint8_t columns, uint8_t rows);
 
 		virtual void task();
 

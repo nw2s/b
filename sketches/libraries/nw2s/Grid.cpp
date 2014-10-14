@@ -40,8 +40,10 @@ const uint32_t nw2s::USBGrid::epDataOutIndex = 2;
 USBHost usbHost;
 
 
-USBGrid::USBGrid() : pUsb(&usbHost), bAddress(0), bNumEP(1), ready(false)
+USBGrid::USBGrid(GridDevice deviceType) : pUsb(&usbHost), bAddress(0), bNumEP(1), ready(false)
 {
+	this->deviceType = deviceType;
+	
 	/* Setup an empty set of endpoints */
 	for (uint32_t i = 0; i < MAX_ENDPOINTS; ++i)
 	{
@@ -184,14 +186,19 @@ uint32_t USBGrid::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 			return rcode;
 		}
 
-		if (bNumEP > 2)
+		/* monome FTDI only looks for 2. CDC ACM (leonardo) looks for 3 */ 
+		if (deviceType == DEVICE_40H_TRELLIS && bNumEP > 2)
+		{
+			break;
+		}
+		else if (deviceType == DEVICE_SERIES && bNumEP > 1)
 		{
 			break;
 		}
 	}
 
-	if (bNumEP == 3)
-	{
+	// if (bNumEP == 3)
+	// {
 		/* Assign epInfo to epinfo pointer - this time all 3 endpoins */
 		rcode = pUsb->setEpInfoEntry(bAddress, 3, epInfo);
 		if (rcode)
@@ -199,10 +206,11 @@ uint32_t USBGrid::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 			Serial.print("Failed setEpInfoEntry: ");
 			Serial.println(rcode);
 		}
-	}
+	// }
 
 	/* Set Configuration Value */
 	rcode = pUsb->setConf(bAddress, 0, bConfNum);
+
 	if (rcode)
 	{
 		Serial.print("setConf failed: ");
@@ -213,29 +221,68 @@ uint32_t USBGrid::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 	/* Assume for now that the control interface is 0 */
 	bControlIface = 0;
 
-	/* Send the line control information */
-    rcode = setControlLineState(3);
-
-    if (rcode)
-    {
-		Serial.print("SetControlLineState failed: ");
-		Serial.println(rcode);
-        return rcode;
-    }
-	
-    LineCoding	lc;
-    lc.dwDTERate	= 115200;
-    lc.bCharFormat	= 0;
-    lc.bParityType	= 0;
-    lc.bDataBits	= 8;
-
-    rcode = setLineCoding(&lc);
-
-    if (rcode)
+	if (deviceType == DEVICE_40H_TRELLIS)
 	{
-		Serial.print("SetLineCoding failed: ");
-		Serial.println(rcode);
-		return rcode;
+		/* Send the line control information */
+	    rcode = setControlLineState(3);
+
+	    if (rcode)
+	    {
+			Serial.print("SetControlLineState failed: ");
+			Serial.println(rcode);
+	        return rcode;
+	    }
+
+	    LineCoding	lc;
+	    lc.dwDTERate	= 115200;
+	    lc.bCharFormat	= 0;
+	    lc.bParityType	= 0;
+	    lc.bDataBits	= 8;
+
+	    rcode = setLineCoding(&lc);
+
+	    if (rcode)
+		{
+			Serial.print("SetLineCoding failed: ");
+			Serial.println(rcode);
+			return rcode;
+		}
+	}
+	else if (deviceType == DEVICE_SERIES)
+	{
+		/* Set the baud rate */
+        uint16_t baud_value = 0;
+		uint16_t baud_index = 0;
+		
+        uint32_t divisor3 = 48000000 / 2 / 115200; // divisor shifted 3 bits to the left
+
+        static const unsigned char divfrac [8] = {0, 3, 2, 0, 1, 1, 2, 3};
+        static const unsigned char divindex[8] = {0, 0, 0, 1, 0, 1, 1, 1};
+
+        baud_value = divisor3 >> 3;
+        baud_value |= divfrac [divisor3 & 0x7] << 14;
+        baud_index = divindex[divisor3 & 0x7];
+
+        /* Deal with special cases for highest baud rates. */
+        if (baud_value == 1) 
+		{
+			baud_value = 0;
+		}
+        else if (baud_value == 0x4001) 
+		{
+            baud_value = 1;
+		}
+
+        rcode = pUsb->ctrlReq(bAddress, 0, bmREQ_FTDI_OUT, FTDI_SIO_SET_BAUD_RATE, baud_value & 0xff, baud_value >> 8, baud_index, 0, 0, NULL, NULL);
+		
+	    if (rcode)
+	    {
+	        Serial.println("Error setting baudrate");
+	        return rcode;
+	    }
+
+		/* Set no flow control */
+		rcode = pUsb->ctrlReq(bAddress, 0, bmREQ_FTDI_OUT, FTDI_SIO_SET_FLOW_CTRL, 0x11, 0x13, FTDI_SIO_DISABLE_FLOW_CTRL << 8, 0, 0, NULL, NULL);		
 	}
 
 	ready = true;
@@ -332,7 +379,7 @@ uint8_t USBGrid::setLineCoding(const LineCoding *dataptr)
 	return ( pUsb->ctrlReq(bAddress, 0, USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE, CDC_SET_LINE_CODING, 0x00, 0x00, bControlIface, sizeof (LineCoding), sizeof (LineCoding), (uint8_t*)dataptr, NULL));
 }
 
-USBGridController::USBGridController(uint8_t columnCount, uint8_t rowCount)
+USBGridController::USBGridController(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount) : USBGrid(deviceType)
 {
 	this->columnCount = columnCount;
 	this->rowCount = rowCount;
@@ -350,14 +397,22 @@ void USBGridController::setLED(uint8_t page, uint8_t column, uint8_t row, uint8_
 
 	if (page == this->currentPage)
 	{
-		switch (this->dialect)
+		switch (this->deviceType)
 		{
-			case DIALECT_40H:
-
+			case DEVICE_40H_TRELLIS:
+			{
 				uint8_t setCommand[] = { 0x21, (column << 4) | (row & 0x0F) };
 				this->write(2, setCommand);
 				
 				break;
+			}				
+			case DEVICE_SERIES:
+			{
+				uint8_t setCommand[] = { 0x20, (column << 4) | (row & 0x0F) };
+				this->write(2, setCommand);		
+				
+				break;		
+			}			
 		}
 	}
 }
@@ -368,14 +423,23 @@ void USBGridController::clearLED(uint8_t page, uint8_t column, uint8_t row)
 
 	if (page == this->currentPage)
 	{
-		switch (this->dialect)
+		switch (this->deviceType)
 		{
-			case DIALECT_40H:
-			
+			case DEVICE_40H_TRELLIS:
+			{
 				uint8_t setCommand[] = { 0x20, (column << 4) | (row & 0x0F) };
 				this->write(2, setCommand);
 				
 				break;
+			}
+						
+			case DEVICE_SERIES:
+			{
+				uint8_t setCommand[] = { 0x30, (column << 4) | (row & 0x0F) };
+				this->write(2, setCommand);
+			
+				break;			
+			}			
 		}
 	}
 }
@@ -404,9 +468,10 @@ void USBGridController::switchPage(uint8_t page)
 
 void USBGridController::refreshGrid()
 {	
-	switch (this->dialect)
+	switch (this->deviceType)
 	{
-		case DIALECT_40H:
+		case DEVICE_40H_TRELLIS:
+		case DEVICE_SERIES:
 		
 			uint8_t gridCommand[32];
 		
@@ -480,25 +545,51 @@ void USBGridController::task()
 			uint8_t column = data >> 4;
 			uint8_t row = data & 0x0F;
 
-			if (command == 0x01)
+			if (deviceType == DEVICE_40H_TRELLIS)
 			{
-				//TODO: refactor to a struct
-				this->lastpress[0] = column;
-				this->lastpress[1] = row;
+				if (command == 0x01)
+				{
+					//TODO: refactor to a struct
+					this->lastpress[0] = column;
+					this->lastpress[1] = row;
 				
-				this->buttonPressed(column, row);
-			}
-			else if (command == 0x00)
-			{
-				this->lastrelease[0] = column;
-				this->lastrelease[1] = row;
+					this->buttonPressed(column, row);
+				}
+				else if (command == 0x00)
+				{
+					this->lastrelease[0] = column;
+					this->lastrelease[1] = row;
 				
-				this->buttonReleased(column, row);
+					this->buttonReleased(column, row);
+				}
+				else
+				{
+					Serial.print("Unknown command: ");
+					Serial.println(command, HEX);
+				}
 			}
-			else
+			else if (deviceType == DEVICE_SERIES)
 			{
-				Serial.print("Unknown command: ");
-				Serial.println(command, HEX);
+				if (command == 0x10)
+				{
+					//TODO: refactor to a struct
+					this->lastpress[0] = column;
+					this->lastpress[1] = row;
+				
+					this->buttonPressed(column, row);
+				}
+				else if (command == 0x00)
+				{
+					this->lastrelease[0] = column;
+					this->lastrelease[1] = row;
+				
+					this->buttonReleased(column, row);
+				}
+				else
+				{
+					Serial.print("Unknown command: ");
+					Serial.println(command, HEX);
+				}
 			}
 		}
 	}	

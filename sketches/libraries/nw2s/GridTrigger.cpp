@@ -25,12 +25,12 @@
 
 using namespace nw2s;
 
-GridTriggerController* GridTriggerController::create(uint8_t columnCount, uint8_t rowCount, int clockDivision, PinDigitalOut out0, PinDigitalOut out1, PinDigitalOut out2, PinDigitalOut out3, PinDigitalOut out4, PinDigitalOut out5, PinDigitalOut out6)
+GridTriggerController* GridTriggerController::create(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, int clockDivision, PinDigitalOut out0, PinDigitalOut out1, PinDigitalOut out2, PinDigitalOut out3, PinDigitalOut out4, PinDigitalOut out5, PinDigitalOut out6)
 {	
-	return new GridTriggerController(columnCount, rowCount, clockDivision, out0, out1, out2, out3, out4, out5, out6);
+	return new GridTriggerController(deviceType, columnCount, rowCount, clockDivision, out0, out1, out2, out3, out4, out5, out6);
 }
 
-GridTriggerController::GridTriggerController(uint8_t columnCount, uint8_t rowCount, int clockDivision, PinDigitalOut out0, PinDigitalOut out1, PinDigitalOut out2, PinDigitalOut out3, PinDigitalOut out4, PinDigitalOut out5, PinDigitalOut out6) : USBGridController(columnCount, rowCount)
+GridTriggerController::GridTriggerController(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, int clockDivision, PinDigitalOut out0, PinDigitalOut out1, PinDigitalOut out2, PinDigitalOut out3, PinDigitalOut out4, PinDigitalOut out5, PinDigitalOut out6) : USBGridController(deviceType, columnCount, rowCount)
 {
 	this->beat = 0;
 	this->clock_division = clockDivision;
@@ -58,7 +58,6 @@ void GridTriggerController::setShuffleScopeInput(PinDigitalIn input)
 	this->shuffleScopeInput = input;
 }
 
-//TODO: when other toggles happen, the page led doesn't get set
 void GridTriggerController::setNextPageToggle(PinDigitalIn input)
 {
 	this->nextPageInput = input;
