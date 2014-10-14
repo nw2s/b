@@ -471,7 +471,6 @@ void USBGridController::refreshGrid()
 	switch (this->deviceType)
 	{
 		case DEVICE_40H_TRELLIS:
-		case DEVICE_SERIES:
 		
 			uint8_t gridCommand[32];
 		
@@ -491,6 +490,38 @@ void USBGridController::refreshGrid()
 		
 			this->write(this->columnCount * 2, gridCommand);
 			
+			break;
+		
+		case DEVICE_SERIES:
+	
+			/* Quadrant-based commands are most efficient for full screen refresh */
+			
+			/* 64 - one quadrant */
+			uint8_t quadrant1[] = { (0x08 << 4) | 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	
+			/* 128 - two quadrants */
+			uint8_t quadrant2[] = { (0x08 << 4) | 1, 0, 0, 0, 0, 0, 0, 0, 0};
+			
+			/* 256 - four quadrants */
+			uint8_t quadrant3[] = { (0x08 << 4) | 2, 0, 0, 0, 0, 0, 0, 0, 0};
+			uint8_t quadrant4[] = { (0x08 << 4) | 3, 0, 0, 0, 0, 0, 0, 0, 0};
+			
+			//TODO: Only working with 64 right now to get this running. 
+			for (uint8_t column = 0; column < this->columnCount; column++)
+			{
+				for (uint8_t row = 1; row < this->rowCount; row++)
+				{
+					if (column < 8 && row < 8)
+					{
+						/* quadrant 1 */
+						if (this->cells[this->currentPage][column][row])
+						{
+							quadrant1[column + 1] = quadrant1[column + 1] | (1 << (this->rowCount - 1) - row);
+						}
+					}
+				}
+			}
+	
 			break;
 	}
 }
@@ -521,8 +552,16 @@ void USBGridController::task()
 	if (isReady())
 	{		
 		if (!gridInitialized)
-		{			
-			this->refreshGrid();
+		{	
+			if (deviceType == DEVICE_40H_TRELLIS)
+			{
+				this->refreshGrid();
+			}
+			else if (deviceType == DEVICE_SERIES)
+			{
+				uint8_t clearCommand[] = { (0x09 << 4) | 0 };
+				this->write(1, clearCommand);
+			}
 			
 			gridInitialized = true;
 		}
