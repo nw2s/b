@@ -506,6 +506,7 @@ void USBGridController::refreshGrid()
 			uint8_t quadrant3[] = { (0x08 << 4) | 2, 0, 0, 0, 0, 0, 0, 0, 0};
 			uint8_t quadrant4[] = { (0x08 << 4) | 3, 0, 0, 0, 0, 0, 0, 0, 0};
 			
+			//TODO: row/cols are flipped somewhere. Have to fix, but need to go to work.
 			//TODO: Only working with 64 right now to get this running. 
 			for (uint8_t column = 0; column < this->columnCount; column++)
 			{
@@ -521,6 +522,8 @@ void USBGridController::refreshGrid()
 					}
 				}
 			}
+
+			this->write(9, quadrant1);
 	
 			break;
 	}
