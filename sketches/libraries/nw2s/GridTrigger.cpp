@@ -34,7 +34,6 @@ GridTriggerController::GridTriggerController(GridDevice deviceType, uint8_t colu
 {
 	this->beat = 0;
 	this->clock_division = clockDivision;
-	this->columnCount = columnCount;
 	
 	this->gates[1] = Gate::create(out0, GATE_DURATION);
 	this->gates[2] = Gate::create(out1, GATE_DURATION);
@@ -189,10 +188,6 @@ void GridTriggerController::reset()
 
 void GridTriggerController::buttonPressed(uint8_t column, uint8_t row)
 {	
-	Serial.print(column, HEX);
-	Serial.print(" ");
-	Serial.println(row, HEX);
-	
 	/* Top row is reserved for the clock - pressing sets the current page */
 	if (row == 0) 
 	{		

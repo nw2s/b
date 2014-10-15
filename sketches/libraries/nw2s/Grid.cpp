@@ -409,9 +409,6 @@ void USBGridController::setLED(uint8_t page, uint8_t column, uint8_t row, uint8_
 			case DEVICE_SERIES:
 			{
 				this->refreshGrid();
-				// uint8_t setCommand[] = { 0x20, (column << 4) | (row & 0x0F) };
-				// this->write(2, setCommand);
-				
 				break;		
 			}			
 		}
@@ -437,10 +434,6 @@ void USBGridController::clearLED(uint8_t page, uint8_t column, uint8_t row)
 			case DEVICE_SERIES:
 			{
 				this->refreshGrid();
-
-				// uint8_t setCommand[] = { 0x30, (column << 4) | (row & 0x0F) };
-				// this->write(2, setCommand);
-			
 				break;			
 			}			
 		}
@@ -524,10 +517,16 @@ void USBGridController::refreshGrid()
 							quadrant1[row + 1] = quadrant1[row + 1] | (1 << column);
 						}
 					}
-				}
-				
-				Serial.print(quadrant1[row + 1], BIN);
-				Serial.print(" ");
+
+					/* quadrant 2 */
+					// if (column <= 8 && row < 8)
+					// {
+					// 	if (this->cells[this->currentPage][column][row])
+					// 	{
+					// 		quadrant2[row + 1] = quadrant1[row + 1] | (1 << column);
+					// 	}
+					// }
+				}				
 			}
 
 			this->write(9, quadrant1);
