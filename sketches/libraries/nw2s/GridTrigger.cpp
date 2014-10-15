@@ -44,6 +44,30 @@ GridTriggerController::GridTriggerController(GridDevice deviceType, uint8_t colu
 	this->gates[6] = Gate::create(out5, GATE_DURATION);
 	this->gates[7] = Gate::create(out6, GATE_DURATION);
 	
+	/* initialize the memory */
+	if (!memoryInitialized)
+	{
+		for (uint8_t page = 0; page < 16; page++)
+		{
+			for (uint8_t column = 0; column < 16; column++)
+			{
+				for (uint8_t row = 0; row < 16; row++)
+				{
+					if ((page == column) && (row == 0))
+					{
+						this->cells[page][column][row] = 1;
+					}
+					else
+					{
+						this->cells[page][column][row] = 0;
+					}
+				}
+			}
+		}
+		
+		memoryInitialized = true;
+	}
+		
 	/* Give it a moment... */
 	delay(200);	
 }
@@ -165,14 +189,16 @@ void GridTriggerController::reset()
 
 void GridTriggerController::buttonPressed(uint8_t column, uint8_t row)
 {	
-	Serial.println("here");
+	Serial.print(column, HEX);
+	Serial.print(" ");
+	Serial.println(row, HEX);
 	
 	/* Top row is reserved for the clock - pressing sets the current page */
 	if (row == 0) 
-	{
+	{		
 		this->switchPage(column);
 		
-		this->setLED(this->currentPage, this->currentPage, 0, 1);
+		//this->setLED(this->currentPage, this->currentPage, 0, 1);
 	}	
 	else if (!getValue(this->currentPage, column, row))
 	{

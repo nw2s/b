@@ -408,8 +408,9 @@ void USBGridController::setLED(uint8_t page, uint8_t column, uint8_t row, uint8_
 			}				
 			case DEVICE_SERIES:
 			{
-				uint8_t setCommand[] = { 0x20, (column << 4) | (row & 0x0F) };
-				this->write(2, setCommand);		
+				this->refreshGrid();
+				// uint8_t setCommand[] = { 0x20, (column << 4) | (row & 0x0F) };
+				// this->write(2, setCommand);
 				
 				break;		
 			}			
@@ -435,8 +436,10 @@ void USBGridController::clearLED(uint8_t page, uint8_t column, uint8_t row)
 						
 			case DEVICE_SERIES:
 			{
-				uint8_t setCommand[] = { 0x30, (column << 4) | (row & 0x0F) };
-				this->write(2, setCommand);
+				this->refreshGrid();
+
+				// uint8_t setCommand[] = { 0x30, (column << 4) | (row & 0x0F) };
+				// this->write(2, setCommand);
 			
 				break;			
 			}			
@@ -506,24 +509,29 @@ void USBGridController::refreshGrid()
 			uint8_t quadrant3[] = { (0x08 << 4) | 2, 0, 0, 0, 0, 0, 0, 0, 0};
 			uint8_t quadrant4[] = { (0x08 << 4) | 3, 0, 0, 0, 0, 0, 0, 0, 0};
 			
-			//TODO: row/cols are flipped somewhere. Have to fix, but need to go to work.
+			//TODO: weird error when using the paging, it's mirrored in row 8
 			//TODO: Only working with 64 right now to get this running. 
-			for (uint8_t column = 0; column < this->columnCount; column++)
+			/* The LED_FRAME command for series is per row, not column */
+			for (uint8_t row = 0; row < this->rowCount; row++)
 			{
-				for (uint8_t row = 1; row < this->rowCount; row++)
+				for (uint8_t column = 0; column < this->columnCount; column++)
 				{
+					/* quadrant 1 */
 					if (column < 8 && row < 8)
 					{
-						/* quadrant 1 */
 						if (this->cells[this->currentPage][column][row])
 						{
-							quadrant1[column + 1] = quadrant1[column + 1] | (1 << (this->rowCount - 1) - row);
+							quadrant1[row + 1] = quadrant1[row + 1] | (1 << column);
 						}
 					}
 				}
+				
+				Serial.print(quadrant1[row + 1], BIN);
+				Serial.print(" ");
 			}
 
 			this->write(9, quadrant1);
+			delay(5);
 	
 			break;
 	}
@@ -536,35 +544,12 @@ void USBGridController::task()
 	uint32_t nbread = 0;
     uint8_t buf[64];
 
-	if (!memoryInitialized)
-	{
-		for (uint8_t page = 0; page < 16; page++)
-		{
-			for (uint8_t column = 0; column < 16; column++)
-			{
-				for (uint8_t row = 0; row < 16; row++)
-				{
-					this->cells[page][column][row] = 0;
-				}
-			}
-		}
-		
-		memoryInitialized = true;
-	}
-
 	if (isReady())
 	{		
 		if (!gridInitialized)
 		{	
-			if (deviceType == DEVICE_40H_TRELLIS)
-			{
-				this->refreshGrid();
-			}
-			else if (deviceType == DEVICE_SERIES)
-			{
-				uint8_t clearCommand[] = { (0x09 << 4) | 0 };
-				this->write(1, clearCommand);
-			}
+			this->currentPage = 0;
+			this->refreshGrid();
 			
 			gridInitialized = true;
 		}
@@ -612,7 +597,7 @@ void USBGridController::task()
 			}
 			else if (deviceType == DEVICE_SERIES)
 			{
-				if (command == 0x10)
+				if (command == 0x00)
 				{
 					//TODO: refactor to a struct
 					this->lastpress[0] = column;
@@ -620,12 +605,16 @@ void USBGridController::task()
 				
 					this->buttonPressed(column, row);
 				}
-				else if (command == 0x00)
+				else if (command == 0x10)
 				{
 					this->lastrelease[0] = column;
 					this->lastrelease[1] = row;
 				
 					this->buttonReleased(column, row);
+				}
+				else if (command == 0x31)
+				{
+					/* Not sure why the monome is spitting this out constantly */
 				}
 				else
 				{
