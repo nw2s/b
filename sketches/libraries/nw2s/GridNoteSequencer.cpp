@@ -185,14 +185,16 @@ void GridNoteSequencer::reset()
 
 	if (isReady()) this->setLED(this->currentPage, beat, 0, 1);
 
-	//TODO: add a second, third, fourth voice
 	for (uint8_t i = 1; i < this->rowCount; i++)
-	{		
-		if (getValue(this->currentPage, beat, i))
+	{	
+		/* Iterate over each available voice, they are all on the same page */
+		for (uint8_t voice = 0; voice < (columnCount / 4); voice++)
 		{
-			/* Voice 1 */
-			this->outs[0]->outputCV(this->key->getNoteMillivolt(this->notes[0][i][0], this->notes[0][i][1]));
-			this->gates[0]->reset();
+			if (getValue((this->currentPage % 4) + (voice * 4), beat, i))
+			{
+				if (this->notes[voice] != NULL) this->outs[voice]->outputCV(this->key->getNoteMillivolt(this->notes[voice][i][0], this->notes[voice][i][1]));
+				this->gates[voice]->reset();
+			}
 		}
 	}
 
@@ -215,9 +217,9 @@ void GridNoteSequencer::buttonPressed(uint8_t column, uint8_t row)
 		{
 			if (rowIterator == row)
 			{
-				/* If it's already set, then unset it */
 				if (this->cells[this->currentPage][column][rowIterator])
 				{
+					/* If it's already set, then unset it */
 					this->cells[this->currentPage][column][rowIterator] = 0;					
 				}
 				else
