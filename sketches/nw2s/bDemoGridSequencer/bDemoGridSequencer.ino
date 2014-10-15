@@ -49,13 +49,13 @@ void setup()
 
 	/* Setup a variable clock */
 	Clock* vclock = VariableClock::create(10, 240, DUE_IN_A00, 16);
-	Trigger* trigger = Trigger::create(DUE_OUT_D15, DIV_QUARTER);
-	vclock->registerDevice(trigger);
+	// Trigger* trigger = Trigger::create(DUE_OUT_D15, DIV_QUARTER);
+	// vclock->registerDevice(trigger);
 
 	int notes0[][2] = { { 1, 1 }, { 1, 3 }, { 1, 4 }, { 1, 5 }, { 1, 7 }, { 2, 1 }, { 2, 3 } };
 	int notes1[][2] = { { 2, 1 }, { 2, 3 }, { 2, 4 }, { 2, 5 }, { 2, 7 }, { 3, 1 }, { 3, 3 } };
 	
-	grid = GridNoteSequencer::create(DEVICE_SERIES, 8, 8, DIV_SIXTEENTH, C, Key::SCALE_MAJOR, DUE_OUT_D00, DUE_SPI_4822_00, notes0, DUE_OUT_D01, DUE_SPI_4822_01, notes1, DIGITAL_OUT_NONE, ANALOG_OUT_NONE, NULL, DIGITAL_OUT_NONE, ANALOG_OUT_NONE, NULL);
+	grid = GridNoteSequencer::create(DEVICE_SERIES, 8, 8, DIV_SIXTEENTH, C, Key::SCALE_MAJOR, DUE_OUT_D15, DUE_SPI_4822_00, notes0, DUE_OUT_D01, DUE_SPI_4822_01, notes1, DIGITAL_OUT_NONE, ANALOG_OUT_NONE, NULL, DIGITAL_OUT_NONE, ANALOG_OUT_NONE, NULL);
 
 	vclock->registerDevice(grid);
 

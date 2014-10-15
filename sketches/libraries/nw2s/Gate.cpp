@@ -36,7 +36,7 @@ Gate::Gate(PinDigitalOut pin, unsigned int duration)
 
 	/* Make sure we start with the gate closed */
 	this->state = false;
-	digitalWrite(this->pin, LOW);	
+	if (this->pin != DIGITAL_OUT_NONE) digitalWrite(this->pin, LOW);	
 }
 
 void Gate::timer(unsigned long t)
@@ -44,14 +44,14 @@ void Gate::timer(unsigned long t)
 	if ((this->state == false) && (this->last_clock_t == 0))
 	{
 		this->state = true;
-		digitalWrite(this->pin, HIGH);
+		if (this->pin != DIGITAL_OUT_NONE) digitalWrite(this->pin, HIGH);
 		
 		this->last_clock_t = t;
 	}
 	else if ((this->state == true) && (t - this->last_clock_t >= this->duration))
 	{
 		this->state = false;
-		digitalWrite(this->pin, LOW);
+		if (this->pin != DIGITAL_OUT_NONE) digitalWrite(this->pin, LOW);
 	}	
 }
 
@@ -59,5 +59,5 @@ void Gate::reset()
 {
 	this->last_clock_t = 0;
 	this->state = false;
-	digitalWrite(this->pin, LOW);
+	if (this->pin != DIGITAL_OUT_NONE) digitalWrite(this->pin, LOW);
 }

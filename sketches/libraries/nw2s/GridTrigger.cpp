@@ -172,7 +172,7 @@ void GridTriggerController::reset()
 
 	if (isReady()) this->setLED(this->currentPage, beat, 0, 1);
 
-	for (uint8_t i = 1; i < 8; i++)
+	for (uint8_t i = 1; i < this->rowCount; i++)
 	{
 		if (getValue(this->currentPage, beat, i))
 		{

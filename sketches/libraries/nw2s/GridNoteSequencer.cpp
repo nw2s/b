@@ -36,20 +36,20 @@ GridNoteSequencer::GridNoteSequencer(GridDevice deviceType, uint8_t columnCount,
 	this->beat = 0;
 	this->clock_division = clockDivision;
 
-	if (outd0 != DIGITAL_IN_NONE) gates[0] = Gate::create(outd0, GATE_DURATION);
-	if (outd1 != DIGITAL_IN_NONE) gates[1] = Gate::create(outd1, GATE_DURATION);
-	if (outd2 != DIGITAL_IN_NONE) gates[2] = Gate::create(outd2, GATE_DURATION);
-	if (outd3 != DIGITAL_IN_NONE) gates[3] = Gate::create(outd3, GATE_DURATION);
+	gates[0] = Gate::create(outd0, GATE_DURATION);
+	gates[1] = Gate::create(outd1, GATE_DURATION);
+	gates[2] = Gate::create(outd2, GATE_DURATION);
+	gates[3] = Gate::create(outd3, GATE_DURATION);
 
-	if (outa0 != ANALOG_IN_NONE) outs[0] = AnalogOut::create(outa0);
-	if (outa1 != ANALOG_IN_NONE) outs[1] = AnalogOut::create(outa1);
-	if (outa2 != ANALOG_IN_NONE) outs[2] = AnalogOut::create(outa2);
-	if (outa3 != ANALOG_IN_NONE) outs[3] = AnalogOut::create(outa3);
+	outs[0] = AnalogOut::create(outa0);
+	outs[1] = AnalogOut::create(outa1);
+	outs[2] = AnalogOut::create(outa2);
+	outs[3] = AnalogOut::create(outa3);
 	
 	/* Copy the notes to their final resting place */
 	if (outa0 != ANALOG_OUT_NONE)
 	{
-		for (uint8_t row = 0; row < this->rowCount; row++)
+		for (uint8_t row = 0; row < this->rowCount - 1; row++)
 		{
 			this->notes[0][row][0] = notes0[row][0];
 			this->notes[0][row][1] = notes0[row][1];
@@ -58,7 +58,7 @@ GridNoteSequencer::GridNoteSequencer(GridDevice deviceType, uint8_t columnCount,
 
 	if (outa1 != ANALOG_OUT_NONE)
 	{
-		for (uint8_t row = 0; row < this->rowCount; row++)
+		for (uint8_t row = 0; row < this->rowCount - 1; row++)
 		{
 			this->notes[1][row][0] = notes1[row][0];
 			this->notes[1][row][1] = notes1[row][1];
@@ -67,16 +67,16 @@ GridNoteSequencer::GridNoteSequencer(GridDevice deviceType, uint8_t columnCount,
 
 	if (outa2 != ANALOG_OUT_NONE)
 	{
-		for (uint8_t row = 0; row < this->rowCount; row++)
+		for (uint8_t row = 0; row < this->rowCount - 1; row++)
 		{
 			this->notes[2][row][0] = notes2[row][0];
 			this->notes[2][row][1] = notes2[row][1];
 		}
 	}
-	
+
 	if (outa3 != ANALOG_OUT_NONE)
 	{
-		for (uint8_t row = 0; row < this->rowCount; row++)
+		for (uint8_t row = 0; row < this->rowCount - 1; row++)
 		{
 			this->notes[3][row][0] = notes3[row][0];
 			this->notes[3][row][1] = notes3[row][1];
@@ -109,33 +109,32 @@ GridNoteSequencer::GridNoteSequencer(GridDevice deviceType, uint8_t columnCount,
 
 	/* Give it a moment... */
 	delay(200);	
-	
 }
 
 
 void GridNoteSequencer::timer(unsigned long t)
 {
-	// for (uint8_t i = 1; i < 8; i++)
-	// {
-	// 	this->gates[i]->timer(t);
-	// }
-	//
-	// /* Clock is rising */
-	// if (this->clockInput != DIGITAL_IN_NONE && !this->clockState && digitalRead(this->clockInput))
-	// {
-	// 	this->clockState = t;
-	//
-	// 	/* Simulate a clock pulse */
-	// 	this->reset();
-	// }
-	//
-	// /* Clock is falling and at least 20ms after rising */
-	// if (this->clockInput != DIGITAL_IN_NONE && (this->clockState != 0) && ((this->clockState + 20) < t) && !digitalRead(this->clockInput))
-	// {
-	// 	this->clockState = 0;
-	// }
-	//
-	// /* Shuffle input signal rising */
+	this->gates[0]->timer(t);
+	this->gates[1]->timer(t);
+	this->gates[2]->timer(t);
+	this->gates[3]->timer(t);
+
+	/* Clock is rising */
+	if (this->clockInput != DIGITAL_IN_NONE && !this->clockState && digitalRead(this->clockInput))
+	{
+		this->clockState = t;
+
+		/* Simulate a clock pulse */
+		this->reset();
+	}
+
+	/* Clock is falling and at least 20ms after rising */
+	if (this->clockInput != DIGITAL_IN_NONE && (this->clockState != 0) && ((this->clockState + 20) < t) && !digitalRead(this->clockInput))
+	{
+		this->clockState = 0;
+	}
+
+	/* Shuffle input signal rising */
 	// if (this->shuffleInput != DIGITAL_IN_NONE && !this->shuffleState && digitalRead(this->shuffleInput))
 	// {
 	// 	this->shuffleState = true;
@@ -159,8 +158,8 @@ void GridNoteSequencer::timer(unsigned long t)
 	//
 	// 	this->setLED(this->currentPage, this->currentPage, 0, 1);
 	// }
-	//
-	// /* Next page trigger is rising */
+
+	/* Next page trigger is rising */
 	// if (this->nextPageInput != DIGITAL_IN_NONE && !this->nextPageState && digitalRead(this->nextPageInput))
 	// {
 	// 	this->nextPageState = t;
@@ -175,7 +174,7 @@ void GridNoteSequencer::timer(unsigned long t)
 	// if (this->nextPageInput != DIGITAL_IN_NONE && (this->nextPageState != 0) && ((this->nextPageState + 20) < t) && !digitalRead(this->nextPageInput))
 	// {
 	// 	this->nextPageState = 0;
-	// }	
+	// }
 }
 
 void GridNoteSequencer::reset()
@@ -186,14 +185,17 @@ void GridNoteSequencer::reset()
 
 	if (isReady()) this->setLED(this->currentPage, beat, 0, 1);
 
-	// for (uint8_t i = 1; i < 8; i++)
-	// {
-	// 	if (getValue(this->currentPage, beat, i))
-	// 	{
-	// 		this->gates[i]->reset();
-	// 	}
-	// }
-	//
+	//TODO: add a second, third, fourth voice
+	for (uint8_t i = 1; i < this->rowCount; i++)
+	{		
+		if (getValue(this->currentPage, beat, i))
+		{
+			/* Voice 1 */
+			this->outs[0]->outputCV(this->key->getNoteMillivolt(this->notes[0][i][0], this->notes[0][i][1]));
+			this->gates[0]->reset();
+		}
+	}
+
 	// if (!digitalRead(this->shuffleInput))
 	// {
 	// 	this->shuffleState = false;
@@ -208,16 +210,24 @@ void GridNoteSequencer::buttonPressed(uint8_t column, uint8_t row)
 		this->switchPage(column);		
 	}	
 	else
-	{
-		for (uint8_t rowIterator = 0; rowIterator < rowCount; rowIterator++)
+	{		
+		for (uint8_t rowIterator = 1; rowIterator < rowCount; rowIterator++)
 		{
 			if (rowIterator == row)
 			{
-				this->cells[this->currentPage][column][row] = 1;
+				/* If it's already set, then unset it */
+				if (this->cells[this->currentPage][column][rowIterator])
+				{
+					this->cells[this->currentPage][column][rowIterator] = 0;					
+				}
+				else
+				{
+					this->cells[this->currentPage][column][rowIterator] = 1;
+				}
 			}
 			else
 			{
-				this->cells[this->currentPage][column][row] = 0;
+				this->cells[this->currentPage][column][rowIterator] = 0;
 			}
 		}
 		
