@@ -52,12 +52,19 @@ void setup()
 	// Trigger* trigger = Trigger::create(DUE_OUT_D15, DIV_QUARTER);
 	// vclock->registerDevice(trigger);
 
-	int notes0[][2] = { { 1, 1 }, { 1, 3 }, { 1, 4 }, { 1, 5 }, { 1, 7 }, { 2, 1 }, { 2, 3 } };
-	int notes1[][2] = { { 2, 1 }, { 2, 3 }, { 2, 4 }, { 2, 5 }, { 2, 7 }, { 3, 1 }, { 3, 3 } };
+	int notes0[][2] = { { 1, 1 }, { 1, 2 }, { 1, 3 }, { 1, 4 }, { 1, 5 }, { 1, 6 }, { 1, 7 } };
+	int notes1[][2] = { { 2, 1 }, { 2, 2 }, { 2, 3 }, { 2, 4 }, { 2, 5 }, { 2, 6 }, { 2, 7 } };
 	
-	grid = GridNoteSequencer::create(DEVICE_SERIES, 8, 8, DIV_SIXTEENTH, C, Key::SCALE_MAJOR, DUE_OUT_D15, DUE_SPI_4822_00, notes0, DUE_OUT_D01, DUE_SPI_4822_01, notes1, DIGITAL_OUT_NONE, ANALOG_OUT_NONE, NULL, DIGITAL_OUT_NONE, ANALOG_OUT_NONE, NULL);
+	grid = GridNoteSequencer::create(DEVICE_SERIES, 8, 8, DIV_SIXTEENTH, C, Key::SCALE_MAJOR, DUE_OUT_D14, DUE_SPI_4822_14, notes0, DUE_OUT_D15, DUE_SPI_4822_15, notes1, DIGITAL_OUT_NONE, ANALOG_OUT_NONE, NULL, DIGITAL_OUT_NONE, ANALOG_OUT_NONE, NULL);
+
+	Sequencer* cvsequencer4 = CVSequencer::create(1000, 5000, DIV_EIGHTH, DUE_SPI_4822_13);
+	Sequencer* cvsequencer5 = CVSequencer::create(1000, 5000, DIV_SIXTEENTH, DUE_SPI_4822_12);
+	Sequencer* cvsequencer6 = CVSequencer::create(1000, 5000, DIV_QUARTER, DUE_SPI_4822_11);
 
 	vclock->registerDevice(grid);
+	vclock->registerDevice(cvsequencer4);
+	vclock->registerDevice(cvsequencer5);
+	vclock->registerDevice(cvsequencer6);
 
 	EventManager::registerDevice(vclock);
 }
