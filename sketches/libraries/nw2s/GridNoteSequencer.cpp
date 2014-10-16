@@ -185,14 +185,14 @@ void GridNoteSequencer::reset()
 
 	if (isReady()) this->setLED(this->currentPage, beat, 0, 1);
 
-	for (uint8_t i = 1; i < this->rowCount; i++)
+	for (uint8_t i = 0; i < this->rowCount - 1; i++)
 	{	
 		/* Iterate over each available voice, they are all on the same page */
 		for (uint8_t voice = 0; voice < (columnCount / 4); voice++)
 		{
-			if (getValue((this->currentPage % 4) + (voice * 4), beat, i))
+			if (getValue((this->currentPage % 4) + (voice * 4), beat, i + 1))
 			{
-				if (this->notes[voice] != NULL) this->outs[voice]->outputCV(this->key->getNoteMillivolt(this->notes[voice][i][0], this->notes[voice][i][1]));
+				if (this->notes[voice] != NULL) this->outs[voice]->outputCV(this->key->getNoteMillivolt(this->notes[voice][rowCount - i - 2][0], this->notes[voice][rowCount - i - 2][1]));
 				this->gates[voice]->reset();
 			}
 		}
