@@ -24,6 +24,8 @@
 namespace nw2s
 {
 	void initializeFirmware();
+	aJsonObject* openProgram(char* fileName);
+	void loadProgram(aJsonObject* program);
 }
 
 #endif

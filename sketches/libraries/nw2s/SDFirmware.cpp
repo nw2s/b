@@ -40,6 +40,36 @@ using namespace nw2s;
 
 void nw2s::initializeFirmware()
 {
+	aJsonObject* program = openProgram("DEFAULT.B");
+	
+	/* See if it's a loader */
+	aJsonObject* loaderNode = aJson.getObjectItem(program, "loader"); 
+
+	if (loaderNode != NULL)
+	{
+		int val1 = 0;
+		
+		/* If there is a loader node, then prompt for a couple of numbers */
+		while (!digitalRead(DUE_IN_D0))
+		{
+			val1 = nw2s::analogRead(DUE_IN_A00);
+			
+			IOUtils::displayBeat(val1 / 250, NULL);
+						
+			delay(1);
+		}
+		
+		char filename[7];
+		sprintf(filename, "PROG%02d.B", val1 / 250);
+		
+		program = openProgram(filename);
+	}
+	
+	loadProgram(program);
+}
+
+aJsonObject* nw2s::openProgram(char* filename)
+{
 	SdFile root;
 	SdFile programsDir;
 	SdFile programFile;
@@ -54,13 +84,14 @@ void nw2s::initializeFirmware()
 	if (!programsDir.open(root, "PROGRAMS", O_READ))
 	{
 	    Serial.println("Error opening programs folder. Are you sure it's there?");
-	    return;
+	    return NULL;
 	}
 	
-	if (!programFile.open(programsDir, "DEFAULT.B", O_READ))
+	if (!programFile.open(programsDir, filename, O_READ))
 	{
-	    Serial.println("Error opening default program. Are you sure it's there?");
-	    return;
+	    Serial.print("Error opening program. Are you sure it's there? ");
+	    Serial.println(filename);
+	    return NULL;
 	}
 
 	/* Load and parse the program definition file */
@@ -79,14 +110,17 @@ void nw2s::initializeFirmware()
 	{
 		static const char error[] = "Program not parsed successfully. Check to see that it's properly formatted JSON."; 
         Serial.println(error);
-		return;
+		return NULL;
 	}
 	else
 	{
 		static const char msg[] = "Program parsed successfully.";
         Serial.println(msg);
 	}
+}
 
+void nw2s::loadProgram(aJsonObject* program)
+{
 	aJsonObject* programNode = aJson.getObjectItem(program, "program"); 
 
 	if (programNode == NULL)

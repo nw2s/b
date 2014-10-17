@@ -32,6 +32,7 @@
 #include <ShiftRegister.h>
 #include <aJSON.h>
 #include <SDFirmware.h>
+#include <Usb.h>
 
 using namespace nw2s;
 
