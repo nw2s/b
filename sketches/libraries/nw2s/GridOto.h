@@ -38,7 +38,7 @@ namespace nw2s
 
 	struct OtoCell
 	{
-		bool active;
+		bool isActive;
 		uint8_t column;
 		uint8_t row;
 		OtoCellDirection direction;
@@ -72,6 +72,8 @@ class nw2s::GridOto : public BeatDevice, public USBGridController
 		Gate* gates[4];	
 		AnalogOut* outs[4];
 		int notes[4][16][2];
+
+		uint8_t maxcells = 0;
 		OtoCell otocells[32];
 
 		unsigned long clockState = 0;
