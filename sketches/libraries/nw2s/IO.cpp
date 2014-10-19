@@ -265,6 +265,8 @@ bool IOUtils::enableLED = false;
 
 void IOUtils::displayBeat(int beat, void* clockinstance)
 {
+	beat = (beat < 0) ? 0 : (beat > 15) ? 15 : beat;
+	
 	/* There's only one clock display, so only allow one instance to update the display. */
 	if (IOUtils::clockinstance == NULL)
 	{

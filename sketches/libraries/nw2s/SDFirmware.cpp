@@ -47,20 +47,25 @@ void nw2s::initializeFirmware()
 
 	if (loaderNode != NULL)
 	{
+		Serial.println("Loader...");
+		
 		int val1 = 0;
 		
 		/* If there is a loader node, then prompt for a couple of numbers */
 		while (!digitalRead(DUE_IN_D0))
 		{
-			val1 = nw2s::analogRead(DUE_IN_A00);
+			val1 = nw2s::analogReadmV(DUE_IN_A00, 0, 5000);
 			
-			IOUtils::displayBeat(val1 / 250, NULL);
+			IOUtils::displayBeat(val1 / 312, NULL);
 						
 			delay(1);
 		}
 		
 		char filename[7];
-		sprintf(filename, "PROG%02d.B", val1 / 250);
+		sprintf(filename, "PROG%02d.B", val1 / 312);
+		
+		Serial.print("Opening ");
+		Serial.println(filename);
 		
 		program = openProgram(filename);
 	}
@@ -117,6 +122,8 @@ aJsonObject* nw2s::openProgram(char* filename)
 		static const char msg[] = "Program parsed successfully.";
         Serial.println(msg);
 	}
+	
+	return program;
 }
 
 void nw2s::loadProgram(aJsonObject* program)

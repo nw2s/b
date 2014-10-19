@@ -1,4 +1,6 @@
 {
-	"loader" : 	1
-
+	"loader" : 	
+	{
+		"mode" : "default"
+	}
 }
