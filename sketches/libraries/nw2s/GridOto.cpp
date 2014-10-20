@@ -25,7 +25,7 @@
 using namespace nw2s;
 
 
-GridNoteSequencer* GridOto::create(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, int clockDivision, NoteName key, Scale scale, PinDigitalOut outd0, PinAnalogOut outa0, int notes0[][2], PinDigitalOut outd1, PinAnalogOut outa1, int notes1[][2], PinDigitalOut outd2, PinAnalogOut outa2, int notes2[][2], PinDigitalOut outd3, PinAnalogOut outa3, int notes3[][2])
+GridOto* GridOto::create(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, int clockDivision, NoteName key, Scale scale, PinDigitalOut outd0, PinAnalogOut outa0, int notes0[][2], PinDigitalOut outd1, PinAnalogOut outa1, int notes1[][2], PinDigitalOut outd2, PinAnalogOut outa2, int notes2[][2], PinDigitalOut outd3, PinAnalogOut outa3, int notes3[][2])
 {
 	return new GridOto(deviceType, columnCount, rowCount, clockDivision, key, scale, outd0, outa0, notes0, outd1, outa1, notes1, outd2, outa2, notes2, outd3, outa3, notes3);
 }
@@ -57,16 +57,16 @@ GridOto::GridOto(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, i
 	/* Copy the notes to their final resting place */
 	if (outa0 != ANALOG_OUT_NONE)
 	{
-		for (uint8_t row = 0; row < this->rowCount - 1; row++)
+		for (uint8_t column = 0; column < this->columnCount; column++)
 		{
-			this->notes[0][row][0] = notes0[row][0];
-			this->notes[0][row][1] = notes0[row][1];
+			this->notes[0][column][0] = notes0[column][0];
+			this->notes[0][column][1] = notes0[column][1];
 		}
 	}
 
 	if (outa1 != ANALOG_OUT_NONE)
 	{
-		for (uint8_t row = 0; row < this->rowCount - 1; row++)
+		for (uint8_t row = 0; row < this->rowCount; row++)
 		{
 			this->notes[1][row][0] = notes1[row][0];
 			this->notes[1][row][1] = notes1[row][1];
@@ -75,16 +75,16 @@ GridOto::GridOto(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, i
 
 	if (outa2 != ANALOG_OUT_NONE)
 	{
-		for (uint8_t row = 0; row < this->rowCount - 1; row++)
+		for (uint8_t column = 0; column < this->columnCount; column++)
 		{
-			this->notes[2][row][0] = notes2[row][0];
-			this->notes[2][row][1] = notes2[row][1];
+			this->notes[2][column][0] = notes2[column][0];
+			this->notes[2][column][1] = notes2[column][1];
 		}
 	}
 
 	if (outa3 != ANALOG_OUT_NONE)
 	{
-		for (uint8_t row = 0; row < this->rowCount - 1; row++)
+		for (uint8_t row = 0; row < this->rowCount; row++)
 		{
 			this->notes[3][row][0] = notes3[row][0];
 			this->notes[3][row][1] = notes3[row][1];
@@ -116,7 +116,7 @@ GridOto::GridOto(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, i
 	}
 
 	/* Give it a moment... */
-	delay(200);	
+	delay(200);		
 }
 
 
@@ -147,21 +147,127 @@ void GridOto::reset()
 {
 	beat = (beat + 1) % columnCount;
 
+	OtoCell topevent = { false, 0, 0, CELL_UP };
+	OtoCell bottomevent = { false, 0, 0, CELL_UP };
+	OtoCell rightevent = { false, 0, 0, CELL_UP };
+	OtoCell leftevent = { false, 0, 0, CELL_UP };
+
+	/* Clear the matrix so we can set the new positions */
+	for (uint8_t column = 0; column < this->columnCount; column++)
+	{
+		for (uint8_t row = 0; row < this->rowCount; row++)
+		{
+			this->cells[0][column][row] = 0;
+		}
+	}
+
 	/* For each cell, see if it's active and move it in it's direction */
-	for (uint8_t cellIndex = 0; cellIndex < this->maxCells; cellIndex++)
+	for (uint8_t cellIndex = 0; cellIndex < this->maxcells; cellIndex++)
 	{
 		if (otocells[cellIndex].isActive)
 		{
+			switch (otocells[cellIndex].direction)
+			{
+				case CELL_UP:
+				
+					otocells[cellIndex].row--;
+					
+					if (otocells[cellIndex].row == 0)
+					{
+						otocells[cellIndex].direction = CELL_DOWN;
+						topevent = otocells[cellIndex];
+					}
+					
+					break;
+				
+				case CELL_RIGHT:
+				
+					otocells[cellIndex].column++;
+				
+					if (otocells[cellIndex].column == this->columnCount - 1) 
+					{
+						otocells[cellIndex].direction = CELL_LEFT;
+						rightevent = otocells[cellIndex];
+					}
+					
+					break;
+				
+				case CELL_DOWN:
+				
+					otocells[cellIndex].row++;
+				
+					if (otocells[cellIndex].row == this->rowCount - 1) 
+					{
+						otocells[cellIndex].direction = CELL_UP;
+						bottomevent = otocells[cellIndex];
+					}
+						
+					break;
+				
+				case CELL_LEFT:
+
+					otocells[cellIndex].column--;
 			
+					if (otocells[cellIndex].column == 0)
+					{
+						otocells[cellIndex].direction = CELL_RIGHT;
+						leftevent = otocells[cellIndex];
+					}
+						
+					break;
+			}
+			
+			/* Update the matrix display to show the new positions */
+			this->cells[0][otocells[cellIndex].column][otocells[cellIndex].row] = 1;
 		}
 	}
 	
 	/* For each cell, see if any are on top of each other and rotate them clockwise */
+	for (uint8_t cellIndex = 0; cellIndex < this->maxcells; cellIndex++)
+	{
+		if (otocells[cellIndex].isActive)
+		{
+			for (uint8_t cellIndex2 = 0; cellIndex2 < this->maxcells; cellIndex2++)
+			{
+				if ((cellIndex2 != cellIndex) && (otocells[cellIndex2].isActive))
+				{
+					if ((otocells[cellIndex].column == otocells[cellIndex2].column) && (otocells[cellIndex].row == otocells[cellIndex2].row))
+					{
+						Serial.println("collision");
+						
+						if (otocells[cellIndex].direction == CELL_UP) otocells[cellIndex].direction = CELL_RIGHT;
+						else if (otocells[cellIndex].direction == CELL_RIGHT) otocells[cellIndex].direction = CELL_DOWN;
+						else if (otocells[cellIndex].direction == CELL_DOWN) otocells[cellIndex].direction = CELL_LEFT;
+						else if (otocells[cellIndex].direction == CELL_LEFT) otocells[cellIndex].direction = CELL_UP;
+					}
+				}
+			}
+		}
+	}
 	
-	
-	/* For each side, see if any are on the side. */
-	
-	/* If more than one on the side, pick a random one */
+	if (topevent.isActive)
+	{
+		if (this->notes[0] != NULL) this->outs[0]->outputCV(this->key->getNoteMillivolt(this->notes[0][topevent.column][0], this->notes[0][topevent.column][1]));
+		gates[0]->reset();
+	}	
+
+	if (rightevent.isActive)
+	{
+		if (this->notes[1] != NULL) this->outs[1]->outputCV(this->key->getNoteMillivolt(this->notes[1][rightevent.row][0],this->notes[1][rightevent.row][1]));
+		gates[1]->reset();
+	}	
+
+	if (bottomevent.isActive)
+	{
+		if (this->notes[2] != NULL) this->outs[2]->outputCV(this->key->getNoteMillivolt(this->notes[2][bottomevent.column][0],this->notes[2][bottomevent.column][1]));
+		gates[2]->reset();
+	}	
+
+	if (leftevent.isActive)
+	{
+		if (this->notes[3] != NULL) this->outs[3]->outputCV(this->key->getNoteMillivolt(this->notes[3][leftevent.row][0],this->notes[3][leftevent.row][1]));
+		gates[3]->reset();
+	}	
 
 
 	if (isReady()) this->refreshGrid();
@@ -170,10 +276,30 @@ void GridOto::reset()
 void GridOto::buttonPressed(uint8_t column, uint8_t row)
 {		
 	/* If the button was exactly on one of the active cells, clear it */
+	for (uint8_t cellid = 0; cellid < this->maxcells; cellid++)
+	{
+		if (this->otocells[cellid].isActive && this->otocells[cellid].row == row && this->otocells[cellid].column == column)
+		{
+			this->otocells[cellid].isActive = false;
+			return;
+		}
+	}
 	
-	/* If not, create a new active cell at this position */
-	
+	/* If not, create a new active cell at this position */	
 	/* Find the first inactive cell and use that place */
+	for (uint8_t cellid = 0; cellid < this->maxcells; cellid++)
+	{
+		if (!this->otocells[cellid].isActive)
+		{
+			this->otocells[cellid].isActive = true;
+			this->otocells[cellid].column = column;
+			this->otocells[cellid].row = row;
+			
+			this->cells[0][column][row] = 1;
+			
+			break;
+		}
+	}
 	
 	/* If there were no inactive spots, then just ignore it */
 

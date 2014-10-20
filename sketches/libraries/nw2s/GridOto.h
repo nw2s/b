@@ -30,11 +30,11 @@ namespace nw2s
 	
 	enum OtoCellDirection
 	{
-		CELL_UP = 0;
-		CELL_LEFT = 1;
-		CELL_DOWN = 2;
-		CELL_RIGHT = 3;
-	}
+		CELL_UP = 0,
+		CELL_RIGHT = 1,
+		CELL_DOWN = 2,
+		CELL_LEFT = 3,
+	};
 
 	struct OtoCell
 	{
@@ -42,7 +42,7 @@ namespace nw2s
 		uint8_t column;
 		uint8_t row;
 		OtoCellDirection direction;
-	}
+	};
 }
 
 
