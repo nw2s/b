@@ -30,6 +30,7 @@
 #include <SD.h>
 #include <Wire.h>
 #include <aJSON.h>
+#include <Usb.h>
 
 using namespace nw2s;
 
