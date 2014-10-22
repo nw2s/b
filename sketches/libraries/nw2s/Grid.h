@@ -33,7 +33,7 @@
 #ifndef GRID_H
 #define GRID_H
 
-#include "usb_ch9.h"
+//include "usb_ch9.h"
 #include "Usb.h"
 #include "confdescparser.h"
 
@@ -118,6 +118,8 @@ class nw2s::USBGrid : public USBDeviceConfig, public UsbConfigXtracter
 class nw2s::USBGridController : public USBGrid
 {
 	protected:
+		
+		bool varibright = false;
 		
 		uint8_t beat = 0;
 		uint8_t columnCount;

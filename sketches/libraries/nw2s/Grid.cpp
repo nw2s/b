@@ -248,7 +248,7 @@ uint32_t USBGrid::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 			return rcode;
 		}
 	}
-	else if (deviceType == DEVICE_SERIES)
+	else if ((deviceType == DEVICE_SERIES) || (deviceType == DEVICE_GRIDS))
 	{
 		/* Set the baud rate */
         uint16_t baud_value = 0;
@@ -291,7 +291,6 @@ uint32_t USBGrid::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 
 	return 0;
 }
-
 
 
 void USBGrid::EndpointXtract(uint32_t conf, uint32_t iface, uint32_t alt, uint32_t proto, const USB_ENDPOINT_DESCRIPTOR *pep)
@@ -407,6 +406,7 @@ void USBGridController::setLED(uint8_t page, uint8_t column, uint8_t row, uint8_
 				break;
 			}				
 			case DEVICE_SERIES:
+			case DEVICE_GRIDS:
 			{
 				this->refreshGrid();
 				break;		
@@ -432,10 +432,11 @@ void USBGridController::clearLED(uint8_t page, uint8_t column, uint8_t row)
 			}
 						
 			case DEVICE_SERIES:
+			case DEVICE_GRIDS:
 			{
 				this->refreshGrid();
 				break;			
-			}			
+			}						
 		}
 	}
 }
@@ -467,7 +468,7 @@ void USBGridController::refreshGrid()
 	switch (this->deviceType)
 	{
 		case DEVICE_40H_TRELLIS:
-		
+		{
 			uint8_t gridCommand[32];
 		
 			for (uint8_t column = 0; column < this->columnCount; column++)
@@ -487,9 +488,10 @@ void USBGridController::refreshGrid()
 			this->write(this->columnCount * 2, gridCommand);
 			
 			break;
+		}
 		
 		case DEVICE_SERIES:
-	
+		{
 			/* Quadrant-based commands are most efficient for full screen refresh */
 			
 			/* 64 - one quadrant */
@@ -513,25 +515,129 @@ void USBGridController::refreshGrid()
 					{
 						if (this->cells[this->currentPage][column][row])
 						{
-							quadrant1[row + 1] = quadrant1[row + 1] | (1 << column);
+							quadrant1[(row % 8) + 1] = quadrant1[(row % 8) + 1] | (1 << (column % 8));
 						}
 					}
 
 					/* quadrant 2 */
-					// if (column <= 8 && row < 8)
-					// {
-					// 	if (this->cells[this->currentPage][column][row])
-					// 	{
-					// 		quadrant2[row + 1] = quadrant1[row + 1] | (1 << column);
-					// 	}
-					// }
+					if (column <= 8 && row < 8)
+					{
+						if (this->cells[this->currentPage][column][row])
+						{
+							quadrant2[(row % 8) + 1] = quadrant2[(row % 8) + 1] | (1 << (column % 8));
+						}
+					}
+
+					/* quadrant 3 */
+					if (column <= 8 && row < 8)
+					{
+						if (this->cells[this->currentPage][column][row])
+						{
+							quadrant3[(row % 8) + 1] = quadrant3[(row % 8) + 1] | (1 << (column % 8));
+						}
+					}
+
+					/* quadrant 4 */
+					if (column <= 8 && row < 8)
+					{
+						if (this->cells[this->currentPage][column][row])
+						{
+							quadrant4[(row % 8) + 1] = quadrant4[(row % 8) + 1] | (1 << (column % 8));
+						}
+					}
 				}				
 			}
 
 			this->write(9, quadrant1);
+			this->write(9, quadrant2);
+			this->write(9, quadrant3);
+			this->write(9, quadrant4);
 			delay(5);
 	
 			break;
+		}
+			
+		case DEVICE_GRIDS:
+		{
+			if (!varibright)
+			{
+				/* If it's not varibright, then it's just boolean off and on */
+
+				/* Quadrant-based commands are most efficient for full screen refresh */
+			
+				/* 64 - one quadrant */
+				uint8_t quadrant1[] = { 0x14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	
+				/* 128 - two quadrants */
+				uint8_t quadrant2[] = { 0x14, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+			
+				/* 256 - four quadrants */
+				uint8_t quadrant3[] = { 0x14, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+				uint8_t quadrant4[] = { 0x14, 8, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+			
+				/* The LED_FRAME command for series is per row, not column */
+				for (uint8_t row = 0; row < this->rowCount; row++)
+				{
+					for (uint8_t column = 0; column < this->columnCount; column++)
+					{
+						/* quadrant 1 */
+						if (column < 8 && row < 8)
+						{
+							if (this->cells[this->currentPage][column][row])
+							{
+								quadrant1[(row % 8) + 3] = quadrant1[(row % 8) + 3] | (1 << (column % 8));
+							}
+						}
+
+						/* quadrant 2 */
+						if (column >= 8 && row < 8)
+						{
+							if (this->cells[this->currentPage][column][row])
+							{
+								quadrant2[(row % 8) + 3] = quadrant2[(row % 8) + 3] | (1 << (column % 8));
+							}
+						}
+
+						/* quadrant 3 */
+						if (column < 8 && row >= 8)
+						{
+							if (this->cells[this->currentPage][column][row])
+							{
+								quadrant3[(row % 8) + 3] = quadrant3[(row % 8) + 3] | (1 << (column % 8));
+							}
+						}
+
+						/* quadrant 4 */
+						if (column >= 8 && row >= 8)
+						{
+							if (this->cells[this->currentPage][column][row])
+							{
+								quadrant4[(row % 8) + 3] = quadrant4[(row % 8) + 3] | (1 << (column % 8));
+							}
+						}
+					}				
+				}
+				
+				this->write(11, quadrant1);
+				this->write(11, quadrant2);
+				this->write(11, quadrant3);
+				this->write(11, quadrant4);
+
+				delay(5);
+			}
+			else
+			{
+				for (uint8_t row = 0; row < this->rowCount; row++)
+				{
+					for (uint8_t column = 0; column < this->columnCount; column++)
+					{
+						
+					}
+				}
+			}
+	
+			break;
+		}
 	}
 }
 
@@ -562,16 +668,22 @@ void USBGridController::task()
 		}
 			
 		/* Only problem, if we don't get an even number at once, we'll drop the last half */
-		for (uint8_t i = 0; i < nbread / 2; i++)
+		for (uint8_t i = 0; i < nbread; i++)
 		{
-			uint8_t command = buf[i * 2];
-			uint8_t data = buf[(i * 2) + 1];
-			
-			uint8_t column = data >> 4;
-			uint8_t row = data & 0x0F;
+			// uint8_t command = buf[i * 2];
+			// uint8_t data = buf[(i * 2) + 1];
+			//
+			// uint8_t column = data >> 4;
+			// uint8_t row = data & 0x0F;
 
 			if (deviceType == DEVICE_40H_TRELLIS)
 			{
+				uint8_t command = buf[i++];			
+				uint8_t data = buf[i];
+			
+				uint8_t column = data >> 4;
+				uint8_t row = data & 0x0F;
+
 				if (command == 0x01)
 				{
 					//TODO: refactor to a struct
@@ -595,6 +707,12 @@ void USBGridController::task()
 			}
 			else if (deviceType == DEVICE_SERIES)
 			{
+				uint8_t command = buf[i++];			
+				uint8_t data = buf[i];
+			
+				uint8_t column = data >> 4;
+				uint8_t row = data & 0x0F;
+
 				if (command == 0x00)
 				{
 					//TODO: refactor to a struct
@@ -620,13 +738,47 @@ void USBGridController::task()
 					Serial.println(command, HEX);
 				}
 			}
+			else if (deviceType == DEVICE_GRIDS)
+			{
+				uint8_t command = buf[i++];			
+				
+				if (command == 0x21)
+				{
+					uint8_t column = buf[i++];
+					uint8_t row = buf[i];
+
+					this->lastpress[0] = column;
+					this->lastpress[1] = row;
+				
+					this->buttonPressed(column, row);
+					
+					Serial.print(column, HEX);
+					Serial.print(" ");
+					Serial.println(row, HEX);
+				}
+				else if (command == 0x20)
+				{
+					uint8_t column = buf[i++];
+					uint8_t row = buf[i];
+
+					this->lastrelease[0] = column;
+					this->lastrelease[1] = row;
+				
+					this->buttonReleased(column, row);
+				}
+				else if (command == 0x31)
+				{
+					/* Not sure why the monome is spitting this out constantly */
+				}
+				else
+				{
+					Serial.print("Unknown command: ");
+					Serial.println(command, HEX);
+				}
+			}
 		}
 	}	
 }
-
-
-
-
 
 
 
