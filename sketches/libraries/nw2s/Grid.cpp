@@ -561,6 +561,7 @@ void USBGridController::refreshGrid()
 		{
 			if (!varibright)
 			{
+				//TODO: We don't need to send them all if the size isn't that big
 				/* If it's not varibright, then it's just boolean off and on */
 
 				/* Quadrant-based commands are most efficient for full screen refresh */
@@ -575,7 +576,7 @@ void USBGridController::refreshGrid()
 				uint8_t quadrant3[] = { 0x14, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 				uint8_t quadrant4[] = { 0x14, 8, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 			
-				/* The LED_FRAME command for series is per row, not column */
+				/* The LED_FRAME command for grids is per row, not column */
 				for (uint8_t row = 0; row < this->rowCount; row++)
 				{
 					for (uint8_t column = 0; column < this->columnCount; column++)
@@ -627,13 +628,69 @@ void USBGridController::refreshGrid()
 			}
 			else
 			{
+				/* If it is varibright, then it's 4 bits of brightness */
+
+				/* Quadrant-based commands are most efficient for full screen refresh */
+			
+				/* 64 - one quadrant */
+				uint8_t quadrant1[] = { 0x1A, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	
+				/* 128 - two quadrants */
+				uint8_t quadrant2[] = { 0x1A, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+			
+				/* 256 - four quadrants */
+				uint8_t quadrant3[] = { 0x1A, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+				uint8_t quadrant4[] = { 0x1A, 8, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+			
+				/* The LED_FRAME command for grids is per row, not column */
 				for (uint8_t row = 0; row < this->rowCount; row++)
 				{
 					for (uint8_t column = 0; column < this->columnCount; column++)
 					{
-						
-					}
+						/* quadrant 1 */
+						if (column < 8 && row < 8)
+						{
+							if (this->cells[this->currentPage][column][row])
+							{
+								quadrant1[((row % 8) * 4) + ((column % 8) / 2) + 3] = quadrant1[((row % 8) * 4) + ((column % 8) / 2) + 3] | ((this->cells[this->currentPage][column][row] & 0x0F) << (((column + 1) % 2) * 4));
+							}
+						}
+
+						/* quadrant 2 */
+						if (column >= 8 && row < 8)
+						{
+							if (this->cells[this->currentPage][column][row])
+							{
+								quadrant2[((row % 8) * 4) + 3] = quadrant2[((row % 8) * 4) + 3] | ((this->cells[this->currentPage][column][row] & 0x0F) << (((column + 1) % 2) * 4));
+							}
+						}
+
+						/* quadrant 3 */
+						if (column < 8 && row >= 8)
+						{
+							if (this->cells[this->currentPage][column][row])
+							{
+								quadrant3[((row % 8) * 4) + 3] = quadrant3[((row % 8) * 4) + 3] | ((this->cells[this->currentPage][column][row] & 0x0F) << (((column + 1) % 2) * 4));
+							}
+						}
+
+						/* quadrant 4 */
+						if (column >= 8 && row >= 8)
+						{
+							if (this->cells[this->currentPage][column][row])
+							{
+								quadrant4[((row % 8) * 4) + 3] = quadrant4[((row % 8) * 4) + 3] | ((this->cells[this->currentPage][column][row] & 0x0F) << (((column + 1) % 2) * 4));
+							}
+						}
+					}				
 				}
+				
+				this->write(35, quadrant1);
+				// this->write(11, quadrant2);
+				// this->write(11, quadrant3);
+				// this->write(11, quadrant4);
+
+				delay(5);
 			}
 	
 			break;
@@ -667,15 +724,9 @@ void USBGridController::task()
 			Serial.println(rcode, HEX);
 		}
 			
-		/* Only problem, if we don't get an even number at once, we'll drop the last half */
+		/* Only problem, if we don't get the whole chunk at once, we'll drop half */
 		for (uint8_t i = 0; i < nbread; i++)
 		{
-			// uint8_t command = buf[i * 2];
-			// uint8_t data = buf[(i * 2) + 1];
-			//
-			// uint8_t column = data >> 4;
-			// uint8_t row = data & 0x0F;
-
 			if (deviceType == DEVICE_40H_TRELLIS)
 			{
 				uint8_t command = buf[i++];			

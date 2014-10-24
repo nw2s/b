@@ -40,6 +40,7 @@ class nw2s::GridTriggerController : public BeatDevice, public USBGridController
 		virtual void timer(unsigned long t);
 		virtual void reset();
 		
+		void setProbabilityInput(PinAnalogIn input);
 		void setShuffleToggle(PinDigitalIn input);
 		void setNextPageToggle(PinDigitalIn input);
 		void setResetPageToggle(PinDigitalIn input);	
@@ -63,6 +64,7 @@ class nw2s::GridTriggerController : public BeatDevice, public USBGridController
 		unsigned long clockState = 0;
 		unsigned long nextPageState = 0;
 		
+		PinAnalogIn probabilityInput = ANALOG_IN_NONE;
 		PinDigitalIn shuffleInput = DIGITAL_IN_NONE;
 		PinDigitalIn shuffleScopeInput = DIGITAL_IN_NONE;
 		PinDigitalIn resetPageInput = DIGITAL_IN_NONE;

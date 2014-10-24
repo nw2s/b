@@ -28,7 +28,10 @@ bool Entropy::seeded = false;
 
 bool Entropy::getBit()
 {
-	return (digitalRead(DUE_IN_DIGITAL_NOISE) ^ random(1)) ? true : false;
+	bool random1 = random(1);
+	bool random2 = digitalRead(DUE_IN_DIGITAL_NOISE);
+	
+	return random1 ^ random2;	
 }
 
 long Entropy::getValue()

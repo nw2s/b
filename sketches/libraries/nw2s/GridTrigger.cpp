@@ -71,6 +71,16 @@ GridTriggerController::GridTriggerController(GridDevice deviceType, uint8_t colu
 	delay(200);	
 }
 
+void GridTriggerController::setProbabilityInput(PinAnalogIn input)
+{
+	this->probabilityInput = input;
+	
+	if (this->deviceType == DEVICE_GRIDS && input != ANALOG_IN_NONE)
+	{
+		this->varibright = true;
+	}
+}
+
 void GridTriggerController::setShuffleToggle(PinDigitalIn input)
 {
 	this->shuffleInput = input;
@@ -176,7 +186,19 @@ void GridTriggerController::reset()
 	{
 		if (getValue(this->currentPage, beat, i))
 		{
-			this->gates[i]->reset();
+			if (this->probabilityInput == ANALOG_IN_NONE)
+			{
+				/* If no probability, just reset them all */
+				this->gates[i]->reset();
+			}
+			else
+			{
+				/* If probability, get a random value */
+				if (Entropy::getValue(0, 15) <= getValue(this->currentPage, beat, i))
+				{
+					this->gates[i]->reset();
+				}
+			}
 		}
 	}
 
@@ -192,12 +214,42 @@ void GridTriggerController::buttonPressed(uint8_t column, uint8_t row)
 	if (row == 0) 
 	{		
 		this->switchPage(column);
-		
-		//this->setLED(this->currentPage, this->currentPage, 0, 1);
 	}	
 	else if (!getValue(this->currentPage, column, row))
 	{
-		if (isReady()) this->setLED(this->currentPage, column, row, 1);
+		if (this->probabilityInput == ANALOG_IN_NONE)
+		{
+			if (isReady()) this->setLED(this->currentPage, column, row, 1);
+		}
+		else
+		{
+			/* Get a probability value based on analog input specified */
+			int probability = analogReadmV(this->probabilityInput, 0, 5000);
+
+			Serial.print("read: ");
+			Serial.print(probability);
+			
+			probability = probability / 312;
+
+			Serial.print(" ");
+			Serial.print(probability);
+
+			probability = (probability < 2) ? 2 : (probability > 15) ? 15 : probability;
+
+			Serial.print(" ");
+			Serial.print(probability);
+
+			probability = probability | 0x01;
+
+			//TODO: Make sure the range is correct
+			Serial.print(" ");
+			Serial.println(probability);
+
+			
+			//uint8_t probability = 0x0F;
+			
+			if (isReady()) this->setLED(this->currentPage, column, row, probability);
+		}
 	}
 	else
 	{
@@ -214,6 +266,23 @@ void GridTriggerController::buttonReleased(uint8_t column, uint8_t row)
 void GridTriggerController::shuffleRow(uint8_t rowIndex)
 {
 	/* Pseudo random shuffling of triggers, but keeping the same number of them set */
+	
+	/* Shift by one */
+	// for (uint8_t i = 0; i < this->columnCount - 1; i++)
+	// {
+	// 	if (Entropy::getBit() | Entropy::getBit())
+	// 	{
+	// 		uint8_t position1 = i;
+	// 		uint8_t position2 = i + 1;
+	//
+	// 		uint8_t value1 = getValue(this->currentPage, position1, rowIndex);
+	// 		uint8_t value2 = getValue(this->currentPage, position2, rowIndex);
+	//
+	// 		this->cells[this->currentPage][position2][rowIndex] = value1;
+	// 		this->cells[this->currentPage][position1][rowIndex] = value2;
+	// 	}
+	// }
+	
 	
 	/* 75% chance that we swap bits across the midpoint  12344321   */
 	for (uint8_t i = 0; i < this->columnCount / 2; i++)
