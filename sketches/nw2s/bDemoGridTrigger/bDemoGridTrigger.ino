@@ -52,7 +52,7 @@ void setup()
 	Trigger* trigger = Trigger::create(DUE_OUT_D15, DIV_QUARTER);
 	vclock->registerDevice(trigger);
 
-	grid = GridTriggerController::create(DEVICE_GRIDS, 16, 8, DIV_SIXTEENTH, DUE_OUT_D00, DUE_OUT_D01, DUE_OUT_D02, DUE_OUT_D03,DUE_OUT_D04, DUE_OUT_D05, DUE_OUT_D06);
+	grid = GridTriggerController::create(DEVICE_GRIDS, 16, 16, DIV_SIXTEENTH, DUE_OUT_D00, DUE_OUT_D01, DUE_OUT_D02, DUE_OUT_D03,DUE_OUT_D04, DUE_OUT_D05, DUE_OUT_D06);
 	grid->setProbabilityInput(DUE_IN_A01);
 
 	//grid = GridTriggerController::create(DEVICE_40H_TRELLIS, 16, 8, DIV_SIXTEENTH, DUE_OUT_D00, DUE_OUT_D01, DUE_OUT_D02, DUE_OUT_D03,DUE_OUT_D04, DUE_OUT_D05, DUE_OUT_D06);

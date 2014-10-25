@@ -35,6 +35,7 @@ class nw2s::GridTriggerController : public BeatDevice, public USBGridController
 	public:
 		
 		static GridTriggerController* create(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, int clockDivision, PinDigitalOut out0, PinDigitalOut out1, PinDigitalOut out2, PinDigitalOut out3, PinDigitalOut out4, PinDigitalOut out5, PinDigitalOut out6);
+		static GridTriggerController* create(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, int clockDivision, PinDigitalOut out0, PinDigitalOut out1, PinDigitalOut out2, PinDigitalOut out3, PinDigitalOut out4, PinDigitalOut out5, PinDigitalOut out6, PinDigitalOut out7, PinDigitalOut out8, PinDigitalOut out9, PinDigitalOut out10, PinDigitalOut out11, PinDigitalOut out12, PinDigitalOut out13, PinDigitalOut out14);
 		static GridTriggerController* create(aJsonObject* data);
 
 		virtual void timer(unsigned long t);
@@ -54,11 +55,11 @@ class nw2s::GridTriggerController : public BeatDevice, public USBGridController
 		
 	private:
 		
-		GridTriggerController(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, int clockDivision, PinDigitalOut out0, PinDigitalOut out1, PinDigitalOut out2, PinDigitalOut out3, PinDigitalOut out4, PinDigitalOut out5, PinDigitalOut out6);
+		GridTriggerController(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, int clockDivision, PinDigitalOut out0, PinDigitalOut out1, PinDigitalOut out2, PinDigitalOut out3, PinDigitalOut out4, PinDigitalOut out5, PinDigitalOut out6, PinDigitalOut out7, PinDigitalOut out8, PinDigitalOut out9, PinDigitalOut out10, PinDigitalOut out11, PinDigitalOut out12, PinDigitalOut out13, PinDigitalOut out14);
 		
 		void shuffleRow(uint8_t rowIndex);
 
-		Gate* gates[8];	
+		Gate* gates[16];	
 		bool shuffleState = false;
 		bool resetPageState = false;
 		unsigned long clockState = 0;

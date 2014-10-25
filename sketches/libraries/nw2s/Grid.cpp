@@ -561,7 +561,6 @@ void USBGridController::refreshGrid()
 		{
 			if (!varibright)
 			{
-				//TODO: We don't need to send them all if the size isn't that big
 				/* If it's not varibright, then it's just boolean off and on */
 
 				/* Quadrant-based commands are most efficient for full screen refresh */
@@ -619,6 +618,7 @@ void USBGridController::refreshGrid()
 					}				
 				}
 				
+				//TODO: We don't need to send them all if the size isn't that big
 				this->write(11, quadrant1);
 				this->write(11, quadrant2);
 				this->write(11, quadrant3);
@@ -661,7 +661,7 @@ void USBGridController::refreshGrid()
 						{
 							if (this->cells[this->currentPage][column][row])
 							{
-								quadrant2[((row % 8) * 4) + 3] = quadrant2[((row % 8) * 4) + 3] | ((this->cells[this->currentPage][column][row] & 0x0F) << (((column + 1) % 2) * 4));
+								quadrant2[((row % 8) * 4) + ((column % 8) / 2) + 3] = quadrant2[((row % 8) * 4) + ((column % 8) / 2) + 3] | ((this->cells[this->currentPage][column][row] & 0x0F) << (((column + 1) % 2) * 4));
 							}
 						}
 
@@ -670,7 +670,7 @@ void USBGridController::refreshGrid()
 						{
 							if (this->cells[this->currentPage][column][row])
 							{
-								quadrant3[((row % 8) * 4) + 3] = quadrant3[((row % 8) * 4) + 3] | ((this->cells[this->currentPage][column][row] & 0x0F) << (((column + 1) % 2) * 4));
+								quadrant3[((row % 8) * 4) + ((column % 8) / 2) + 3] = quadrant3[((row % 8) * 4) + ((column % 8) / 2) + 3] | ((this->cells[this->currentPage][column][row] & 0x0F) << (((column + 1) % 2) * 4));
 							}
 						}
 
@@ -679,18 +679,28 @@ void USBGridController::refreshGrid()
 						{
 							if (this->cells[this->currentPage][column][row])
 							{
-								quadrant4[((row % 8) * 4) + 3] = quadrant4[((row % 8) * 4) + 3] | ((this->cells[this->currentPage][column][row] & 0x0F) << (((column + 1) % 2) * 4));
+								quadrant4[((row % 8) * 4) + ((column % 8) / 2) + 3] = quadrant4[((row % 8) * 4) + ((column % 8) / 2) + 3] | ((this->cells[this->currentPage][column][row] & 0x0F) << (((column + 1) % 2) * 4));
 							}
 						}
 					}				
 				}
-				
-				this->write(35, quadrant1);
-				// this->write(11, quadrant2);
-				// this->write(11, quadrant3);
-				// this->write(11, quadrant4);
 
-				delay(5);
+				//TODO: Not sure why it screws up without the delay
+
+				this->write(35, quadrant1);
+				if (this->columnCount > 8) 
+				{
+					this->write(35, quadrant2);
+
+					if (this->rowCount > 8) 
+					{
+						delay(5);
+						this->write(35, quadrant3);
+						this->write(35, quadrant4);						
+					}	
+				}	
+
+				delay(5);				
 			}
 	
 			break;

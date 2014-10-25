@@ -27,10 +27,15 @@ using namespace nw2s;
 
 GridTriggerController* GridTriggerController::create(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, int clockDivision, PinDigitalOut out0, PinDigitalOut out1, PinDigitalOut out2, PinDigitalOut out3, PinDigitalOut out4, PinDigitalOut out5, PinDigitalOut out6)
 {	
-	return new GridTriggerController(deviceType, columnCount, rowCount, clockDivision, out0, out1, out2, out3, out4, out5, out6);
+	return new GridTriggerController(deviceType, columnCount, rowCount, clockDivision, out0, out1, out2, out3, out4, out5, out6, DIGITAL_OUT_NONE, DIGITAL_OUT_NONE, DIGITAL_OUT_NONE, DIGITAL_OUT_NONE, DIGITAL_OUT_NONE, DIGITAL_OUT_NONE, DIGITAL_OUT_NONE, DIGITAL_OUT_NONE);
 }
 
-GridTriggerController::GridTriggerController(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, int clockDivision, PinDigitalOut out0, PinDigitalOut out1, PinDigitalOut out2, PinDigitalOut out3, PinDigitalOut out4, PinDigitalOut out5, PinDigitalOut out6) : USBGridController(deviceType, columnCount, rowCount)
+GridTriggerController* GridTriggerController::create(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, int clockDivision, PinDigitalOut out0, PinDigitalOut out1, PinDigitalOut out2, PinDigitalOut out3, PinDigitalOut out4, PinDigitalOut out5, PinDigitalOut out6, PinDigitalOut out7, PinDigitalOut out8, PinDigitalOut out9, PinDigitalOut out10, PinDigitalOut out11, PinDigitalOut out12, PinDigitalOut out13, PinDigitalOut out14)
+{	
+	return new GridTriggerController(deviceType, columnCount, rowCount, clockDivision, out0, out1, out2, out3, out4, out5, out6, out7, out8, out9, out10, out11, out12, out13, out14);
+}
+
+GridTriggerController::GridTriggerController(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, int clockDivision, PinDigitalOut out0, PinDigitalOut out1, PinDigitalOut out2, PinDigitalOut out3, PinDigitalOut out4, PinDigitalOut out5, PinDigitalOut out6, PinDigitalOut out7, PinDigitalOut out8, PinDigitalOut out9, PinDigitalOut out10, PinDigitalOut out11, PinDigitalOut out12, PinDigitalOut out13, PinDigitalOut out14) : USBGridController(deviceType, columnCount, rowCount)
 {
 	this->beat = 0;
 	this->clock_division = clockDivision;
@@ -42,6 +47,14 @@ GridTriggerController::GridTriggerController(GridDevice deviceType, uint8_t colu
 	this->gates[5] = Gate::create(out4, GATE_DURATION);
 	this->gates[6] = Gate::create(out5, GATE_DURATION);
 	this->gates[7] = Gate::create(out6, GATE_DURATION);
+	this->gates[8] = Gate::create(out7, GATE_DURATION);
+	this->gates[9] = Gate::create(out8, GATE_DURATION);
+	this->gates[10] = Gate::create(out9, GATE_DURATION);
+	this->gates[11] = Gate::create(out10, GATE_DURATION);
+	this->gates[12] = Gate::create(out11, GATE_DURATION);
+	this->gates[13] = Gate::create(out12, GATE_DURATION);
+	this->gates[14] = Gate::create(out13, GATE_DURATION);
+	this->gates[15] = Gate::create(out14, GATE_DURATION);
 	
 	/* initialize the memory */
 	if (!memoryInitialized)
@@ -109,7 +122,7 @@ void GridTriggerController::setClockInput(PinDigitalIn input)
 
 void GridTriggerController::timer(unsigned long t)
 {
-	for (uint8_t i = 1; i < 8; i++)
+	for (uint8_t i = 1; i < this->rowCount; i++)
 	{
 		this->gates[i]->timer(t);
 	}
@@ -180,13 +193,14 @@ void GridTriggerController::reset()
 
 	beat = (beat + 1) % columnCount;
 
-	if (isReady()) this->setLED(this->currentPage, beat, 0, 1);
+	/* Just using 16 all the time as it works for both varibright and not */
+	if (isReady()) this->setLED(this->currentPage, beat, 0, 0x0F);
 
 	for (uint8_t i = 1; i < this->rowCount; i++)
 	{
 		if (getValue(this->currentPage, beat, i))
 		{
-			if (this->probabilityInput == ANALOG_IN_NONE)
+			if (this->probabilityInput == ANALOG_IN_NONE || getValue(this->currentPage, beat, i) == 15)
 			{
 				/* If no probability, just reset them all */
 				this->gates[i]->reset();
