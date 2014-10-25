@@ -59,7 +59,6 @@ namespace nw2s
 	// class RandomDropoutClock;
 	
 	int clockDivisionFromName(char* name);
-	
 }
 
 class nw2s::BeatDevice : public TimeBasedDevice
@@ -71,12 +70,16 @@ class nw2s::BeatDevice : public TimeBasedDevice
 		void setNextTime(unsigned long t);
 		unsigned long getNextTime();
 		
+		void setStopInput(PinDigitalIn input);
+		bool isStopped();
+		
 	protected:
 		int clock_division;
 		BeatDevice();
 		
 	private:
-		unsigned long next_time;
+		unsigned long next_time = 0;
+		PinDigitalIn stopInput = DIGITAL_IN_NONE;
 };
 
 class nw2s::Clock : public nw2s::TimeBasedDevice

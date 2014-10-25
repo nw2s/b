@@ -110,9 +110,19 @@ void BeatDevice::setNextTime(unsigned long t)
 	this->next_time = t;
 }
 
+bool BeatDevice::isStopped()
+{
+	return (this->stopInput == DIGITAL_IN_NONE) ? false : digitalRead(this->stopInput);
+}
+
 unsigned long BeatDevice::getNextTime()
 {
 	return this->next_time;
+}
+
+void BeatDevice::setStopInput(PinDigitalIn input)
+{
+	this->stopInput = input;
 }
 
 void BeatDevice::calculate()
@@ -227,7 +237,10 @@ void Clock::timer(unsigned long t)
 	{
 		if (this->devices[i]->getNextTime() <= t)
 		{
-			this->devices[i]->reset();
+			if (!this->devices[i]->isStopped())
+			{
+				this->devices[i]->reset();
+			}
 		}
 	}	
 	
@@ -240,7 +253,8 @@ void Clock::timer(unsigned long t)
 	/* Then update the clock display */
 	if (t >= this->next_clock_t)
 	{
-		if (t > this->next_clock_t) Serial.println("Clock missed next clock T by (ms) " + String(t - this->next_clock_t));
+		//TODO: Disabling this cause we're having some perf problems.
+		//if (t > this->next_clock_t) Serial.println("Clock missed next clock T by (ms) " + String(t - this->next_clock_t));
 		IOUtils::displayBeat(this->beat, this);				
 		this->beat = (this->beat + 1) % this->beats_per_measure;		
 
