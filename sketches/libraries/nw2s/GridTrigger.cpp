@@ -282,26 +282,26 @@ void GridTriggerController::shuffleRow(uint8_t rowIndex)
 	/* Pseudo random shuffling of triggers, but keeping the same number of them set */
 	
 	/* Shift by one */
-	// for (uint8_t i = 0; i < this->columnCount - 1; i++)
-	// {
-	// 	if (Entropy::getBit() | Entropy::getBit())
-	// 	{
-	// 		uint8_t position1 = i;
-	// 		uint8_t position2 = i + 1;
-	//
-	// 		uint8_t value1 = getValue(this->currentPage, position1, rowIndex);
-	// 		uint8_t value2 = getValue(this->currentPage, position2, rowIndex);
-	//
-	// 		this->cells[this->currentPage][position2][rowIndex] = value1;
-	// 		this->cells[this->currentPage][position1][rowIndex] = value2;
-	// 	}
-	// }
+	for (uint8_t i = 0; i < this->columnCount - 1; i++)
+	{
+		if (Entropy::getValue(0, 100) < 75)
+		{
+			uint8_t position1 = i;
+			uint8_t position2 = i + 1;
+
+			uint8_t value1 = getValue(this->currentPage, position1, rowIndex);
+			uint8_t value2 = getValue(this->currentPage, position2, rowIndex);
+
+			this->cells[this->currentPage][position2][rowIndex] = value1;
+			this->cells[this->currentPage][position1][rowIndex] = value2;
+		}
+	}
 	
 	
 	/* 75% chance that we swap bits across the midpoint  12344321   */
 	for (uint8_t i = 0; i < this->columnCount / 2; i++)
 	{		
-		if (Entropy::getBit() | Entropy::getBit())
+		if (Entropy::getValue(0, 100) < 75)
 		{
 			uint8_t position1 = i;
 			uint8_t position2 = columnCount - 1 - i;
@@ -317,7 +317,7 @@ void GridTriggerController::shuffleRow(uint8_t rowIndex)
 	/* 75% chance that we flip a bit with its pair across the middle 12341234 */
 	for (uint8_t i = 0; i < this->columnCount / 2; i++)
 	{
-		if (Entropy::getBit() | Entropy::getBit())
+		if (Entropy::getValue(0, 100) < 75)
 		{
 			uint8_t position1 = i;
 			uint8_t position2 = i + this->columnCount / 2;
@@ -333,7 +333,7 @@ void GridTriggerController::shuffleRow(uint8_t rowIndex)
 	/* 75% chance that we flip a bit with its neighbor 11223344 */
 	for (uint8_t i = 0; i < this->columnCount / 2; i++)
 	{
-		if (Entropy::getBit() | Entropy::getBit())
+		if (Entropy::getValue(0, 100) < 75)
 		{
 			uint8_t position1 = i * 2;
 			uint8_t position2 = (i * 2) + 1;

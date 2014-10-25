@@ -690,12 +690,15 @@ void USBGridController::refreshGrid()
 				this->write(35, quadrant1);
 				if (this->columnCount > 8) 
 				{
+					delay(3);
 					this->write(35, quadrant2);
 
 					if (this->rowCount > 8) 
 					{
-						delay(5);
+						delay(3);
 						this->write(35, quadrant3);
+						
+						delay(3);
 						this->write(35, quadrant4);						
 					}	
 				}	
