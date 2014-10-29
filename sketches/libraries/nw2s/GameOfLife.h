@@ -1,6 +1,7 @@
 /*
 
 	Conway's Game of Life device. To be used with Monome grids.
+	Copyright (C) 2014 scanner darkly (fuzzybeacon@gmail.com)
 
 	nw2s::b - A microcontroller-based modular synth control framework
 	Copyright (C) 2013 Scott Wilson (thomas.scott.wilson@gmail.com)
