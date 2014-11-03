@@ -204,6 +204,11 @@ void GridNoteSequencer::reset()
 	// }
 }
 
+void GridNoteSequencer::setClockInput(PinDigitalIn input)
+{
+	this->clockInput = input;
+}
+
 void GridNoteSequencer::buttonPressed(uint8_t column, uint8_t row)
 {		
 	/* Top row is reserved for the clock - pressing sets the current page */
