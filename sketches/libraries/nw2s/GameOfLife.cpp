@@ -98,6 +98,11 @@ void GameOfLife::reset()
 	if (isReady()) this->refreshGrid();
 }
 
+void GameOfLife::setClockInput(PinDigitalIn input)
+{
+	this->clockInput = input;
+}
+
 int GameOfLife::wrapX(int x)
 {
 	return (x + columnCount) % columnCount;
@@ -166,6 +171,7 @@ void GameOfLife::nextGeneration()
 	}
 	
 	// TODO add array for digital outs, replace with a loop
+	// If you're looking for that array, see IO.h array INDEX_DIGITAL_OUT
 	digitalWrite(DUE_OUT_D00, lifecells[nextGen][0][0] == 0 ? LOW : HIGH);
 	digitalWrite(DUE_OUT_D01, lifecells[nextGen][1][0] == 0 ? LOW : HIGH);
 	digitalWrite(DUE_OUT_D02, lifecells[nextGen][2][0] == 0 ? LOW : HIGH);
