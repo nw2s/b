@@ -35,6 +35,8 @@
 #include "b.h"
 #include "../aJSON/aJSON.h"
 #include "SDFirmware.h"
+#include "JSONUtil.h"
+#include "GameOfLife.h"
 
 using namespace nw2s;
 
@@ -194,6 +196,21 @@ void nw2s::loadProgram(aJsonObject* program)
 		else if (strcmp(typeNode->valuestring, "CVNoteSequencer") == 0)
 		{
 			EventManager::registerDevice(CVNoteSequencer::create(deviceNode));
+		}
+		else if (strcmp(typeNode->valuestring, "GameOfLife") == 0)
+		{
+			/* If the device has it's own clock input, or if there is no clock defined, just register with event manager */
+			if ((clockDevice != NULL) && (getDigitalInputFromJSON(deviceNode, "externalClock") == DIGITAL_IN_NONE))
+			{
+				clockDevice->registerDevice(GameOfLife::create(deviceNode));
+			}
+			else
+			{
+				EventManager::registerDevice(GameOfLife::create(deviceNode));
+				
+				static const char nodeError[] = "Game of Life defined with no clock, assuming external.";
+				Serial.println(String(nodeError));
+			}
 		}
 		else if (strcmp(typeNode->valuestring, "CVSequencer") == 0)
 		{

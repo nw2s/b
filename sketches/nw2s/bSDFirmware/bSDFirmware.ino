@@ -33,6 +33,7 @@
 #include <aJSON.h>
 #include <SDFirmware.h>
 #include <Usb.h>
+#include <Grid.h>
 
 using namespace nw2s;
 

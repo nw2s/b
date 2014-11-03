@@ -30,6 +30,33 @@ GameOfLife* GameOfLife::create(GridDevice deviceType, uint8_t columnCount, uint8
 	return new GameOfLife(deviceType, columnCount, rowCount, varibright);
 }
 
+
+GameOfLife* GameOfLife::create(aJsonObject* data)
+{
+	static const char rowsNodeName[] = "rows";
+	static const char columnsNodeName[] = "column";
+	static const char clockNodeName[] = "externalClock";
+	static const char varibrightNodeName[] = "varibright";
+
+	GridDevice device = DEVICE_GRIDS;
+	//GridDevice device = getGridDeviceFromJSON(data);
+	int rows = getIntFromJSON(data, rowsNodeName, 8, 8, 16);
+	int columns = getIntFromJSON(data, columnsNodeName, 8, 8, 16);
+	bool varibright = getBoolFromJSON(data, varibrightNodeName, false);
+
+	PinDigitalIn clockPin = getDigitalInputFromJSON(data, clockNodeName);
+	
+	GameOfLife* grid = new GameOfLife(device, columns, rows, varibright);
+	
+	if (clockPin != DIGITAL_IN_NONE)
+	{
+		grid->setClockInput(clockPin);
+	}
+			
+	return grid;
+	
+}
+
 GameOfLife::GameOfLife(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, bool varibright) : USBGridController(deviceType, columnCount, rowCount)
 {
 	this->varibright = varibright;

@@ -40,6 +40,33 @@ const uint32_t nw2s::USBGrid::epDataOutIndex = 2;
 USBHost usbHost;
 
 
+GridDevice USBGrid::deviceTypeFromJson(aJsonObject* data)
+{
+	static const char deviceNodeName[] = "deviceType";
+	static const char fortyHTrellisName[] = "40H trellis";
+	static const char gridsName[] = "grids";
+	static const char seriesName[] = "series";
+		
+	char* deviceName = getStringFromJSON(data, deviceNodeName);
+	
+	if (strcmp(deviceName, fortyHTrellisName) == 0)
+	{
+		return DEVICE_40H_TRELLIS;
+	}
+	else if (strcmp(deviceName, gridsName) == 0)
+	{
+		return DEVICE_GRIDS;
+	}
+	else if (strcmp(deviceName, seriesName) == 0)
+	{
+		return DEVICE_SERIES;
+	}
+	else
+	{
+		return DEVICE_GRIDS;
+	}
+}
+
 USBGrid::USBGrid(GridDevice deviceType) : pUsb(&usbHost), bAddress(0), bNumEP(1), ready(false)
 {
 	this->deviceType = deviceType;

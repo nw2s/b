@@ -25,6 +25,7 @@
 #include "IO.h"
 #include "Clock.h"
 #include "Gate.h"
+#include "JSONUtil.h"
 
 namespace nw2s
 {
@@ -36,6 +37,7 @@ class nw2s::GameOfLife : public BeatDevice, public USBGridController
 	public:
 		
 		static GameOfLife* create(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, bool varibright);
+		static GameOfLife* create(aJsonObject* data);
 
 		virtual void timer(unsigned long t);
 		virtual void reset();

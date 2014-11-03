@@ -21,6 +21,7 @@
 #ifndef JSONUtil_h
 #define JSONUtil_h
 
+#include "Grid.h"
 #include "IO.h"
 #include "Key.h"
 #include "Sequence.h"
@@ -28,7 +29,7 @@
 #include "../aJSON/aJSON.h"
 
 namespace nw2s
-{
+{	
 	/* 
 		These are some utility functions to encapsulate navigating the 'b JSON format. 
 	   	The goal is to put functions here to avoid having multiple copies of the same
@@ -42,6 +43,7 @@ namespace nw2s
 	PinAnalogIn getAnalogInputFromJSON(aJsonObject* data, const char* nodeName);
 	PinDigitalOut getDigitalOutputFromJSON(aJsonObject* data, const char* nodeName);
 	PinDigitalIn getDigitalInputFromJSON(aJsonObject* data, const char* nodeName);
+	//GridDevice getGridDeviceFromJSON(aJsonObject* data);
 	NoteName getRootFromJSON(aJsonObject* data);
 	Scale getScaleFromJSON(aJsonObject* data);
 	int getDivisionFromJSON(aJsonObject* data);

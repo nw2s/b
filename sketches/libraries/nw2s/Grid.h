@@ -36,6 +36,8 @@
 //include "usb_ch9.h"
 #include "Usb.h"
 #include "confdescparser.h"
+#include "JSONUtil.h"
+#include "../aJson/aJson.h"
 
 //define MAX_ENDPOINTS 3
 
@@ -91,10 +93,12 @@ class nw2s::USBGrid : public USBDeviceConfig, public UsbConfigXtracter
 		
 		USBGrid(GridDevice deviceType);
 
+		static GridDevice deviceTypeFromJson(aJsonObject* data);
+
 		virtual void task();
 
 		/* Support multiple types, but you have to tell me what it is */
-		GridDevice deviceType = DEVICE_40H_TRELLIS;
+		GridDevice deviceType = DEVICE_GRIDS;
 
 		/* Basic IO */
 		uint32_t read(uint32_t *nreadbytes, uint32_t datalen, uint8_t *dataptr);
@@ -119,7 +123,7 @@ class nw2s::USBGridController : public USBGrid
 {
 	protected:
 		
-		bool varibright = false;
+		bool varibright = false;	
 		
 		uint8_t beat = 0;
 		uint8_t columnCount;

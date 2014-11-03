@@ -34,8 +34,8 @@
 #include <Wire.h>
 #include <aJSON.h>
 #include <Gate.h>
-#include <GameOfLife.h>
 #include <Grid.h>
+#include <GameOfLife.h>
 #include <Usb.h>
 
 using namespace nw2s;
@@ -52,13 +52,13 @@ void setup()
   
     /* Setup a variable clock */
     Clock* vclock = VariableClock::create(10, 240, DUE_IN_A00, 16);
-    vclock->registerDevice(grid);
+    //vclock->registerDevice(grid);
     EventManager::registerDevice(vclock);
 
     // This tells the device that you want to clock it externally
     // TODO this clock doesn't work yet
-    // grid->setClockInput(DUE_IN_D0);
-    // EventManager::registerDevice(grid);
+    grid->setClockInput(DUE_IN_D0);
+    EventManager::registerDevice(grid);
 }
 
 void loop()
