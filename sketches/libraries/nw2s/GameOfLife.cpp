@@ -23,6 +23,8 @@
 
 #include "GameOfLife.h"
 
+#define TRIGGER_LENGTH 10
+
 using namespace nw2s;
 
 GameOfLife* GameOfLife::create(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, bool varibright)
@@ -78,22 +80,8 @@ GameOfLife::GameOfLife(GridDevice deviceType, uint8_t columnCount, uint8_t rowCo
 	memoryInitialized = true;
 	
 	// assign analog outs
-	cvout[0] = AnalogOut::create(DUE_SPI_4822_00);
-	cvout[1] = AnalogOut::create(DUE_SPI_4822_01);
-	cvout[2] = AnalogOut::create(DUE_SPI_4822_02);
-	cvout[3] = AnalogOut::create(DUE_SPI_4822_03);
-	cvout[4] = AnalogOut::create(DUE_SPI_4822_04);
-	cvout[5] = AnalogOut::create(DUE_SPI_4822_05);
-	cvout[6] = AnalogOut::create(DUE_SPI_4822_06);
-	cvout[7] = AnalogOut::create(DUE_SPI_4822_07);
-	cvout[8] = AnalogOut::create(DUE_SPI_4822_08);
-	cvout[9] = AnalogOut::create(DUE_SPI_4822_09);
-	cvout[10] = AnalogOut::create(DUE_SPI_4822_10);
-	cvout[11] = AnalogOut::create(DUE_SPI_4822_11);
-	cvout[12] = AnalogOut::create(DUE_SPI_4822_12);
-	cvout[13] = AnalogOut::create(DUE_SPI_4822_13);
-	cvout[14] = AnalogOut::create(DUE_SPI_4822_14);
-	cvout[15] = AnalogOut::create(DUE_SPI_4822_15);
+	for (int i = 0; i < 16; i++)
+		cvout[i] = AnalogOut::create(INDEX_ANALOG_OUT[i+1]);
 
 	/* Give it a moment... */
 	delay(200);		
@@ -197,25 +185,16 @@ void GameOfLife::nextGeneration()
 		}
 	}
 	
-	// TODO add array for digital outs, replace with a loop
-	// If you're looking for that array, see IO.h array INDEX_DIGITAL_OUT
-	digitalWrite(DUE_OUT_D00, lifecells[nextGen][0][0] == 0 ? LOW : HIGH);
-	digitalWrite(DUE_OUT_D01, lifecells[nextGen][1][0] == 0 ? LOW : HIGH);
-	digitalWrite(DUE_OUT_D02, lifecells[nextGen][2][0] == 0 ? LOW : HIGH);
-	digitalWrite(DUE_OUT_D03, lifecells[nextGen][3][0] == 0 ? LOW : HIGH);
-	digitalWrite(DUE_OUT_D04, lifecells[nextGen][4][0] == 0 ? LOW : HIGH);
-	digitalWrite(DUE_OUT_D05, lifecells[nextGen][5][0] == 0 ? LOW : HIGH);
-	digitalWrite(DUE_OUT_D06, lifecells[nextGen][6][0] == 0 ? LOW : HIGH);
-	digitalWrite(DUE_OUT_D07, lifecells[nextGen][7][0] == 0 ? LOW : HIGH);
-	digitalWrite(DUE_OUT_D08, lifecells[nextGen][8][0] == 0 ? LOW : HIGH);
-	digitalWrite(DUE_OUT_D09, lifecells[nextGen][9][0] == 0 ? LOW : HIGH);
-	digitalWrite(DUE_OUT_D10, lifecells[nextGen][10][0] == 0 ? LOW : HIGH);
-	digitalWrite(DUE_OUT_D11, lifecells[nextGen][11][0] == 0 ? LOW : HIGH);
-	digitalWrite(DUE_OUT_D12, lifecells[nextGen][12][0] == 0 ? LOW : HIGH);
-	digitalWrite(DUE_OUT_D13, lifecells[nextGen][13][0] == 0 ? LOW : HIGH);
-	digitalWrite(DUE_OUT_D14, lifecells[nextGen][14][0] == 0 ? LOW : HIGH);
-	digitalWrite(DUE_OUT_D15, lifecells[nextGen][15][0] == 0 ? LOW : HIGH);
-
+	for (int i = 0; i < columnCount; i++)
+	{
+		digitalWrite(INDEX_DIGITAL_OUT[i + 1], lifecells[nextGen][i][0] ? HIGH : LOW);
+	}
+	delay(TRIGGER_LENGTH); // is this a good way to do triggers?
+	for (int i = 0; i < columnCount; i++)
+	{
+		digitalWrite(INDEX_DIGITAL_OUT[i + 1], LOW);
+	}
+	
 	if (debug)
 	{
 		Serial.println("-- generation --");
@@ -258,7 +237,7 @@ void GameOfLife::buttonPressed(uint8_t column, uint8_t row)
 {	
 	if (column == 0 && row == 0)
 	{
-		debug = 1;
+		// debug = 1; 
 	}
 
 	if (lifecells[generation][column][row])
