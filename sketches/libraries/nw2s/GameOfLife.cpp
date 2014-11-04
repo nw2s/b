@@ -155,21 +155,29 @@ int GameOfLife::countColumn(int gen, int column)
 void GameOfLife::nextGeneration()
 {
 	int nextGen = (generation + 1) % 2;
+	bool isRandom = digitalRead(DUE_IN_D2);
 
 	for (int column = 0; column < columnCount; column++)
 	{
 		for (int row = 0; row < rowCount; row++)
 		{
-			int neighbours = calculateNeighbours(generation, column, row);
-			if (debug)
+			if (isRandom)
 			{
-				Serial.print(neighbours);
+				lifecells[nextGen][column][row] = random(0, 2) ? 15 : 0;
 			}
-			lifecells[nextGen][column][row] = 0;
-			if ((neighbours == 3 || neighbours == 2) && lifecells[generation][column][row])
-				lifecells[nextGen][column][row] = constrain(lifecells[generation][column][row] - 2, 5, 15);
-			else if ((neighbours == 3) && !lifecells[generation][column][row])
-				lifecells[nextGen][column][row] = 15;
+			else
+			{
+				int neighbours = calculateNeighbours(generation, column, row);
+				if (debug)
+				{
+					Serial.print(neighbours);
+				}
+				lifecells[nextGen][column][row] = 0;
+				if ((neighbours == 3 || neighbours == 2) && lifecells[generation][column][row])
+					lifecells[nextGen][column][row] = constrain(lifecells[generation][column][row] - 2, 5, 15);
+				else if ((neighbours == 3) && !lifecells[generation][column][row])
+					lifecells[nextGen][column][row] = 15;
+			}
 		}
 		if (debug)
 		{
@@ -187,7 +195,7 @@ void GameOfLife::nextGeneration()
 	
 	for (int i = 0; i < columnCount; i++)
 	{
-		digitalWrite(INDEX_DIGITAL_OUT[i + 1], lifecells[nextGen][i][0] ? HIGH : LOW);
+		digitalWrite(INDEX_DIGITAL_OUT[i + 1], !lifecells[generation][i][0] && lifecells[nextGen][i][0] ? HIGH : LOW);
 	}
 	delay(TRIGGER_LENGTH); // is this a good way to do triggers?
 	for (int i = 0; i < columnCount; i++)
