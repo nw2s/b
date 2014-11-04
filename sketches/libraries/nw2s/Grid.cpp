@@ -31,6 +31,7 @@
 */
 
 #include "Grid.h"
+#include "JSONUtil.h"
 
 using namespace nw2s;
 

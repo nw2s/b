@@ -19,6 +19,7 @@
 */
 
 #include "JSONUtil.h"
+#include "Grid.h"
 
 using namespace nw2s;
 
@@ -64,19 +65,23 @@ bool nw2s::getBoolFromJSON(aJsonObject* data, const char* nodeName, bool default
 	return node->valuebool;
 }
 
-// GridDevice nw2s::getGridDeviceFromJSON(aJsonObject* data)
-// {
-// 	if (node == NULL)
-// 	{
-// 		static const char nodeError[] = "Missing deviceType, assuming grids.";
-// 		Serial.println(String(nodeError));
-// 		return DEVICE_GRIDS;
-// 	}
-//
-// 	GridDevice deviceType = UsbGrid::deviceTypeFromJson(data);
-//
-// 	return deviceType;
-// }
+GridDevice nw2s::getGridDeviceFromJSON(aJsonObject* data)
+{
+	static const char nodeName[] = "deviceType";
+
+	aJsonObject* node = aJson.getObjectItem(data, nodeName);	
+	
+	if (node == NULL)
+	{
+		static const char nodeError[] = "Missing deviceType, assuming grids.";
+		Serial.println(String(nodeError));
+		return DEVICE_GRIDS;
+	}
+
+	GridDevice deviceType = USBGrid::deviceTypeFromJson(data);
+
+	return deviceType;
+}
 
 char* nw2s::getStringFromJSON(aJsonObject* data, const char* nodeName)
 {

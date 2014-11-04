@@ -29,6 +29,7 @@ using namespace nw2s;
 
 volatile unsigned long EventManager::t = 0UL;
 vector<TimeBasedDevice *> EventManager::timedevices;
+USBGrid* EventManager::usbDevice = NULL;
 
 /* SERIAL COMMAND PROCESSING */
 String inputString = "";         
@@ -53,6 +54,11 @@ void EventManager::loop()
 		{
 			EventManager::timedevices[i]->timer(EventManager::t);	
 		}
+	}
+	
+	if (usbDevice != NULL)
+	{
+		usbDevice->task();
 	}
 
 	if (stringComplete)
@@ -86,6 +92,11 @@ void EventManager::loop()
 void EventManager::registerDevice(TimeBasedDevice *device)
 {
 	timedevices.push_back(device);
+}
+
+void EventManager::registerUsbDevice(USBGrid* device)
+{
+	EventManager::usbDevice = device;
 }
 
 unsigned long EventManager::getT()

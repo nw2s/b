@@ -21,6 +21,9 @@
 
 */
 
+#ifndef GAMEOFLIFE_H
+#define GAMEOFLIFE_H
+
 #include "Grid.h"
 #include "IO.h"
 #include "Clock.h"
@@ -66,3 +69,5 @@ class nw2s::GameOfLife : public BeatDevice, public USBGridController
 		AnalogOut* cvout[16];
 		int debug = 0;
 };
+
+#endif

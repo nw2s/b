@@ -24,6 +24,9 @@
 #include <iterator>
 #include <vector>
 
+//TODO: move usb base class into event manager
+#include "Grid.h"
+
 using namespace std;
 
 namespace nw2s
@@ -43,12 +46,16 @@ class nw2s::EventManager
 	public:
 		static void initialize();
  		static void registerDevice(TimeBasedDevice* device);
+		static void registerUsbDevice(USBGrid* usbDevice);
 		static void loop();
 		static unsigned long getT();
 	
 	private:
 		static volatile unsigned long t;
 		static vector<TimeBasedDevice*> timedevices;		
+
+		//TODO: This is too specific - need to encapsulate only USB device
+		static USBGrid* usbDevice;
 };
 
 

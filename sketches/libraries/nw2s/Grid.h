@@ -36,7 +36,6 @@
 //include "usb_ch9.h"
 #include "Usb.h"
 #include "confdescparser.h"
-#include "JSONUtil.h"
 #include "../aJson/aJson.h"
 
 //define MAX_ENDPOINTS 3

@@ -202,15 +202,19 @@ void nw2s::loadProgram(aJsonObject* program)
 			/* If the device has it's own clock input, or if there is no clock defined, just register with event manager */
 			if ((clockDevice != NULL) && (getDigitalInputFromJSON(deviceNode, "externalClock") == DIGITAL_IN_NONE))
 			{
-				clockDevice->registerDevice(GameOfLife::create(deviceNode));
+				GameOfLife* grid = GameOfLife::create(deviceNode);
+				clockDevice->registerDevice(grid);
+				EventManager::registerUsbDevice(grid);
 			}
 			else
 			{
-				EventManager::registerDevice(GameOfLife::create(deviceNode));
+				GameOfLife* grid = GameOfLife::create(deviceNode);
+				EventManager::registerDevice(grid);
+				EventManager::registerUsbDevice(grid);
 				
 				static const char nodeError[] = "Game of Life defined with no clock, assuming external.";
 				Serial.println(String(nodeError));
-			}
+			}			
 		}
 		else if (strcmp(typeNode->valuestring, "CVSequencer") == 0)
 		{

@@ -43,7 +43,7 @@ namespace nw2s
 	PinAnalogIn getAnalogInputFromJSON(aJsonObject* data, const char* nodeName);
 	PinDigitalOut getDigitalOutputFromJSON(aJsonObject* data, const char* nodeName);
 	PinDigitalIn getDigitalInputFromJSON(aJsonObject* data, const char* nodeName);
-	//GridDevice getGridDeviceFromJSON(aJsonObject* data);
+	GridDevice getGridDeviceFromJSON(aJsonObject* data);
 	NoteName getRootFromJSON(aJsonObject* data);
 	Scale getScaleFromJSON(aJsonObject* data);
 	int getDivisionFromJSON(aJsonObject* data);
