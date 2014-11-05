@@ -41,10 +41,8 @@ class nw2s::GridNoteSequencer : public BeatDevice, public USBGridController
 		virtual void reset();
 		
 		void setShuffleToggle(PinDigitalIn input);
-		//void setPageSyncToggle(PinDigitalIn input);
-		//void setNextPageToggle(PinDigitalIn input);
-		//void setResetPageToggle(PinDigitalIn input);	
-		//void setShuffleToggle(PinDigitalIn input);
+		void setNextPageToggle(PinDigitalIn input);
+		void setResetPageToggle(PinDigitalIn input);
 		void setClockInput(PinDigitalIn input);	
 
 	protected:
@@ -62,14 +60,13 @@ class nw2s::GridNoteSequencer : public BeatDevice, public USBGridController
 		int notes[4][16][2];
 
 		unsigned long clockState = 0;
-		//bool shuffleState = false;
-		//bool resetPageState = false;
-		//unsigned long nextPageState = 0;
+		unsigned long shuffleState = 0;
+		unsigned long resetPageState = 0;
+		unsigned long nextPageState = 0;
 		
 		PinDigitalIn clockInput = DIGITAL_IN_NONE;
-		// PinDigitalIn shuffleInput = DIGITAL_IN_NONE;
-		// PinDigitalIn shuffleScopeInput = DIGITAL_IN_NONE;
-		// PinDigitalIn resetPageInput = DIGITAL_IN_NONE;
-		// PinDigitalIn nextPageInput = DIGITAL_IN_NONE;
+		PinDigitalIn shuffleInput = DIGITAL_IN_NONE;
+		PinDigitalIn resetPageInput = DIGITAL_IN_NONE;
+		PinDigitalIn nextPageInput = DIGITAL_IN_NONE;
 		
 };

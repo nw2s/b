@@ -35,6 +35,7 @@
 
 //include "usb_ch9.h"
 #include "Usb.h"
+#include "EventManager.h"
 #include "confdescparser.h"
 #include "../aJson/aJson.h"
 
@@ -70,7 +71,7 @@ namespace nw2s
 
 }
 
-class nw2s::USBGrid : public USBDeviceConfig, public UsbConfigXtracter
+class nw2s::USBGrid : public USBDeviceConfig, public UsbConfigXtracter, public UsbBasedDevice
 {
 	protected:
 
@@ -78,7 +79,7 @@ class nw2s::USBGrid : public USBDeviceConfig, public UsbConfigXtracter
 		static const uint32_t epDataOutIndex;			// DataOUT endpoint index
 
 		/* Mandatory members */
-		USBHost		*pUsb;
+		// USBHost		*pUsb;
 		uint32_t	bAddress;							// Device USB address
 		uint32_t	bConfNum;							// configuration number
 		uint8_t 	bControlIface; 						// Control interface value
@@ -94,7 +95,7 @@ class nw2s::USBGrid : public USBDeviceConfig, public UsbConfigXtracter
 
 		static GridDevice deviceTypeFromJson(aJsonObject* data);
 
-		virtual void task();
+		// virtual void task();
 
 		/* Support multiple types, but you have to tell me what it is */
 		GridDevice deviceType = DEVICE_GRIDS;

@@ -23,17 +23,23 @@
 #include "IO.h"
 #include <Arduino.h>
 #include <Reset.h>
+#include <Usb.h>
 
 using namespace std;
 using namespace nw2s;
 
 volatile unsigned long EventManager::t = 0UL;
 vector<TimeBasedDevice *> EventManager::timedevices;
-USBGrid* EventManager::usbDevice = NULL;
+UsbBasedDevice* EventManager::usbDevice = NULL;
 
 /* SERIAL COMMAND PROCESSING */
 String inputString = "";         
 bool stringComplete = false;
+
+void UsbBasedDevice::task()
+{
+	this->pUsb->Task();
+}
 
 void EventManager::initialize()
 {
@@ -89,12 +95,12 @@ void EventManager::loop()
 	}
 }
 
-void EventManager::registerDevice(TimeBasedDevice *device)
+void EventManager::registerDevice(TimeBasedDevice* device)
 {
 	timedevices.push_back(device);
 }
 
-void EventManager::registerUsbDevice(USBGrid* device)
+void EventManager::registerUsbDevice(UsbBasedDevice* device)
 {
 	EventManager::usbDevice = device;
 }

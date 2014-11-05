@@ -68,8 +68,9 @@ GridDevice USBGrid::deviceTypeFromJson(aJsonObject* data)
 	}
 }
 
-USBGrid::USBGrid(GridDevice deviceType) : pUsb(&usbHost), bAddress(0), bNumEP(1), ready(false)
+USBGrid::USBGrid(GridDevice deviceType) : bAddress(0), bNumEP(1), ready(false)
 {
+	this->pUsb = &usbHost;
 	this->deviceType = deviceType;
 	
 	/* Setup an empty set of endpoints */
@@ -89,13 +90,13 @@ USBGrid::USBGrid(GridDevice deviceType) : pUsb(&usbHost), bAddress(0), bNumEP(1)
 	}
 }
 
-void USBGrid::task()
-{
-	if (!isReady()) Serial.println("not ready");
-	
-	/* This must be run every loop() */
-	pUsb->Task();	
-}
+// void USBGrid::task()
+// {
+// 	if (!isReady()) Serial.println("not ready");
+//
+// 	/* This must be run every loop() */
+// 	pUsb->Task();
+// }
 
 
 uint32_t USBGrid::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
