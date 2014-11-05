@@ -210,6 +210,10 @@ GridOto::GridOto(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, i
 	delay(200);		
 }
 
+void GridOto::setClockInput(PinDigitalIn input)
+{
+	this->clockInput = input;
+}
 
 void GridOto::timer(unsigned long t)
 {
