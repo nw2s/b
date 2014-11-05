@@ -37,6 +37,7 @@
 #include "SDFirmware.h"
 #include "JSONUtil.h"
 #include "GameOfLife.h"
+#include "GridOto.h"
 
 using namespace nw2s;
 
@@ -213,6 +214,25 @@ void nw2s::loadProgram(aJsonObject* program)
 				EventManager::registerUsbDevice(grid);
 				
 				static const char nodeError[] = "Game of Life defined with no clock, assuming external.";
+				Serial.println(String(nodeError));
+			}			
+		}
+		else if (strcmp(typeNode->valuestring, "OtoGrid") == 0)
+		{
+			/* If the device has it's own clock input, or if there is no clock defined, just register with event manager */
+			if ((clockDevice != NULL) && (getDigitalInputFromJSON(deviceNode, "externalClock") == DIGITAL_IN_NONE))
+			{
+				GridOto* grid = GridOto::create(deviceNode);
+				clockDevice->registerDevice(grid);
+				EventManager::registerUsbDevice(grid);
+			}
+			else
+			{
+				GridOto* grid = GridOto::create(deviceNode);
+				EventManager::registerDevice(grid);
+				EventManager::registerUsbDevice(grid);
+				
+				static const char nodeError[] = "OtoGrid defined with no clock, assuming external.";
 				Serial.println(String(nodeError));
 			}			
 		}
