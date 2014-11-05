@@ -60,14 +60,44 @@ class nw2s::GameOfLife : public BeatDevice, public USBGridController
 		int wrapY(int y);
 		int calculateNeighbours(int gen, int j, int  k);
 		int countColumn(int gen, int column);
+		void copyCellsToGrid(int gen);
+		void shiftCells(int deltaX, int deltaY);
 		void nextGeneration();
 		
+		PinDigitalIn clockInput				= DIGITAL_IN_NONE;
+		PinDigitalIn newCellTrigger 		= DUE_IN_D1;
+		PinDigitalIn generateRandomTrigger	= DUE_IN_D2;
+		PinDigitalIn cvRulesOnSwitch		= DUE_IN_D3;
+		PinDigitalIn shiftLeftTrigger		= DUE_IN_D4;
+		PinDigitalIn shiftRightTrigger		= DUE_IN_D5;
+		PinDigitalIn shiftUpTrigger			= DUE_IN_D6;
+		PinDigitalIn shiftDownTrigger		= DUE_IN_D7;
+
 		unsigned long clockState = 0;
-		PinDigitalIn clockInput = DIGITAL_IN_NONE;
+		unsigned long newCellTriggerState = 0;
+		unsigned long generateRandomTriggerState = 0;
+		unsigned long cvRulesOnSwitchState = 0;
+		unsigned long shiftLeftTriggerState = 0;
+		unsigned long shiftRightTriggerState = 0;
+		unsigned long shiftUpTriggerState = 0;
+		unsigned long shiftDownTriggerState = 0;
+		
+		PinAnalogIn newCellShapeCV			= DUE_IN_A01;
+		PinAnalogIn newCellXCV				= DUE_IN_A02;
+		PinAnalogIn newCellYCV				= DUE_IN_A03;
+		PinAnalogIn minNewCV				= DUE_IN_A04;
+		PinAnalogIn maxNewCV				= DUE_IN_A05;
+		PinAnalogIn minSurviveCV			= DUE_IN_A06;
+		PinAnalogIn maxSurviveCV			= DUE_IN_A07;
+		PinAnalogIn probabilityCV			= DUE_IN_A08;
+		PinAnalogIn randomDensityCV			= DUE_IN_A09;
+		
 		int lifecells[2][16][16];
 		int generation = 0;
 		AnalogOut* cvout[16];
 		int debug = 0;
+		unsigned long currentTime = 0;
+		unsigned long triggerStart = 0;
 };
 
 #endif

@@ -23,7 +23,7 @@
 
 #include "GameOfLife.h"
 
-#define TRIGGER_LENGTH 10
+#define TRIGGER_LENGTH 40
 
 using namespace nw2s;
 
@@ -87,6 +87,78 @@ GameOfLife::GameOfLife(GridDevice deviceType, uint8_t columnCount, uint8_t rowCo
 
 void GameOfLife::timer(unsigned long t)
 {
+	currentTime = t;
+	bool refresh = false;
+	
+	if (!newCellTriggerState && digitalRead(newCellTrigger))
+	{
+		newCellTriggerState = t;
+		/*
+		int x = analogRead(newCellXCV) * columnCount / 4096; // TODO FIX
+		int y = analogRead(newCellYCV) * rowCount / 4096; // TODO FIX
+		this->cells[0][x][y] = 15;
+		lifecells[generation][x][y] = 15;
+		refresh = true;
+		*/
+	}
+	if ((newCellTriggerState != 0) && ((newCellTriggerState + 20) < t) && !digitalRead(newCellTrigger))
+	{
+		newCellTriggerState = 0;
+	}
+	
+	if (!shiftLeftTriggerState && digitalRead(shiftLeftTrigger))
+	{
+		shiftLeftTriggerState = t;
+		shiftCells(-1, 0);
+		refresh = true;
+	}
+	if ((shiftLeftTriggerState != 0) && ((shiftLeftTriggerState + 20) < t) && !digitalRead(shiftLeftTrigger))
+	{
+		shiftLeftTriggerState = 0;
+	}
+	
+	if (!shiftRightTriggerState && digitalRead(shiftRightTrigger))
+	{
+		shiftRightTriggerState = t;
+		shiftCells(1, 0);
+		refresh = true;
+	}
+	if ((shiftRightTriggerState != 0) && ((shiftRightTriggerState + 20) < t) && !digitalRead(shiftRightTrigger))
+	{
+		shiftRightTriggerState = 0;
+	}
+	
+	if (!shiftDownTriggerState && digitalRead(shiftDownTrigger))
+	{
+		shiftDownTriggerState = t;
+		shiftCells(0, -1);
+		refresh = true;
+	}
+	if ((shiftDownTriggerState != 0) && ((shiftDownTriggerState + 20) < t) && !digitalRead(shiftDownTrigger))
+	{
+		shiftDownTriggerState = 0;
+	}
+
+	if (!shiftUpTriggerState && digitalRead(shiftUpTrigger))
+	{
+		shiftUpTriggerState = t;
+		shiftCells(0, 1);
+		refresh = true;
+	}
+	if ((shiftUpTriggerState != 0) && ((shiftUpTriggerState + 20) < t) && !digitalRead(shiftUpTrigger))
+	{
+		shiftUpTriggerState = 0;
+	}
+
+	if (triggerStart + TRIGGER_LENGTH > t)
+	{
+		for (int i = 0; i < columnCount; i++)
+		{
+			digitalWrite(INDEX_DIGITAL_OUT[i + 1], LOW);
+		}
+		triggerStart = 0;
+	}
+	
 	/* Clock is rising */
 	if (this->clockInput != DIGITAL_IN_NONE && !this->clockState && digitalRead(this->clockInput))
 	{
@@ -94,6 +166,10 @@ void GameOfLife::timer(unsigned long t)
 
 		/* Simulate a clock pulse */
 		this->reset();
+	}
+	else if (refresh && isReady())
+	{
+		this->refreshGrid();
 	}
 
 	/* Clock is falling and at least 20ms after rising */
@@ -150,10 +226,35 @@ int GameOfLife::countColumn(int gen, int column)
 	return cv;
 }
 
+void GameOfLife::copyCellsToGrid(int gen)
+{
+	for (uint8_t column = 0; column < columnCount; column++)
+	{
+		for (uint8_t row = 0; row < rowCount; row++)
+		{
+			this->cells[0][column][row] = lifecells[gen][column][row];
+		}
+	}
+}
+
+void GameOfLife::shiftCells(int deltaX, int deltaY)
+{
+	int nextGen = (generation + 1) % 2;
+	for (uint8_t column = 0; column < columnCount; column++)
+	{
+		for (uint8_t row = 0; row < rowCount; row++)
+		{
+			lifecells[nextGen][wrapX(column + deltaX)][wrapY(row + deltaY)] = lifecells[generation][column][row];
+		}
+	}
+	copyCellsToGrid(nextGen);
+	generation = nextGen;
+}
+
 void GameOfLife::nextGeneration()
 {
 	int nextGen = (generation + 1) % 2;
-	bool isRandom = digitalRead(DUE_IN_D2);
+	bool isRandom = digitalRead(generateRandomTrigger);
 
 	for (int column = 0; column < columnCount; column++)
 	{
@@ -172,7 +273,7 @@ void GameOfLife::nextGeneration()
 				}
 				lifecells[nextGen][column][row] = 0;
 				if ((neighbours == 3 || neighbours == 2) && lifecells[generation][column][row])
-					lifecells[nextGen][column][row] = constrain(lifecells[generation][column][row] - 2, 5, 15);
+					lifecells[nextGen][column][row] = constrain(lifecells[generation][column][row] - 1, 5, 15);
 				else if ((neighbours == 3) && !lifecells[generation][column][row])
 					lifecells[nextGen][column][row] = 15;
 			}
@@ -183,23 +284,13 @@ void GameOfLife::nextGeneration()
 		}
 	}
 
-	for (uint8_t column = 0; column < columnCount; column++)
-	{
-		for (uint8_t row = 0; row < rowCount; row++)
-		{
-			this->cells[0][column][row] = lifecells[nextGen][column][row];
-		}
-	}
+	this->copyCellsToGrid(nextGen);
 	
 	for (int i = 0; i < columnCount; i++)
 	{
 		digitalWrite(INDEX_DIGITAL_OUT[i + 1], !lifecells[generation][i][0] && lifecells[nextGen][i][0] ? HIGH : LOW);
 	}
-	delay(TRIGGER_LENGTH); // is this a good way to do triggers?
-	for (int i = 0; i < columnCount; i++)
-	{
-		digitalWrite(INDEX_DIGITAL_OUT[i + 1], LOW);
-	}
+	triggerStart = currentTime;
 	
 	if (debug)
 	{
@@ -241,20 +332,24 @@ void GameOfLife::nextGeneration()
 
 void GameOfLife::buttonPressed(uint8_t column, uint8_t row)
 {	
+	/*
 	if (column == 0 && row == 0)
 	{
-		// debug = 1; 
+		debug = 1; 
 	}
-
+	*/
+	
 	if (lifecells[generation][column][row])
 	{
 		this->cells[0][column][row] = 0;
 		lifecells[generation][column][row] = 0;
+		digitalWrite(INDEX_DIGITAL_OUT[column + 1], !lifecells[generation][column][0] && lifecells[(generation + 1) % 2][column][0] ? HIGH : LOW);
 	}
 	else
 	{
 		this->cells[0][column][row] = 15;
 		lifecells[generation][column][row] = 15;
+		digitalWrite(INDEX_DIGITAL_OUT[column + 1], LOW);
 	}
 
 	if (isReady()) this->refreshGrid();
@@ -264,9 +359,6 @@ void GameOfLife::buttonPressed(uint8_t column, uint8_t row)
 
 void GameOfLife::buttonReleased(uint8_t column, uint8_t row)
 {
-	//this->clearLED(0, column, row);
-	//delay(5);
-	//Serial.println("released");
 	//Serial.println("");
 }
 
