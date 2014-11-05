@@ -223,7 +223,14 @@ SampleRateInterrupt nw2s::getSampleRateFromJSON(aJsonObject* data)
 
 NoteSequenceData* nw2s::getNotesFromJSON(aJsonObject* data)
 {
-	aJsonObject* notesNode = aJson.getObjectItem(data, "notes");
+	static const char nodeName[] = "notes";
+
+	return getNotesFromJSON(data, nodeName);
+}
+
+NoteSequenceData* nw2s::getNotesFromJSON(aJsonObject* data, const char* nodeName)
+{
+	aJsonObject* notesNode = aJson.getObjectItem(data, nodeName);
 	
 	if (notesNode == NULL)
 	{

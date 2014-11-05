@@ -48,6 +48,7 @@ namespace nw2s
 	Scale getScaleFromJSON(aJsonObject* data);
 	int getDivisionFromJSON(aJsonObject* data);
 	NoteSequenceData* getNotesFromJSON(aJsonObject* data);
+	NoteSequenceData* getNotesFromJSON(aJsonObject* data, const char* nodeName);
 	int getTempoFromJSON(aJsonObject* data);
 	int getBeatsFromJSON(aJsonObject* data);
 	char* getNameFromJSON(aJsonObject* data);

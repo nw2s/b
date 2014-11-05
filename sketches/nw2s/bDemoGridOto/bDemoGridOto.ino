@@ -54,8 +54,14 @@ void setup()
 	int notes1[][2] = { { 1, 1 }, { 1, 3 }, { 1, 5 }, { 2, 1 }, { 2, 3 }, { 2, 5 }, { 3, 1 }, { 3, 3 }, { 3, 1 }, { 3, 2 }, { 3, 3 }, { 3, 4 }, { 3, 5 }, { 3, 6 }, { 3, 7 }, { 4, 8 } };
 	int notes2[][2] = { { 1, 1 }, { 0, 1 }, { 0, 5 }, { 1, 1 }, { 1, 5 }, { 2, 1 }, { 2, 5 }, { 3, 1 }, { 3, 1 }, { 3, 2 }, { 3, 3 }, { 3, 4 }, { 3, 5 }, { 3, 6 }, { 3, 7 }, { 4, 8 } };
 	int notes3[][2] = { { 2, 1 }, { 1, 1 }, { 1, 1 }, { 1, 1 }, { 2, 1 }, { 2, 1 }, { 2, 1 }, { 1, 1 }, { 3, 1 }, { 3, 2 }, { 3, 3 }, { 3, 4 }, { 3, 5 }, { 3, 6 }, { 3, 7 }, { 4, 8 } };
-	
-	// grid = GridOto::create(DEVICE_SERIES, 8, 8, DIV_SIXTEENTH, C, Key::SCALE_MINOR, DUE_OUT_D14, DUE_SPI_4822_14, notes0, DUE_OUT_D15, DUE_SPI_4822_15, notes1, DUE_OUT_D12, DUE_SPI_4822_12, notes2, DUE_OUT_D13, DUE_SPI_4822_13, notes3);
+
+	/* 8x16 40H/Trellis */
+	//grid = GridOto::create(DEVICE_40H_TRELLIS, 8, 8, DIV_SIXTEENTH, C, Key::SCALE_MINOR, DUE_OUT_D14, DUE_SPI_4822_14, notes0, DUE_OUT_D15, DUE_SPI_4822_15, notes1, DUE_OUT_D12, DUE_SPI_4822_12, notes2, DUE_OUT_D13, DUE_SPI_4822_13, notes3);
+
+	/* 8x8 Series/Grayscale */
+	//grid = GridOto::create(DEVICE_SERIES, 8, 8, DIV_SIXTEENTH, C, Key::SCALE_MINOR, DUE_OUT_D14, DUE_SPI_4822_14, notes0, DUE_OUT_D15, DUE_SPI_4822_15, notes1, DUE_OUT_D12, DUE_SPI_4822_12, notes2, DUE_OUT_D13, DUE_SPI_4822_13, notes3);
+
+	/* 16x16 Grids */
 	grid = GridOto::create(DEVICE_GRIDS, 16, 16, DIV_SIXTEENTH, C, Key::SCALE_MINOR, DUE_OUT_D14, DUE_SPI_4822_14, notes0, DUE_OUT_D15, DUE_SPI_4822_15, notes1, DUE_OUT_D12, DUE_SPI_4822_12, notes2, DUE_OUT_D13, DUE_SPI_4822_13, notes3);
 
 	Sequencer* cvsequencer4 = CVSequencer::create(1000, 1000, DIV_EIGHTH, DUE_SPI_4822_09);
@@ -68,12 +74,12 @@ void setup()
 	vclock->registerDevice(cvsequencer6);
 
 	EventManager::registerDevice(vclock);
+	EventManager::registerUsbDevice(grid);
 }
 
 void loop()
 {
 	EventManager::loop();
-	grid->task();	
 }
 
 

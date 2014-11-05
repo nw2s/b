@@ -45,8 +45,6 @@ namespace nw2s
 	};
 }
 
-
-
 class nw2s::GridOto : public BeatDevice, public USBGridController
 {
 	public:
