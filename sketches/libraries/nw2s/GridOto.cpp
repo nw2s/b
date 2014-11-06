@@ -328,8 +328,6 @@ void GridOto::reset()
 				{
 					if ((otocells[cellIndex].column == otocells[cellIndex2].column) && (otocells[cellIndex].row == otocells[cellIndex2].row))
 					{
-						Serial.println("collision");
-						
 						if (otocells[cellIndex].direction == CELL_UP) otocells[cellIndex].direction = CELL_RIGHT;
 						else if (otocells[cellIndex].direction == CELL_RIGHT) otocells[cellIndex].direction = CELL_DOWN;
 						else if (otocells[cellIndex].direction == CELL_DOWN) otocells[cellIndex].direction = CELL_LEFT;
