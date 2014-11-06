@@ -64,6 +64,7 @@ GameOfLife::GameOfLife(GridDevice deviceType, uint8_t columnCount, uint8_t rowCo
 	this->beat = 0;
 	this->clock_division = DIV_SIXTEENTH; // TODO pass as a parameter
 
+	// page 0 is for the game itself, page 1 is the control page
 	for (uint8_t page = 0; page < 16; page++)
 	{
 		for (uint8_t column = 0; column < 16; column++)
@@ -81,6 +82,8 @@ GameOfLife::GameOfLife(GridDevice deviceType, uint8_t columnCount, uint8_t rowCo
 	for (int i = 0; i < 16; i++)
 		cvout[i] = AnalogOut::create(INDEX_ANALOG_OUT[i+1]);
 
+	populationThreshold = columnCount * rowCount / 16;
+		
 	/* Give it a moment... */
 	delay(200);		
 }
@@ -93,15 +96,17 @@ void GameOfLife::timer(unsigned long t)
 	if (!newCellTriggerState && digitalRead(newCellTrigger))
 	{
 		newCellTriggerState = t;
-		/*
-		int x = analogRead(newCellXCV) * columnCount / 4096; // TODO FIX
-		int y = analogRead(newCellYCV) * rowCount / 4096; // TODO FIX
+		int x = aRead(newCellXCV) * columnCount / 4096;
+		int y = aRead(newCellYCV) * rowCount / 4096;
+
+		x = constrain(x, 0, columnCount - 1);
+		y = constrain(y, 0, rowCount - 1);
+		
 		this->cells[0][x][y] = 15;
 		lifecells[generation][x][y] = 15;
 		refresh = true;
-		*/
 	}
-	if ((newCellTriggerState != 0) && ((newCellTriggerState + 20) < t) && !digitalRead(newCellTrigger))
+	if (newCellTriggerState && ((newCellTriggerState + 20) < t) && !digitalRead(newCellTrigger))
 	{
 		newCellTriggerState = 0;
 	}
@@ -112,7 +117,7 @@ void GameOfLife::timer(unsigned long t)
 		shiftCells(-1, 0);
 		refresh = true;
 	}
-	if ((shiftLeftTriggerState != 0) && ((shiftLeftTriggerState + 20) < t) && !digitalRead(shiftLeftTrigger))
+	if (shiftLeftTriggerState && ((shiftLeftTriggerState + 20) < t) && !digitalRead(shiftLeftTrigger))
 	{
 		shiftLeftTriggerState = 0;
 	}
@@ -123,7 +128,7 @@ void GameOfLife::timer(unsigned long t)
 		shiftCells(1, 0);
 		refresh = true;
 	}
-	if ((shiftRightTriggerState != 0) && ((shiftRightTriggerState + 20) < t) && !digitalRead(shiftRightTrigger))
+	if (shiftRightTriggerState && ((shiftRightTriggerState + 20) < t) && !digitalRead(shiftRightTrigger))
 	{
 		shiftRightTriggerState = 0;
 	}
@@ -134,7 +139,7 @@ void GameOfLife::timer(unsigned long t)
 		shiftCells(0, -1);
 		refresh = true;
 	}
-	if ((shiftDownTriggerState != 0) && ((shiftDownTriggerState + 20) < t) && !digitalRead(shiftDownTrigger))
+	if (shiftDownTriggerState && ((shiftDownTriggerState + 20) < t) && !digitalRead(shiftDownTrigger))
 	{
 		shiftDownTriggerState = 0;
 	}
@@ -145,14 +150,14 @@ void GameOfLife::timer(unsigned long t)
 		shiftCells(0, 1);
 		refresh = true;
 	}
-	if ((shiftUpTriggerState != 0) && ((shiftUpTriggerState + 20) < t) && !digitalRead(shiftUpTrigger))
+	if (shiftUpTriggerState && ((shiftUpTriggerState + 20) < t) && !digitalRead(shiftUpTrigger))
 	{
 		shiftUpTriggerState = 0;
 	}
 
 	if (triggerStart + TRIGGER_LENGTH > t)
 	{
-		for (int i = 0; i < columnCount; i++)
+		for (int i = 2; i < columnCount; i++)
 		{
 			digitalWrite(INDEX_DIGITAL_OUT[i + 1], LOW);
 		}
@@ -173,7 +178,7 @@ void GameOfLife::timer(unsigned long t)
 	}
 
 	/* Clock is falling and at least 20ms after rising */
-	if (this->clockInput != DIGITAL_IN_NONE && (this->clockState != 0) && ((this->clockState + 20) < t) && !digitalRead(this->clockInput))
+	if (this->clockInput != DIGITAL_IN_NONE && this->clockState && ((this->clockState + 20) < t) && !digitalRead(this->clockInput))
 	{
 		this->clockState = 0;
 	}
@@ -251,6 +256,11 @@ void GameOfLife::shiftCells(int deltaX, int deltaY)
 	generation = nextGen;
 }
 
+int GameOfLife::aRead(PinAnalogIn analogIn)
+{
+	return constrain((analogRead(analogIn) - 2048) * 2, 0, 4095); // TODO not sure yet how to fix this for using bipolar CVs into the analog ins
+}
+
 void GameOfLife::nextGeneration()
 {
 	int nextGen = (generation + 1) % 2;
@@ -262,19 +272,27 @@ void GameOfLife::nextGeneration()
 		{
 			if (isRandom)
 			{
-				lifecells[nextGen][column][row] = random(0, 2) ? 15 : 0;
+				lifecells[nextGen][column][row] = random(0, 4096) < aRead(randomDensityCV) ? 15 : 0;
 			}
-			else
+			else 
 			{
+				int minNew = 3, maxNew = 3, minSurvive = 2, maxSurvive = 3;
+				if (digitalRead(cvRulesOnSwitch))
+				{
+					minNew = aRead(minNewCV) * 9 / 4096;
+					maxNew = aRead(maxNewCV) * 9 / 4096;
+					minSurvive = aRead(minSurviveCV) * 9 / 4096;
+					maxSurvive = aRead(maxSurviveCV) * 9 / 4096;
+				}
 				int neighbours = calculateNeighbours(generation, column, row);
 				if (debug)
 				{
 					Serial.print(neighbours);
 				}
 				lifecells[nextGen][column][row] = 0;
-				if ((neighbours == 3 || neighbours == 2) && lifecells[generation][column][row])
+				if ((neighbours >= minSurvive && neighbours <= maxSurvive) && lifecells[generation][column][row])
 					lifecells[nextGen][column][row] = constrain(lifecells[generation][column][row] - 1, 5, 15);
-				else if ((neighbours == 3) && !lifecells[generation][column][row])
+				else if ((neighbours >= minNew && neighbours <= maxNew) && !lifecells[generation][column][row])
 					lifecells[nextGen][column][row] = 15;
 			}
 		}
@@ -286,7 +304,18 @@ void GameOfLife::nextGeneration()
 
 	this->copyCellsToGrid(nextGen);
 	
+	int totalPopulation = 0;
 	for (int i = 0; i < columnCount; i++)
+	{
+		for (int j = 0; j < rowCount; j++)
+		{
+			totalPopulation += (lifecells[nextGen][i][j] ? 1 : 0);
+		}
+	}
+	digitalWrite(INDEX_DIGITAL_OUT[1], totalPopulation + populationThreshold > (columnCount * rowCount) ? HIGH : LOW);
+	digitalWrite(INDEX_DIGITAL_OUT[2], totalPopulation < populationThreshold ? HIGH : LOW);
+	
+	for (int i = 2; i < columnCount; i++)
 	{
 		digitalWrite(INDEX_DIGITAL_OUT[i + 1], !lifecells[generation][i][0] && lifecells[nextGen][i][0] ? HIGH : LOW);
 	}

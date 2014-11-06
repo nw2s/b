@@ -63,6 +63,7 @@ class nw2s::GameOfLife : public BeatDevice, public USBGridController
 		void copyCellsToGrid(int gen);
 		void shiftCells(int deltaX, int deltaY);
 		void nextGeneration();
+		int aRead(PinAnalogIn analogIn);
 		
 		PinDigitalIn clockInput				= DIGITAL_IN_NONE;
 		PinDigitalIn newCellTrigger 		= DUE_IN_D1;
@@ -89,8 +90,7 @@ class nw2s::GameOfLife : public BeatDevice, public USBGridController
 		PinAnalogIn maxNewCV				= DUE_IN_A05;
 		PinAnalogIn minSurviveCV			= DUE_IN_A06;
 		PinAnalogIn maxSurviveCV			= DUE_IN_A07;
-		PinAnalogIn probabilityCV			= DUE_IN_A08;
-		PinAnalogIn randomDensityCV			= DUE_IN_A09;
+		PinAnalogIn randomDensityCV			= DUE_IN_A08;
 		
 		int lifecells[2][16][16];
 		int generation = 0;
@@ -98,6 +98,7 @@ class nw2s::GameOfLife : public BeatDevice, public USBGridController
 		int debug = 0;
 		unsigned long currentTime = 0;
 		unsigned long triggerStart = 0;
+		int populationThreshold = 0;
 };
 
 #endif
