@@ -20,6 +20,7 @@
 
 #include "GridTrigger.h"
 #include "Entropy.h"
+#include "JSONUtil.h"
 
 #define GATE_DURATION 50
 
@@ -34,6 +35,69 @@ GridTriggerController* GridTriggerController::create(GridDevice deviceType, uint
 {	
 	return new GridTriggerController(deviceType, columnCount, rowCount, clockDivision, out0, out1, out2, out3, out4, out5, out6, out7, out8, out9, out10, out11, out12, out13, out14);
 }
+
+GridTriggerController* GridTriggerController::create(aJsonObject* data)
+{
+	static const char rowsNodeName[] = "rows";
+	static const char columnsNodeName[] = "columns";
+	static const char clockNodeName[] = "externalClock";
+	static const char probabilityNodeName[] = "probabilityInput";
+
+	static const char d0NodeName[] = "d0";
+	static const char d1NodeName[] = "d1";
+	static const char d2NodeName[] = "d2";
+	static const char d3NodeName[] = "d3";
+	static const char d4NodeName[] = "d4";
+	static const char d5NodeName[] = "d5";
+	static const char d6NodeName[] = "d6";
+	static const char d7NodeName[] = "d7";
+	static const char d8NodeName[] = "d8";
+	static const char d9NodeName[] = "d9";
+	static const char d10NodeName[] = "d10";
+	static const char d11NodeName[] = "d11";
+	static const char d12NodeName[] = "d12";
+	static const char d13NodeName[] = "d13";
+	static const char d14NodeName[] = "d14";
+
+	GridDevice device = getGridDeviceFromJSON(data);
+	const int rows = getIntFromJSON(data, rowsNodeName, 8, 8, 16);
+	const int columns = getIntFromJSON(data, columnsNodeName, 8, 8, 16);
+	int division = getDivisionFromJSON(data);
+	PinAnalogIn probabilityInput = getAnalogInputFromJSON(data, probabilityNodeName);
+	
+	PinDigitalOut out0 = getDigitalOutputFromJSON(data, d0NodeName);
+	PinDigitalOut out1 = getDigitalOutputFromJSON(data, d1NodeName);
+	PinDigitalOut out2 = getDigitalOutputFromJSON(data, d2NodeName);
+	PinDigitalOut out3 = getDigitalOutputFromJSON(data, d3NodeName);
+	PinDigitalOut out4 = getDigitalOutputFromJSON(data, d4NodeName);
+	PinDigitalOut out5 = getDigitalOutputFromJSON(data, d5NodeName);
+	PinDigitalOut out6 = getDigitalOutputFromJSON(data, d6NodeName);
+	PinDigitalOut out7 = getDigitalOutputFromJSON(data, d7NodeName);
+	PinDigitalOut out8 = getDigitalOutputFromJSON(data, d8NodeName);
+	PinDigitalOut out9 = getDigitalOutputFromJSON(data, d9NodeName);
+	PinDigitalOut out10 = getDigitalOutputFromJSON(data, d10NodeName);
+	PinDigitalOut out11 = getDigitalOutputFromJSON(data, d11NodeName);
+	PinDigitalOut out12 = getDigitalOutputFromJSON(data, d12NodeName);
+	PinDigitalOut out13 = getDigitalOutputFromJSON(data, d13NodeName);
+	PinDigitalOut out14 = getDigitalOutputFromJSON(data, d14NodeName);
+
+	PinDigitalIn clockPin = getDigitalInputFromJSON(data, clockNodeName);
+	
+	GridTriggerController* grid = new GridTriggerController(device, columns, rows, division, out0, out1, out2, out3, out4, out5, out6, out7, out8, out9, out10, out11, out12, out13, out14);
+		
+	if (clockPin != DIGITAL_IN_NONE)
+	{
+		grid->setClockInput(clockPin);
+	}
+			
+	if (probabilityInput != ANALOG_IN_NONE)
+	{
+		grid->setProbabilityInput(probabilityInput);
+	}
+			
+	return grid;
+}
+
 
 GridTriggerController::GridTriggerController(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, int clockDivision, PinDigitalOut out0, PinDigitalOut out1, PinDigitalOut out2, PinDigitalOut out3, PinDigitalOut out4, PinDigitalOut out5, PinDigitalOut out6, PinDigitalOut out7, PinDigitalOut out8, PinDigitalOut out9, PinDigitalOut out10, PinDigitalOut out11, PinDigitalOut out12, PinDigitalOut out13, PinDigitalOut out14) : USBGridController(deviceType, columnCount, rowCount)
 {

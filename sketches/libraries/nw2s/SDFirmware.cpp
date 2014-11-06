@@ -38,6 +38,7 @@
 #include "JSONUtil.h"
 #include "GameOfLife.h"
 #include "GridOto.h"
+#include "GridTrigger.h"
 
 using namespace nw2s;
 
@@ -233,6 +234,25 @@ void nw2s::loadProgram(aJsonObject* program)
 				EventManager::registerUsbDevice(grid);
 				
 				static const char nodeError[] = "OtoGrid defined with no clock, assuming external.";
+				Serial.println(String(nodeError));
+			}			
+		}
+		else if (strcmp(typeNode->valuestring, "GridTriggerSequencer") == 0)
+		{
+			/* If the device has it's own clock input, or if there is no clock defined, just register with event manager */
+			if ((clockDevice != NULL) && (getDigitalInputFromJSON(deviceNode, "externalClock") == DIGITAL_IN_NONE))
+			{
+				GridTriggerController* grid = GridTriggerController::create(deviceNode);
+				clockDevice->registerDevice(grid);
+				EventManager::registerUsbDevice(grid);
+			}
+			else
+			{
+				GridTriggerController* grid = GridTriggerController::create(deviceNode);
+				EventManager::registerDevice(grid);
+				EventManager::registerUsbDevice(grid);
+				
+				static const char nodeError[] = "GridTriggerController defined with no clock, assuming external.";
 				Serial.println(String(nodeError));
 			}			
 		}

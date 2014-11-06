@@ -36,7 +36,6 @@ GridOto* GridOto::create(aJsonObject* data)
 	static const char rowsNodeName[] = "rows";
 	static const char columnsNodeName[] = "columns";
 	static const char clockNodeName[] = "externalClock";
-	static const char varibrightNodeName[] = "varibright";
 
 	static const char d0NodeName[] = "d0";
 	static const char d1NodeName[] = "d1";
@@ -57,7 +56,6 @@ GridOto* GridOto::create(aJsonObject* data)
 	GridDevice device = getGridDeviceFromJSON(data);
 	const int rows = getIntFromJSON(data, rowsNodeName, 8, 8, 16);
 	const int columns = getIntFromJSON(data, columnsNodeName, 8, 8, 16);
-	bool varibright = getBoolFromJSON(data, varibrightNodeName, false);
 	int division = getDivisionFromJSON(data);
 	NoteName key = getRootFromJSON(data);
 	Scale scale = getScaleFromJSON(data);
@@ -395,7 +393,7 @@ void GridOto::buttonPressed(uint8_t column, uint8_t row)
 	}
 	
 	/* If there were no inactive spots, then just ignore it */
-
+	
 	if (isReady()) this->refreshGrid();
 }
 
