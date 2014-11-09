@@ -96,14 +96,21 @@ void GameOfLife::timer(unsigned long t)
 	if (!newCellTriggerState && digitalRead(newCellTrigger))
 	{
 		newCellTriggerState = t;
-		int x = aRead(newCellXCV) * columnCount / 4096;
-		int y = aRead(newCellYCV) * rowCount / 4096;
 
-		x = constrain(x, 0, columnCount - 1);
-		y = constrain(y, 0, rowCount - 1);
+		int x = constrain(aRead(newCellXCV) * columnCount / 4096, 0, columnCount - 1) - 1;
+		int y = constrain(aRead(newCellYCV) * rowCount / 4096, 0, rowCount - 1) - 1;
+		int shape = constrain(aRead(newCellShapeCV) * newShapesCount / 4096, 0, newShapesCount - 1);
 		
-		this->cells[0][x][y] = 15;
-		lifecells[generation][x][y] = 15;
+		for (int i = 0; i < 3; i++)
+			for (int j = 0; j < 3; j++)
+				if (newShapes[shape][i][j])
+				{
+					int _x = wrapX(x+i);
+					int _y = wrapY(y+j);
+					this->cells[0][_x][_y] = 15;
+					lifecells[generation][_x][_y] = 15;
+				}
+				
 		refresh = true;
 	}
 	if (newCellTriggerState && ((newCellTriggerState + 20) < t) && !digitalRead(newCellTrigger))

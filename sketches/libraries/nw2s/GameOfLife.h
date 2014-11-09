@@ -35,8 +35,27 @@ namespace nw2s
 	class GameOfLife;
 }
 
+static const int newShapesCount = 13;
+static const int newShapes[newShapesCount][3][3] 
+	{
+		{0,0,0,0,1,0,0,0,0},
+		{0,0,0,0,1,1,0,0,0},
+		{0,0,0,1,1,1,0,0,0},
+		{0,0,0,0,1,1,0,1,0},
+		{0,0,0,0,1,1,0,1,1},
+		{0,0,0,1,1,1,0,1,0},
+		{0,1,0,1,1,1,0,1,0},
+		{0,1,0,1,0,1,0,1,0},
+		{1,0,1,0,0,0,1,0,1},
+		{1,1,1,1,0,0,0,1,0},
+		{0,1,1,1,0,1,0,0,1},
+		{0,1,0,0,0,1,1,1,1},
+		{1,0,0,1,0,1,1,1,0}
+	};
+	
 class nw2s::GameOfLife : public BeatDevice, public USBGridController
 {
+
 	public:
 		
 		static GameOfLife* create(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, bool varibright);
@@ -53,7 +72,7 @@ class nw2s::GameOfLife : public BeatDevice, public USBGridController
 		virtual void buttonReleased(uint8_t column, uint8_t row);
 		
 	private:
-		
+
 		GameOfLife(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, bool varibright);
 
 		int wrapX(int x);
