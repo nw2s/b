@@ -33,6 +33,7 @@
 namespace nw2s
 {
 	class GameOfLife;
+	class GameOfLifeConfig;
 }
 
 static const int newShapesCount = 13;
@@ -52,6 +53,16 @@ static const int newShapes[newShapesCount][3][3]
 		{0,1,0,0,0,1,1,1,1},
 		{1,0,0,1,0,1,1,1,0}
 	};
+	
+class nw2s::GameOfLifeConfig
+{
+	public:
+		int gateMode[14] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,}; // 0 == trigger, 1 == gate // only 14 because first 2 are always gates (too full / too empty)
+		int cvMode[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // 0 == CV, 1 == note // for now always CV, note mode to be added in v2
+		int cvRangeMin[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+		int cvRangeMax[16] = {4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096};
+		int noteScale[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // not used right now, to be added in v2
+};
 	
 class nw2s::GameOfLife : public BeatDevice, public USBGridController
 {
@@ -74,7 +85,12 @@ class nw2s::GameOfLife : public BeatDevice, public USBGridController
 	private:
 
 		GameOfLife(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, bool varibright);
-
+		GameOfLifeConfig config;
+		
+		void renderCVControlColumn(int column);
+		void renderGateModeRow();
+		void renderCVModeRow();
+		void renderControlPage();
 		int wrapX(int x);
 		int wrapY(int y);
 		int calculateNeighbours(int gen, int j, int  k);
@@ -111,6 +127,9 @@ class nw2s::GameOfLife : public BeatDevice, public USBGridController
 		PinAnalogIn maxSurviveCV			= DUE_IN_A07;
 		PinAnalogIn randomDensityCV			= DUE_IN_A08;
 		
+		bool isControl = false;
+		bool controlButton1 = false;
+		bool controlButton2 = false;
 		int lifecells[2][16][16];
 		int generation = 0;
 		AnalogOut* cvout[16];

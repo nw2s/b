@@ -32,7 +32,6 @@ GameOfLife* GameOfLife::create(GridDevice deviceType, uint8_t columnCount, uint8
 	return new GameOfLife(deviceType, columnCount, rowCount, varibright);
 }
 
-
 GameOfLife* GameOfLife::create(aJsonObject* data)
 {
 	static const char rowsNodeName[] = "rows";
@@ -76,6 +75,8 @@ GameOfLife::GameOfLife(GridDevice deviceType, uint8_t columnCount, uint8_t rowCo
 		}
 	}
 
+	renderControlPage();
+	
 	memoryInitialized = true;
 	
 	// assign analog outs
@@ -100,6 +101,9 @@ void GameOfLife::timer(unsigned long t)
 		int x = constrain(aRead(newCellXCV) * columnCount / 4096, 0, columnCount - 1) - 1;
 		int y = constrain(aRead(newCellYCV) * rowCount / 4096, 0, rowCount - 1) - 1;
 		int shape = constrain(aRead(newCellShapeCV) * newShapesCount / 4096, 0, newShapesCount - 1);
+		
+		// TODO potential bug: with jitter on analog ins the coordinates can shift by one and looks like new cell trigger can double trigger sometimes? shape of the trigger?
+		// double check how the jitter protection works
 		
 		for (int i = 0; i < 3; i++)
 			for (int j = 0; j < 3; j++)
@@ -166,7 +170,8 @@ void GameOfLife::timer(unsigned long t)
 	{
 		for (int i = 2; i < columnCount; i++)
 		{
-			digitalWrite(INDEX_DIGITAL_OUT[i + 1], LOW);
+			if (!config.gateMode[i - 2])
+				digitalWrite(INDEX_DIGITAL_OUT[i + 1], LOW);
 		}
 		triggerStart = 0;
 	}
@@ -197,6 +202,38 @@ void GameOfLife::reset()
 	nextGeneration();
 
 	if (isReady()) this->refreshGrid();
+}
+
+void GameOfLife::renderCVControlColumn(int column)
+{
+	int minRow = rowCount - 2 - constrain(config.cvRangeMax[column] * (rowCount - 3) / 4096, 0, rowCount - 3);
+	int maxRow = rowCount - 2 - constrain(config.cvRangeMin[column] * (rowCount - 3) / 4096, 0, rowCount - 3);
+	
+	for (int row = 1; row < rowCount - 1; row++)
+		this->cells[1][column][row] = (row >= minRow && row <= maxRow) ? 8 : 0;
+}
+
+void GameOfLife::renderGateModeRow()
+{
+	for (int i = 0; i < 14; i++)
+		this->cells[1][i+2][0] = config.gateMode[i] ? 15 : 0;
+}
+
+void GameOfLife::renderCVModeRow()
+{
+	for (int i = 0; i < 16; i++)
+		this->cells[1][i][rowCount - 1] = 0; // reserved for switching between CV mode and note mode
+}
+
+void GameOfLife::renderControlPage()
+{
+	this->cells[1][0][0] = this->cells[1][1][0] = 15;
+
+	renderGateModeRow();
+	renderCVModeRow();
+	
+	for (int i = 0; i < 16; i++)
+		renderCVControlColumn(i);
 }
 
 void GameOfLife::setClockInput(PinDigitalIn input)
@@ -298,7 +335,7 @@ void GameOfLife::nextGeneration()
 				}
 				lifecells[nextGen][column][row] = 0;
 				if ((neighbours >= minSurvive && neighbours <= maxSurvive) && lifecells[generation][column][row])
-					lifecells[nextGen][column][row] = constrain(lifecells[generation][column][row] - 1, 5, 15);
+					lifecells[nextGen][column][row] = constrain(lifecells[generation][column][row] - 1, 3, 15);
 				else if ((neighbours >= minNew && neighbours <= maxNew) && !lifecells[generation][column][row])
 					lifecells[nextGen][column][row] = 15;
 			}
@@ -361,33 +398,98 @@ void GameOfLife::nextGeneration()
 	}
 
 	for (int i = 0; i < columnCount; i++)
-		cvout[i]->outputCV((4096 / rowCount * countColumn(nextGen, i)) % 4096); // TODO convert to bit ops
+		{
+			cvout[i]->outputCV(constrain((config.cvRangeMax[i] - config.cvRangeMin[i]) / rowCount * countColumn(nextGen, i) + config.cvRangeMin[i], 0, 4096));
+		}
 	
 	generation = nextGen;
 }
 
 void GameOfLife::buttonPressed(uint8_t column, uint8_t row)
 {	
-	/*
+	this->cells[2][column][row] = 1;
+
 	if (column == 0 && row == 0)
 	{
-		debug = 1; 
+		// debug = 1; 
+		controlButton1 = true;
 	}
-	*/
-	
-	if (lifecells[generation][column][row])
+	else if (column == 1 && row == 0)
 	{
-		this->cells[0][column][row] = 0;
-		lifecells[generation][column][row] = 0;
-		digitalWrite(INDEX_DIGITAL_OUT[column + 1], !lifecells[generation][column][0] && lifecells[(generation + 1) % 2][column][0] ? HIGH : LOW);
+		controlButton2 = true;
+	}
+	
+	if (controlButton1 && controlButton2)
+	{
+		if (isControl)
+		{
+			this->currentPage = 0;
+		}
+		else
+		{
+			// TODO save config to SD
+			this->currentPage = 1;
+		}
+		isControl = !isControl;
+		this->refreshGrid();
+		return;
+	}
+		
+	if (isControl)
+	{
+		if (column >= 2 && row == 0)
+		{
+			config.gateMode[column - 2] = config.gateMode[column - 2] ? 0 : 1;
+			renderGateModeRow();
+		}
+		else if (row == rowCount - 1)
+		{
+			// reserved for switching between CV mode and note mode
+		}
+		else
+		{
+			int topRowPressed = 0;
+			for (int i = 1; i < rowCount - 1; i++)
+			{
+				if (cells[2][column][i])
+				{
+					topRowPressed = i;
+					break;
+				}
+			}
+			int bottomRowPressed = 0;
+			for (int i = rowCount - 2; i > 0; i--)
+			{
+				if (cells[2][column][i])
+				{
+					bottomRowPressed = i;
+					break;
+				}
+			}
+			if (topRowPressed != bottomRowPressed)
+			{
+				config.cvRangeMin[column] = (rowCount - 2 - bottomRowPressed) * 4096 / (rowCount - 3) + 1;
+				config.cvRangeMax[column] = (rowCount - 2 - topRowPressed) * 4096 / (rowCount - 3) + 1;
+				renderCVControlColumn(column);
+			}
+		}
 	}
 	else
 	{
-		this->cells[0][column][row] = 15;
-		lifecells[generation][column][row] = 15;
-		digitalWrite(INDEX_DIGITAL_OUT[column + 1], LOW);
+		if (lifecells[generation][column][row])
+		{
+			this->cells[0][column][row] = 0;
+			lifecells[generation][column][row] = 0;
+			digitalWrite(INDEX_DIGITAL_OUT[column + 1], !lifecells[generation][column][0] && lifecells[(generation + 1) % 2][column][0] ? HIGH : LOW);
+		}
+		else
+		{
+			this->cells[0][column][row] = 15;
+			lifecells[generation][column][row] = 15;
+			digitalWrite(INDEX_DIGITAL_OUT[column + 1], LOW);
+		}
 	}
-
+		
 	if (isReady()) this->refreshGrid();
 	delay(5);
 	// Serial.println("\npressed");
@@ -395,6 +497,17 @@ void GameOfLife::buttonPressed(uint8_t column, uint8_t row)
 
 void GameOfLife::buttonReleased(uint8_t column, uint8_t row)
 {
+	this->cells[2][column][row] = 0;
+
+	if (column == 0 && row == 0)
+	{
+		controlButton1 = false;
+	}
+	else if (column == 1 && row == 0)
+	{
+		controlButton2 = false;
+	}
+	
 	//Serial.println("");
 }
 
