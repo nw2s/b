@@ -2,7 +2,7 @@
 	"program" : 	
 
 	{
-		"name" : 			"Grid Trigger Sequencer Grids 256",
+		"name" : 			"Grid Note Sequencer Grids 256",
 			
 		"clock" :
 
@@ -15,7 +15,7 @@
 		"devices" : [
 			
 			{
-				"type" : "GridTriggerSequencer",
+				"type" : "GridNoteSequencer",
 				"division" : "sixteenth",
 				"columns" : 16,
 				"rows" : 16,
