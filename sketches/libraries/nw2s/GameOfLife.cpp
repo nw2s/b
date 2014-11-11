@@ -673,14 +673,15 @@ void GameOfLife::buttonPressed(uint8_t column, uint8_t row)
 		{
 			this->cells[0][column][row] = 0;
 			lifecells[generation][column][row] = 0;
-			digitalWrite(INDEX_DIGITAL_OUT[column + 1], !lifecells[generation][column][0] && lifecells[(generation + 1) % 2][column][0] ? HIGH : LOW);
+			digitalWrite(INDEX_DIGITAL_OUT[column + 1], LOW);
 		}
 		else
 		{
 			this->cells[0][column][row] = 15;
 			lifecells[generation][column][row] = 15;
-			digitalWrite(INDEX_DIGITAL_OUT[column + 1], LOW);
+			digitalWrite(INDEX_DIGITAL_OUT[column + 1], HIGH);
 		}
+		triggerStart = currentTime;
 		cvout[column]->outputCV(constrain((config.cvRangeMax[column] - config.cvRangeMin[column]) / rowCount * countColumn(generation, column) + config.cvRangeMin[column], 0, 4096));
 	}
 		
