@@ -528,7 +528,7 @@ void GameOfLife::nextGeneration()
 				}
 				lifecells[nextGen][column][row] = 0;
 				if ((neighbours >= minSurvive && neighbours <= maxSurvive) && lifecells[generation][column][row])
-					lifecells[nextGen][column][row] = constrain(lifecells[generation][column][row] - 1, 3, 15);
+					lifecells[nextGen][column][row] = constrain(lifecells[generation][column][row] - 1, 4, 15);
 				else if ((neighbours >= minNew && neighbours <= maxNew) && !lifecells[generation][column][row])
 					lifecells[nextGen][column][row] = 15;
 			}
