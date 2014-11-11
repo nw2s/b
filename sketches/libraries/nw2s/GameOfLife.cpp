@@ -23,7 +23,8 @@
 
 #include "GameOfLife.h"
 
-#define TRIGGER_LENGTH 40
+#define TRIGGER_LENGTH 40 // must be over 20 for the triggers out to be used reliably as triggers in with 20ms jitter protection threshold
+#define GAME_OF_LIFE_CONFIG_FILE_NAME "bGOfL.cfg"
 
 using namespace nw2s;
 
@@ -61,7 +62,7 @@ GameOfLife::GameOfLife(GridDevice deviceType, uint8_t columnCount, uint8_t rowCo
 	this->varibright = varibright;
 
 	this->beat = 0;
-	this->clock_division = DIV_SIXTEENTH; // TODO pass as a parameter
+	this->clock_division = DIV_SIXTEENTH;
 
 	// page 0 is for the game itself, page 1 is the control page
 	for (uint8_t page = 0; page < 16; page++)
@@ -75,6 +76,7 @@ GameOfLife::GameOfLife(GridDevice deviceType, uint8_t columnCount, uint8_t rowCo
 		}
 	}
 
+	readConfig();
 	renderControlPage();
 	
 	memoryInitialized = true;
@@ -87,6 +89,177 @@ GameOfLife::GameOfLife(GridDevice deviceType, uint8_t columnCount, uint8_t rowCo
 		
 	/* Give it a moment... */
 	delay(200);		
+}
+
+void GameOfLife::readConfig()
+{
+	SdFile root = b::getSDRoot(); 
+	SdFile configFile;
+
+	if (!configFile.open(root, GAME_OF_LIFE_CONFIG_FILE_NAME, O_READ))
+	{
+	    Serial.print("Could not read config, error opening config file ");
+		Serial.println(GAME_OF_LIFE_CONFIG_FILE_NAME);
+	    return;
+	}
+	
+	uint fileSize = configFile.fileSize();
+	char configData[fileSize + 1];
+	configFile.read(configData, fileSize);
+	configData[fileSize] == '\0';
+		
+	aJsonObject* sdConfig = aJson.parse(configData);
+
+    if (sdConfig == NULL) 
+	{
+        Serial.println("Config file not parsed successfully. Check to see that it's properly formatted JSON.");
+		return;
+	}
+	else
+	{
+        Serial.println("Config file parsed successfully.");
+	}
+	
+	aJsonObject* jsonArray;
+	
+	jsonArray = aJson.getObjectItem(sdConfig, "gateMode");
+	if (jsonArray == NULL)
+	{
+		Serial.println("Could not find gateMode in the config data");
+		return;
+	}
+	for (int i = 0; i < aJson.getArraySize(jsonArray); i++)
+	{
+		if (i > 13) break;
+		aJsonObject* item = aJson.getArrayItem(jsonArray, i);
+		config.gateMode[i] = item->valueint;
+	}
+	
+	jsonArray = aJson.getObjectItem(sdConfig, "cvMode");
+	if (jsonArray == NULL)
+	{
+		Serial.println("Could not find cvMode in the config data");
+		return;
+	}
+	for (int i = 0; i < aJson.getArraySize(jsonArray); i++)
+	{
+		if (i > 15) break;
+		aJsonObject* item = aJson.getArrayItem(jsonArray, i);
+		config.cvMode[i] = item->valueint;
+	}
+	
+	jsonArray = aJson.getObjectItem(sdConfig, "cvRangeMin");
+	if (jsonArray == NULL)
+	{
+		Serial.println("Could not find cvRangeMin in the config data");
+		return;
+	}
+	for (int i = 0; i < aJson.getArraySize(jsonArray); i++)
+	{
+		if (i > 15) break;
+		aJsonObject* item = aJson.getArrayItem(jsonArray, i);
+		config.cvRangeMin[i] = item->valueint;
+	}
+	
+	jsonArray = aJson.getObjectItem(sdConfig, "cvRangeMax");
+	if (jsonArray == NULL)
+	{
+		Serial.println("Could not find cvRangeMax in the config data");
+		return;
+	}
+	for (int i = 0; i < aJson.getArraySize(jsonArray); i++)
+	{
+		if (i > 15) break;
+		aJsonObject* item = aJson.getArrayItem(jsonArray, i);
+		config.cvRangeMax[i] = item->valueint;
+	}
+	
+	jsonArray = aJson.getObjectItem(sdConfig, "noteScale");
+	if (jsonArray == NULL)
+	{
+		Serial.println("Could not find noteScale in the config data");
+		return;
+	}
+	for (int i = 0; i < aJson.getArraySize(jsonArray); i++)
+	{
+		if (i > 15) break;
+		aJsonObject* item = aJson.getArrayItem(jsonArray, i);
+		config.noteScale[i] = item->valueint;
+	}
+	
+	aJson.deleteItem(sdConfig);
+	Serial.println("Config data loaded successfully");
+}
+
+void GameOfLife::saveConfig()
+{
+	aJsonObject *root;
+	root = aJson.createObject();
+	
+	aJsonObject* jsonArray;
+
+	jsonArray = aJson.createArray();
+	for (int i = 0; i < 14; i++)
+	{
+		aJsonObject* item = aJson.createItem(config.gateMode[i]);
+		aJson.addItemToArray(jsonArray, item);
+	}
+	aJson.addItemToObject(root, "gateMode", jsonArray);	
+
+	jsonArray = aJson.createArray();
+	for (int i = 0; i < 16; i++)
+	{
+		aJsonObject* item = aJson.createItem(config.cvMode[i]);
+		aJson.addItemToArray(jsonArray, item);
+	}
+	aJson.addItemToObject(root, "cvMode", jsonArray);	
+
+	jsonArray = aJson.createArray();
+	for (int i = 0; i < 16; i++)
+	{
+		aJsonObject* item = aJson.createItem(config.cvRangeMin[i]);
+		aJson.addItemToArray(jsonArray, item);
+	}
+	aJson.addItemToObject(root, "cvRangeMin", jsonArray);	
+
+	jsonArray = aJson.createArray();
+	for (int i = 0; i < 16; i++)
+	{
+		aJsonObject* item = aJson.createItem(config.cvRangeMax[i]);
+		aJson.addItemToArray(jsonArray, item);
+	}
+	aJson.addItemToObject(root, "cvRangeMax", jsonArray);	
+	
+	jsonArray = aJson.createArray();
+	for (int i = 0; i < 16; i++)
+	{
+		aJsonObject* item = aJson.createItem(config.noteScale[i]);
+		aJson.addItemToArray(jsonArray, item);
+	}
+	aJson.addItemToObject(root, "noteScale", jsonArray);
+	
+	aJsonStringStream stringStream(NULL, jsonBuffer, 512);
+	aJson.print(root, &stringStream);
+
+	Serial.println("--- config JSON created ----------------------------");
+	Serial.println(jsonBuffer);
+	Serial.println("----------------------------------------------------");
+	
+	SdFile rootFile = b::getSDRoot(); 
+	SdFile configFile;
+	if (configFile.open(rootFile, GAME_OF_LIFE_CONFIG_FILE_NAME, O_CREAT | O_WRITE | O_TRUNC))
+	{
+		configFile.println(jsonBuffer);
+		configFile.close();
+		Serial.println("Config saved!");
+	}
+	else
+	{
+	    Serial.print("Could not write config, error opening config file for writing ");
+		Serial.println(GAME_OF_LIFE_CONFIG_FILE_NAME);
+	}
+	
+	aJson.deleteItem(root);
 }
 
 void GameOfLife::timer(unsigned long t)
@@ -253,9 +426,6 @@ int GameOfLife::wrapY(int y)
 
 int GameOfLife::calculateNeighbours(int gen, int j, int  k)
 {
-	// could be a double for loop but just easier and faster to do it this way
-	// but would be interesting to put the range of neighbours under control as well, 
-	// and factor in distance when calculating the total neighbour count - TODO
 	return 
 		(lifecells[gen][wrapX(j-1)][wrapY(k-1)] ? 1 : 0) + 
 		(lifecells[gen][wrapX(j-1)][wrapY(k)] ? 1 : 0) + 
@@ -423,11 +593,11 @@ void GameOfLife::buttonPressed(uint8_t column, uint8_t row)
 	{
 		if (isControl)
 		{
+			saveConfig();
 			this->currentPage = 0;
 		}
 		else
 		{
-			// TODO save config to SD
 			this->currentPage = 1;
 		}
 		isControl = !isControl;

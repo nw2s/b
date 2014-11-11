@@ -24,6 +24,7 @@
 #ifndef GAMEOFLIFE_H
 #define GAMEOFLIFE_H
 
+#include "b.h"
 #include "Grid.h"
 #include "IO.h"
 #include "Clock.h"
@@ -87,6 +88,8 @@ class nw2s::GameOfLife : public BeatDevice, public USBGridController
 		GameOfLife(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, bool varibright);
 		GameOfLifeConfig config;
 		
+		void readConfig();
+		void saveConfig();
 		void renderCVControlColumn(int column);
 		void renderGateModeRow();
 		void renderCVModeRow();
@@ -137,6 +140,7 @@ class nw2s::GameOfLife : public BeatDevice, public USBGridController
 		unsigned long currentTime = 0;
 		unsigned long triggerStart = 0;
 		int populationThreshold = 0;
+		char * jsonBuffer = (char*) malloc(512);
 };
 
 #endif
