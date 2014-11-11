@@ -51,17 +51,16 @@ void setup()
     grid = GameOfLife::create(DEVICE_GRIDS, 16, 8, true);
   
     /* Setup a variable clock */
-    Clock* vclock = VariableClock::create(10, 240, DUE_IN_A00, 16);
-	
-    //vclock->registerDevice(grid);
-    EventManager::registerDevice(vclock);
+    // Clock* vclock = VariableClock::create(10, 240, DUE_IN_A00, 16);
+    // vclock->registerDevice(grid);
+    // EventManager::registerDevice(vclock);
 
     /* This tells the device that you want to clock it externally */
     grid->setClockInput(DUE_IN_D0);
     EventManager::registerDevice(grid);
 
-	/* This allows the event manager to manage USB events */
-	EventManager::registerUsbDevice(grid);
+    /* This allows the event manager to manage USB events */
+    EventManager::registerUsbDevice(grid);
 }
 
 void loop()

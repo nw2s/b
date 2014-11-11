@@ -24,7 +24,8 @@
 #include "GameOfLife.h"
 
 #define TRIGGER_LENGTH 40 // must be over 20 for the triggers out to be used reliably as triggers in with 20ms jitter protection threshold
-#define GAME_OF_LIFE_CONFIG_FILE_NAME "bGOfL.cfg"
+#define CONFIG_FOLDER "config"
+#define GAME_OF_LIFE_CONFIG_FILE_NAME "gamelife.cfg"
 
 using namespace nw2s;
 
@@ -64,7 +65,7 @@ GameOfLife::GameOfLife(GridDevice deviceType, uint8_t columnCount, uint8_t rowCo
 	this->beat = 0;
 	this->clock_division = DIV_SIXTEENTH;
 
-	// page 0 is for the game itself, page 1 is the control page
+	// page 0 is for the game itself, page 1 is the control page, page 2 is used to track buttons pressed
 	for (uint8_t page = 0; page < 16; page++)
 	{
 		for (uint8_t column = 0; column < 16; column++)
@@ -85,18 +86,30 @@ GameOfLife::GameOfLife(GridDevice deviceType, uint8_t columnCount, uint8_t rowCo
 	for (int i = 0; i < 16; i++)
 		cvout[i] = AnalogOut::create(INDEX_ANALOG_OUT[i+1]);
 
-	populationThreshold = columnCount * rowCount / 16;
+	populationThreshold = columnCount * rowCount / 16; // this makes it 8 cells for grid128, seems like a good threshold
 		
 	/* Give it a moment... */
 	delay(200);		
 }
 
+void GameOfLife::setClockInput(PinDigitalIn input)
+{
+	this->clockInput = input;
+}
+
 void GameOfLife::readConfig()
 {
 	SdFile root = b::getSDRoot(); 
+	SdFile configFolder;
 	SdFile configFile;
 
-	if (!configFile.open(root, GAME_OF_LIFE_CONFIG_FILE_NAME, O_READ))
+	if (!configFolder.open(root, CONFIG_FOLDER, O_READ))
+	{
+	    Serial.println("Could not find config folder");
+	    return;
+	}
+	
+	if (!configFile.open(configFolder, GAME_OF_LIFE_CONFIG_FILE_NAME, O_READ))
 	{
 	    Serial.print("Could not read config, error opening config file ");
 		Serial.println(GAME_OF_LIFE_CONFIG_FILE_NAME);
@@ -246,8 +259,26 @@ void GameOfLife::saveConfig()
 	Serial.println("----------------------------------------------------");
 	
 	SdFile rootFile = b::getSDRoot(); 
+	SdFile configFolder;
+	if (!configFolder.open(rootFile, CONFIG_FOLDER, O_READ))
+	{
+	    if (configFolder.makeDir(rootFile, CONFIG_FOLDER))
+		{
+			Serial.println("Config folder not found, created");
+		}
+		else
+		{
+			Serial.println("Config folder not found and could not create one");
+			return;
+		}
+		if (!configFolder.open(rootFile, CONFIG_FOLDER, O_READ))
+		{
+			Serial.println("Could not open config folder after creating one");
+		}
+	}
+	
 	SdFile configFile;
-	if (configFile.open(rootFile, GAME_OF_LIFE_CONFIG_FILE_NAME, O_CREAT | O_WRITE | O_TRUNC))
+	if (configFile.open(configFolder, GAME_OF_LIFE_CONFIG_FILE_NAME, O_CREAT | O_WRITE | O_TRUNC))
 	{
 		configFile.println(jsonBuffer);
 		configFile.close();
@@ -274,9 +305,6 @@ void GameOfLife::timer(unsigned long t)
 		int x = constrain(aRead(newCellXCV) * columnCount / 4096, 0, columnCount - 1) - 1;
 		int y = constrain(aRead(newCellYCV) * rowCount / 4096, 0, rowCount - 1) - 1;
 		int shape = constrain(aRead(newCellShapeCV) * newShapesCount / 4096, 0, newShapesCount - 1);
-		
-		// TODO potential bug: with jitter on analog ins the coordinates can shift by one and looks like new cell trigger can double trigger sometimes? shape of the trigger?
-		// double check how the jitter protection works
 		
 		for (int i = 0; i < 3; i++)
 			for (int j = 0; j < 3; j++)
@@ -341,7 +369,7 @@ void GameOfLife::timer(unsigned long t)
 
 	if (triggerStart + TRIGGER_LENGTH > t)
 	{
-		for (int i = 2; i < columnCount; i++)
+		for (int i = 2; i < columnCount; i++) // first two digital outs are reserved for "too full / too empty"
 		{
 			if (!config.gateMode[i - 2])
 				digitalWrite(INDEX_DIGITAL_OUT[i + 1], LOW);
@@ -407,11 +435,6 @@ void GameOfLife::renderControlPage()
 	
 	for (int i = 0; i < 16; i++)
 		renderCVControlColumn(i);
-}
-
-void GameOfLife::setClockInput(PinDigitalIn input)
-{
-	this->clockInput = input;
 }
 
 int GameOfLife::wrapX(int x)

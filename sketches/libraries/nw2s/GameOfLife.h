@@ -67,7 +67,6 @@ class nw2s::GameOfLifeConfig
 	
 class nw2s::GameOfLife : public BeatDevice, public USBGridController
 {
-
 	public:
 		
 		static GameOfLife* create(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, bool varibright);
@@ -86,7 +85,6 @@ class nw2s::GameOfLife : public BeatDevice, public USBGridController
 	private:
 
 		GameOfLife(GridDevice deviceType, uint8_t columnCount, uint8_t rowCount, bool varibright);
-		GameOfLifeConfig config;
 		
 		void readConfig();
 		void saveConfig();
@@ -112,6 +110,23 @@ class nw2s::GameOfLife : public BeatDevice, public USBGridController
 		PinDigitalIn shiftUpTrigger			= DUE_IN_D6;
 		PinDigitalIn shiftDownTrigger		= DUE_IN_D7;
 
+		PinAnalogIn newCellShapeCV			= DUE_IN_A01;
+		PinAnalogIn newCellXCV				= DUE_IN_A02;
+		PinAnalogIn newCellYCV				= DUE_IN_A03;
+		PinAnalogIn minNewCV				= DUE_IN_A04;
+		PinAnalogIn maxNewCV				= DUE_IN_A05;
+		PinAnalogIn minSurviveCV			= DUE_IN_A06;
+		PinAnalogIn maxSurviveCV			= DUE_IN_A07;
+		PinAnalogIn randomDensityCV			= DUE_IN_A08;
+
+		AnalogOut* cvout[16];
+		
+		GameOfLifeConfig config;
+		int debug = 0;
+		int lifecells[2][16][16]; // indices are generation, column, row
+		int generation = 0; // currently displayed generation
+
+		// variables to track trigger inputs
 		unsigned long clockState = 0;
 		unsigned long newCellTriggerState = 0;
 		unsigned long generateRandomTriggerState = 0;
@@ -121,22 +136,9 @@ class nw2s::GameOfLife : public BeatDevice, public USBGridController
 		unsigned long shiftUpTriggerState = 0;
 		unsigned long shiftDownTriggerState = 0;
 		
-		PinAnalogIn newCellShapeCV			= DUE_IN_A01;
-		PinAnalogIn newCellXCV				= DUE_IN_A02;
-		PinAnalogIn newCellYCV				= DUE_IN_A03;
-		PinAnalogIn minNewCV				= DUE_IN_A04;
-		PinAnalogIn maxNewCV				= DUE_IN_A05;
-		PinAnalogIn minSurviveCV			= DUE_IN_A06;
-		PinAnalogIn maxSurviveCV			= DUE_IN_A07;
-		PinAnalogIn randomDensityCV			= DUE_IN_A08;
-		
-		bool isControl = false;
+		bool isControl = false; // true when in control mode
 		bool controlButton1 = false;
 		bool controlButton2 = false;
-		int lifecells[2][16][16];
-		int generation = 0;
-		AnalogOut* cvout[16];
-		int debug = 0;
 		unsigned long currentTime = 0;
 		unsigned long triggerStart = 0;
 		int populationThreshold = 0;
