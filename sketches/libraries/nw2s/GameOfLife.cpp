@@ -24,7 +24,7 @@
 #include "GameOfLife.h"
 
 #define TRIGGER_LENGTH 40 // must be over 20 for the triggers out to be used reliably as triggers in with 20ms jitter protection threshold
-#define CONFIG_FOLDER "config"
+#define CONFIG_FOLDER "configs"
 #define GAME_OF_LIFE_CONFIG_FILE_NAME "gamelife.cfg"
 
 using namespace nw2s;
@@ -681,6 +681,7 @@ void GameOfLife::buttonPressed(uint8_t column, uint8_t row)
 			lifecells[generation][column][row] = 15;
 			digitalWrite(INDEX_DIGITAL_OUT[column + 1], LOW);
 		}
+		cvout[column]->outputCV(constrain((config.cvRangeMax[column] - config.cvRangeMin[column]) / rowCount * countColumn(generation, column) + config.cvRangeMin[column], 0, 4096));
 	}
 		
 	if (isReady()) this->refreshGrid();
