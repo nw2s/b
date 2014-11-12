@@ -407,8 +407,8 @@ void GameOfLife::reset()
 
 void GameOfLife::renderCVControlColumn(int column)
 {
-	int minRow = rowCount - 2 - constrain(config.cvRangeMax[column] * (rowCount - 3) / 4096, 0, rowCount - 3);
-	int maxRow = rowCount - 2 - constrain(config.cvRangeMin[column] * (rowCount - 3) / 4096, 0, rowCount - 3);
+	int minRow = rowCount - 2 - constrain(config.cvRangeMax[column] * (rowCount - 3) / 4095, 0, rowCount - 3);
+	int maxRow = rowCount - 2 - constrain(config.cvRangeMin[column] * (rowCount - 3) / 4095, 0, rowCount - 3);
 	
 	for (int row = 1; row < rowCount - 1; row++)
 		this->cells[1][column][row] = (row >= minRow && row <= maxRow) ? 8 : 0;
@@ -592,7 +592,7 @@ void GameOfLife::nextGeneration()
 
 	for (int i = 0; i < columnCount; i++)
 		{
-			cvout[i]->outputCV(constrain((config.cvRangeMax[i] - config.cvRangeMin[i]) / rowCount * countColumn(nextGen, i) + config.cvRangeMin[i], 0, 4096));
+			cvout[i]->outputCV(constrain((config.cvRangeMax[i] - config.cvRangeMin[i]) * countColumn(nextGen, i) / rowCount + config.cvRangeMin[i], 0, 4095));
 		}
 	
 	generation = nextGen;
@@ -661,8 +661,8 @@ void GameOfLife::buttonPressed(uint8_t column, uint8_t row)
 			}
 			if (topRowPressed != bottomRowPressed)
 			{
-				config.cvRangeMin[column] = (rowCount - 2 - bottomRowPressed) * 4096 / (rowCount - 3) + 1;
-				config.cvRangeMax[column] = (rowCount - 2 - topRowPressed) * 4096 / (rowCount - 3) + 1;
+				config.cvRangeMin[column] = (rowCount - 2 - bottomRowPressed) * 4095 / (rowCount - 3);
+				config.cvRangeMax[column] = (rowCount - 2 - topRowPressed) * 4095 / (rowCount - 3);
 				renderCVControlColumn(column);
 			}
 		}
@@ -684,7 +684,7 @@ void GameOfLife::buttonPressed(uint8_t column, uint8_t row)
 			digitalWrite(INDEX_DIGITAL_OUT[column + 1], lifecells[generation][column][row] ? HIGH : LOW);
 			triggerStart = currentTime;
 		}
-		cvout[column]->outputCV(constrain((config.cvRangeMax[column] - config.cvRangeMin[column]) / rowCount * countColumn(generation, column) + config.cvRangeMin[column], 0, 4096));
+		cvout[column]->outputCV(constrain((config.cvRangeMax[column] - config.cvRangeMin[column]) * countColumn(generation, column) / rowCount + config.cvRangeMin[column], 0, 4095));
 	}
 		
 	if (isReady()) this->refreshGrid();

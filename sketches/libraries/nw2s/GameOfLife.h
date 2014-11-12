@@ -61,7 +61,7 @@ class nw2s::GameOfLifeConfig
 		int gateMode[14] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,}; // 0 == trigger, 1 == gate // only 14 because first 2 are always gates (too full / too empty)
 		int cvMode[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // 0 == CV, 1 == note // for now always CV, note mode to be added in v2
 		int cvRangeMin[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-		int cvRangeMax[16] = {4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096};
+		int cvRangeMax[16] = {4095,4095,4095,4095,4095,4095,4095,4095,4095,4095,4095,4095,4095,4095,4095,4095};
 		int noteScale[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // not used right now, to be added in v2
 };
 	
