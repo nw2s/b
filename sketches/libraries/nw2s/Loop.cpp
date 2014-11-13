@@ -266,6 +266,7 @@ Looper::Looper(PinAudioOut pin, LoopPath loops[], unsigned int loopcount, Sample
 	this->reversed = false;	
 	
 	this->loopcount = loopcount;
+	this->looprange = 4095 / loopcount;
 	this->loop1index = 0;
 	this->loop2index = 1;
 	this->mixfactor = 2048;
@@ -391,11 +392,18 @@ void Looper::timer(unsigned long t)
 	if ((mixcontrol != ANALOG_IN_NONE) && (t % 10 == 0))
 	{
 		/* Get the mix factor between 0 and 4096 for 0-5V */
-		this->mixfactor = (analogRead(this->mixcontrol) - 2048) << 1;
-		if (this->mixfactor < 0)
+		int controlval = (analogRead(this->mixcontrol) - 2048) << 1;
+		if (controlval < 0)
 		{
-			this->mixfactor = 0;
+			controlval = 0;
 		}	
+
+		/* Calculate the index of the waves to mix between */
+		this->loop1index = controlval / this->looprange;
+		this->loop2index = (this->loop1index + 1) % this->loopcount;
+		
+		/* Calculate the mix factor between these two waves */
+		this->mixfactor = (4095 * (controlval % this->looprange)) / this->looprange;  		
 	}
 
 	/* If the glitch trigger is high, seek to a random location */
@@ -419,8 +427,8 @@ void Looper::timer(unsigned long t)
 		}
 	}
 	
-	/* If we're in a mix mode and the trigger is high, then iterate over the list of loops */
-	if (this->mixmode != MIXMODE_NONE && !mixtrigger_bounce && digitalRead(mixtrigger))
+	/* If we're in a non-blend mix mode and the trigger is high, then iterate over the list of loops */
+	if (this->mixmode != MIXMODE_NONE && this->mixmode != MIXMODE_BLEND && !mixtrigger_bounce && digitalRead(mixtrigger))
 	{
 		mixtrigger_bounce = true;
 		loop1index = (loop1index + 1) % loopcount;

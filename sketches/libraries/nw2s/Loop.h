@@ -87,6 +87,7 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		MixMode mixmode;
 		
 		unsigned int loopcount;
+		int looprange;
 		unsigned int mixfactor;
 		unsigned int loop1index;
 		unsigned int loop2index;
