@@ -72,16 +72,20 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		void setReverseTrigger(PinDigitalIn reverseTrigger);
 		void setDensityInput(PinAnalogIn density);
 		void setMixControl(PinAnalogIn mixcontrol);
+		void setLengthControl(PinAnalogIn lengthcontrol);
+		void setStartControl(PinAnalogIn startcontrol);
 		void setMixTrigger(PinDigitalIn mixtrigger);
 		void setMixMode(MixMode mixmode);
 		virtual void timer(unsigned long t);
 		virtual void timer_handler();
 			
 	protected:
-		PinDigitalIn glitchTrigger;
-		PinDigitalIn reverseTrigger;
-		PinAnalogIn density;
-		PinAnalogIn mixcontrol;
+		PinDigitalIn glitchTrigger = DIGITAL_IN_NONE;
+		PinDigitalIn reverseTrigger = DIGITAL_IN_NONE;
+		PinAnalogIn density = ANALOG_IN_NONE;
+		PinAnalogIn mixcontrol = ANALOG_IN_NONE;
+		PinAnalogIn lengthcontrol = ANALOG_IN_NONE;
+		PinAnalogIn startcontrol = ANALOG_IN_NONE;
 		bool mixtrigger_bounce;
 		PinDigitalIn mixtrigger;
 		MixMode mixmode;
@@ -91,6 +95,12 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		unsigned int mixfactor;
 		unsigned int loop1index;
 		unsigned int loop2index;
+		unsigned int loop1length = 0;
+		unsigned int loop2length = 0;
+		unsigned int startindex1 = 0;
+		unsigned int looplength1 = 0;
+		unsigned int startindex2 = 0;
+		unsigned int looplength2 = 0;
 		bool glitched_bounce;
 		bool glitchmode_stream;
 		unsigned long glitched;

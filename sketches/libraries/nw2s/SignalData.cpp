@@ -143,6 +143,8 @@ StreamingSignalData::StreamingSignalData(char* foldername, char* subfoldername, 
 	this->loop = loop;
 	this->reversed = false;
 	this->available = file.fileSize() > 0;
+	this->sampleCount = file.fileSize() / 2;
+	this->endIndex = this->sampleCount;
 	this->size[0] = 0;
 	this->size[1] = 0;
 
@@ -163,6 +165,17 @@ bool StreamingSignalData::isAvailable()
 bool StreamingSignalData::isReadyForRefresh()
 {
 	return this->readbufferindex != this->writebufferindex;
+}
+
+void StreamingSignalData::setStartFactor(uint16_t startfactor)
+{
+	/* Pass in a 16 bit value that specifies sample to start with */
+	uint32_t start = (this->sampleCount * startfactor) / 0xFFFF;
+}
+
+void StreamingSignalData::setEndFactor(uint16_t lengthFactor)
+{
+	
 }
 
 void StreamingSignalData::refresh()
@@ -187,9 +200,9 @@ void StreamingSignalData::refresh()
 			if (reversed)
 			{
 				/* If we're closer to the beginning than what we need to read, just skip to the end */
-				if (this->file.curPosition() < (READ_BUFFER_SIZE * 2))
+				if ((this->file.curPosition() - this->startIndex) < (READ_BUFFER_SIZE * 2))
 				{
-					this->file.seekSet(this->file.fileSize() - READ_BUFFER_SIZE - 2);
+					this->file.seekSet(this->endIndex - READ_BUFFER_SIZE - 2);
 				}
 				else
 				{
@@ -204,7 +217,7 @@ void StreamingSignalData::refresh()
 			/* If we're looping and didn't get enough bytes, rewind and start over */
 			while (loop && available && dsize < READ_BUFFER_SIZE)
 			{
-				this->file.rewind();
+				this->file.seekSet(this->startIndex);
 				dsize += this->file.read(&(d[dsize]), READ_BUFFER_SIZE - dsize);
 			}
 
@@ -268,7 +281,7 @@ void StreamingSignalData::reset()
 {
 	this->writebufferindex = !this->readbufferindex;
 
-	this->file.rewind();	
+	this->file.seekSet(this->startIndex);	
 	this->refresh();
 
 	this->readbufferindex = this->writebufferindex;
@@ -277,8 +290,8 @@ void StreamingSignalData::reset()
 
 void StreamingSignalData::seekRandom()
 {
-	/* We have to end up on an even word, and not on the last byte */
-	this->file.seekSet((Entropy::getValue(2, this->file.fileSize() / 2) * 2) - 2);
+	/* We have to end up on an even word, and not on the last sample */
+	this->file.seekSet(Entropy::getValue(this->startIndex, this->endIndex - 1));
 	
 	this->writebufferindex = !this->readbufferindex;
 	this->refresh();

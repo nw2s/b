@@ -73,6 +73,8 @@ Looper* Looper::create(aJsonObject* data)
 	static const char mixmodeNodeName[] = "mixmode";
 	static const char mixcontrolNodeName[] = "mixcontrol";
 	static const char mixtriggerNodeName[] = "mixtrigger";
+	static const char lengthcontrolNodeName[] = "lengthcontrol";
+	static const char startcontrolNodeName[] = "startcontrol";
 	
 	char* subfolder = getStringFromJSON(data, subFolderNodeName);
 	char* filename = getStringFromJSON(data, filenameNodeName);
@@ -83,6 +85,8 @@ Looper* Looper::create(aJsonObject* data)
 	PinDigitalIn mixtrigger = getDigitalInputFromJSON(data, mixtriggerNodeName);
 	PinAnalogIn density = getAnalogInputFromJSON(data, densityNodeName);
 	PinAnalogIn mixcontrol = getAnalogInputFromJSON(data, mixcontrolNodeName);
+	PinAnalogIn lengthcontrol = getAnalogInputFromJSON(data, lengthcontrolNodeName);
+	PinAnalogIn startcontrol = getAnalogInputFromJSON(data, startcontrolNodeName);
 	char* mixmodeVal = getStringFromJSON(data, mixmodeNodeName);
 
 	aJsonObject* loops = aJson.getObjectItem(data, loopsNodeName);
@@ -138,10 +142,22 @@ Looper* Looper::create(aJsonObject* data)
 		looper->setDensityInput(density);
 	}
 	
-	/* DENSITY INPUT */
+	/* MIXCONTROL INPUT */
 	if (mixcontrol != ANALOG_IN_NONE)
 	{
 		looper->setMixControl(mixcontrol);
+	}
+	
+	/* LENGTHCONTROL INPUT */
+	if (lengthcontrol != ANALOG_IN_NONE)
+	{
+		looper->setLengthControl(lengthcontrol);
+	}
+
+	/* STARTCONTROL INPUT */
+	if (startcontrol != ANALOG_IN_NONE)
+	{
+		looper->setMixControl(startcontrol);
 	}
 	
 	/* MIXMODE */
@@ -220,7 +236,12 @@ void EFLooper::timer(unsigned long t)
 		/* Only read the knobs every 100ms */
 		this->windowsize = analogReadmV(this->windowsizein, 0, 5000) / 10;
 		this->threshold = analogReadmV(this->thresholdin, 0, 5000) / 2;
-		this->scale = analogReadmV(this->scalein, 0, 5000) / 2;		
+		this->scale = analogReadmV(this->scalein, 0, 5000) / 2;	
+		
+		/* Figure out the loop length */
+		
+		/* Figure out the start and stop point */
+			
 	}
 	
 	/* Accumulate as many samples as are in the window, abs and average them and that's our output */	
@@ -255,11 +276,7 @@ Looper::Looper(PinAudioOut pin, LoopPath loops[], unsigned int loopcount, Sample
 		this->signalData.push_back(StreamingSignalData::fromSDFile("loops", loops[i].subfoldername, loops[i].filename, true));
 	}
 
-	this->density = ANALOG_IN_NONE;
-	this->muted = false;
-	
-	this->glitchTrigger = DIGITAL_IN_NONE;
-	this->reverseTrigger = DIGITAL_IN_NONE;
+	this->muted = false;	
 	this->glitched = 0;
 	this->glitched_bounce = false;
 	this->mixtrigger_bounce = false;
@@ -272,10 +289,7 @@ Looper::Looper(PinAudioOut pin, LoopPath loops[], unsigned int loopcount, Sample
 	this->mixfactor = 2048;
 	this->glitchmode_stream = 0;
 	this->mixmode = MIXMODE_NONE;
-	
-	this->mixcontrol = ANALOG_IN_NONE;
-	this->mixtrigger = DIGITAL_IN_NONE;
-		
+			
 	this->initializeTimer(pin, sri);
 }
 
@@ -467,6 +481,16 @@ void Looper::setDensityInput(PinAnalogIn density)
 void Looper::setMixControl(PinAnalogIn mixcontrol)
 {
 	this->mixcontrol = mixcontrol;
+}
+
+void Looper::setLengthControl(PinAnalogIn lengthcontrol)
+{
+	this->lengthcontrol = lengthcontrol;
+}
+
+void Looper::setStartControl(PinAnalogIn startcontrol)
+{
+	this->startcontrol = startcontrol;
 }
 
 void Looper::setGlitchTrigger(PinDigitalIn glitchTrigger)

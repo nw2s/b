@@ -1250,14 +1250,14 @@ class nw2s::SignalData
 		static SignalData* fromSDFile(char *filepath);
 		long getSize();
 		short int getSample(long sample);
-	
+		
 	private:
 		short int *data;
 		int size;
 		static bool initialized;
 		
 		SignalData(short int *data, long size);
-		
+
 };
 
 class nw2s::StreamingSignalData
@@ -1271,17 +1271,24 @@ class nw2s::StreamingSignalData
 		void reset();
 		void seekRandom();
 		void reverse();
+
+		void setStartFactor(uint16_t startfactor);
+		void setEndFactor(uint16_t lengthFactor);
 		
 	private:
 		short int buffer[2][nw2s::STREAM_BUFFER_SIZE];
 		short volatile unsigned int readbufferindex;
 		short volatile unsigned int writebufferindex;
 		int size[2];
+		uint32_t sampleCount = 0;
 		volatile int nextsampleindex;
 		bool available;
 		bool loop;
 		bool reversed;
 		SdFile file;
+
+		uint32_t endIndex = 0;
+		uint32_t startIndex = 0;
 		
 		StreamingSignalData(char *foldername, char* subfoldername, char *filename, bool loop = false);
 };
