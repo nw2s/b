@@ -68,6 +68,7 @@ namespace nw2s
 {
 	
 	class UsbPS3;
+	class UsbPS3CV;
 
 	const uint8_t PS3_REPORT_BUFFER[PS3_REPORT_BUFFER_SIZE] = {
 		
@@ -126,7 +127,7 @@ namespace nw2s
 	        0x100000, // T - covers 12 bits - we only need to read the top 8
 	};
 
-	const uint8_t PS3_ANALOG_BUTTONS[] PROGMEM = 
+	const uint8_t PS3_ANALOG_BUTTONS[] = 
 	{
 	        23, // UP_ANALOG
 	        24, // RIGHT_ANALOG
@@ -370,6 +371,54 @@ class nw2s::UsbPS3 : public USBDeviceConfig, public UsbBasedDevice
         void PS3_Command(uint8_t *data, uint16_t nbytes);
         void enable_sixaxis();
 		 
+};
+
+class nw2s::UsbPS3CV : public nw2s::UsbPS3
+{
+	/* 
+	
+		Triggers:
+	
+		1 U
+		2 D 
+		3 L
+		4 R
+		5 SELECT
+		6 START
+		7 L3
+		8 R3
+		9 L2
+		10 R2
+		11 L1
+		12 R1
+		13 TRIANGLE
+		14 CIRCLE
+		15 CROSS
+		16 SQUARE
+		
+		CV:
+	
+		1 L2
+		2 R2
+		3 L1
+		4 R1
+		5 TRIANGLE
+		6 CIRCLE
+		7 CROSS
+		8 SQUARE
+		9 PITCH
+		10 ROLL
+		11 LEFT HAT X
+		12 LEFT HAT Y
+		13 RIGHT HAT X
+		14 RIGHT HAT Y
+	
+		15 ACC Y
+		16 ACC Z
+	
+		(TODO: Ignore front to back accelleration)
+	
+	*/
 };
 
 #endif
