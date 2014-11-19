@@ -32,13 +32,12 @@
 
 #include "Grid.h"
 #include "JSONUtil.h"
+#include "EventManager.h"
 
 using namespace nw2s;
 
 const uint32_t nw2s::USBGrid::epDataInIndex  = 1;
 const uint32_t nw2s::USBGrid::epDataOutIndex = 2;
-
-USBHost usbHost;
 
 
 GridDevice USBGrid::deviceTypeFromJson(aJsonObject* data)
@@ -70,7 +69,7 @@ GridDevice USBGrid::deviceTypeFromJson(aJsonObject* data)
 
 USBGrid::USBGrid(GridDevice deviceType) : bAddress(0), bNumEP(1), ready(false)
 {
-	this->pUsb = &usbHost;
+	this->pUsb = &EventManager::usbHost;
 	this->deviceType = deviceType;
 	
 	/* Setup an empty set of endpoints */

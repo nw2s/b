@@ -31,6 +31,7 @@ using namespace nw2s;
 volatile unsigned long EventManager::t = 0UL;
 vector<TimeBasedDevice *> EventManager::timedevices;
 UsbBasedDevice* EventManager::usbDevice = NULL;
+USBHost EventManager::usbHost;
 
 /* SERIAL COMMAND PROCESSING */
 String inputString = "";         

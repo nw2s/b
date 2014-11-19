@@ -57,6 +57,7 @@ class nw2s::EventManager
 		static void registerUsbDevice(UsbBasedDevice* usbDevice);
 		static void loop();
 		static unsigned long getT();
+		static USBHost usbHost;
 	
 	private:
 		static volatile unsigned long t;
