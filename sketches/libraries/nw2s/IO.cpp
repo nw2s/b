@@ -171,6 +171,22 @@ void AnalogOut::outputCV(int cv)
 	}
 }
 
+void AnalogOut::outputRaw(int x)
+{
+	/* Make sure the values are in a 12bit unsigned range */
+	int dacval = (x < 0) ? 0 : (x > 4095) ? 4095 : x;
+	
+	this->spidac.setValue(this->spidac_index, dacval);
+
+	if (IOUtils::enableLED)
+	{
+		int ledval = (dacval < 2048) ? 4096 - (dacval * 2) : (dacval - 2048) * 2;
+		
+		AnalogOut::ledDriver.setLEDDimmed(this->ledpin, ledval);
+	}
+	
+}
+
 void IOUtils::setupPins()
 {
 	Serial.println("Initializing...");

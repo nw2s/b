@@ -292,7 +292,7 @@ bool UsbPS3::getButtonClick(ButtonEnum b)
 
 uint8_t UsbPS3::getAnalogButton(ButtonEnum a) 
 {
-	return (uint8_t)(readBuf[(pgm_read_byte(&PS3_ANALOG_BUTTONS[(uint8_t)a])) - 9]);
+	return (uint8_t)(readBuf[(PS3_ANALOG_BUTTONS[(uint8_t)a]) - 9]);
 }
 
 uint8_t UsbPS3::getAnalogHat(AnalogHatEnum a) 
@@ -305,7 +305,7 @@ uint16_t UsbPS3::getSensor(SensorEnum a)
 	return ((readBuf[((uint16_t)a) - 9] << 8) | readBuf[((uint16_t)a + 1) - 9]);
 }
 
-double UsbPS3::getAngle(AngleEnum a) 
+int UsbPS3::getAngle(AngleEnum a) 
 {
 	/* Warning - this could be slowish on a Due, better to use raw values */
     if(PS3Connected) 
@@ -322,14 +322,14 @@ double UsbPS3::getAngle(AngleEnum a)
 
             // Convert to 360 degrees resolution
             // atan2 outputs the value of -π to π (radians)
-            // We are then converting it to 0 to 2π and then to degrees
+            // We are then converting it to 0 to 2π and then to 0 - 4096
             if(a == Pitch)
 			{
-                return (atan2(accYval, accZval) + PI) * RAD_TO_DEG;
+                return (int)(floor(atan2(accYval, accZval) + PI) * 652);
 			}
             else
 			{
-                return (atan2(accXval, accZval) + PI) * RAD_TO_DEG;
+                return (int)(floor(atan2(accXval, accZval) + PI) * 652);
 			}
     } 
 	else
@@ -452,3 +452,147 @@ uint32_t UsbPS3::Release()
 	bPollEnable = false;
 	return 0;
 }
+
+
+UsbPS3CV* UsbPS3CV::create(bool bipolar)
+{
+	return new UsbPS3CV(bipolar);
+}
+
+UsbPS3CV::UsbPS3CV(bool bipolar)
+{
+	this->bipolar = bipolar;
+	
+	this->aL2 = AnalogOut::create(DUE_SPI_4822_08);
+	this->aR2 = AnalogOut::create(DUE_SPI_4822_09);
+	this->aL1 = AnalogOut::create(DUE_SPI_4822_10);
+	this->aR1 = AnalogOut::create(DUE_SPI_4822_11);
+	
+	this->aTriangle = AnalogOut::create(DUE_SPI_4822_12);
+	this->aCircle = AnalogOut::create(DUE_SPI_4822_13);
+	this->aCross = AnalogOut::create(DUE_SPI_4822_14);
+	this->aSquare = AnalogOut::create(DUE_SPI_4822_15);
+	
+	this->aLHatX = AnalogOut::create(DUE_SPI_4822_00);
+	this->aLHatY = AnalogOut::create(DUE_SPI_4822_01);
+	this->aRHatX = AnalogOut::create(DUE_SPI_4822_02);
+	this->aRHatY = AnalogOut::create(DUE_SPI_4822_03);
+
+	this->aPitch = AnalogOut::create(DUE_SPI_4822_04);
+	this->aRoll = AnalogOut::create(DUE_SPI_4822_05);
+	this->aAccX = AnalogOut::create(DUE_SPI_4822_06);
+	this->aAccY = AnalogOut::create(DUE_SPI_4822_07);
+}
+
+void UsbPS3CV::timer(uint32_t t)
+{
+	iterationcount = (iterationcount + 1) % 25;
+	
+	if (this->ready)
+	{
+		/* Blink the LEDs so we know that we're connected */
+		uint16_t millisecond = t % 1000;
+		
+		if (this->quartersecond != 1 && millisecond < 250)
+		{
+			this->quartersecond = 1;
+			this->setLedOn(LED1);
+			this->setLedOff(LED2);
+			this->setLedOff(LED3);
+			this->setLedOff(LED4);
+		}
+		else if (this->quartersecond != 2 && millisecond >= 250 && millisecond < 500)
+		{
+			this->quartersecond = 2;
+			this->setLedOff(LED1);
+			this->setLedOn(LED2);
+			this->setLedOff(LED3);
+			this->setLedOff(LED4);
+		}
+		else if (this->quartersecond != 3 && millisecond >= 500 && millisecond < 750)
+		{
+			this->quartersecond = 3;
+			this->setLedOff(LED1);
+			this->setLedOff(LED2);
+			this->setLedOn(LED3);
+			this->setLedOff(LED4);
+		}
+		else if (this->quartersecond != 4 && millisecond >= 750)
+		{
+			this->quartersecond = 4;
+			this->setLedOff(LED1);
+			this->setLedOff(LED2);
+			this->setLedOff(LED3);
+			this->setLedOn(LED4);
+		}
+		
+		
+		/* Digital */
+		digitalWrite(dUp, this->getButtonPress(UP));
+		digitalWrite(dDown, this->getButtonPress(DOWN));
+		digitalWrite(dLeft, this->getButtonPress(LEFT));
+		digitalWrite(dRight, this->getButtonPress(RIGHT));
+
+		digitalWrite(dSelect, this->getButtonPress(SELECT));
+		digitalWrite(dStart, this->getButtonPress(START));
+		digitalWrite(dL3, this->getButtonPress(L3));
+		digitalWrite(dR3, this->getButtonPress(R3));
+
+		digitalWrite(dL2, this->getButtonPress(L2));
+		digitalWrite(dR2, this->getButtonPress(R2));
+		digitalWrite(dL1, this->getButtonPress(L1));
+		digitalWrite(dR1, this->getButtonPress(R1));
+
+		digitalWrite(dTriangle, this->getButtonPress(TRIANGLE));
+		digitalWrite(dCircle, this->getButtonPress(CIRCLE));
+		digitalWrite(dCross, this->getButtonPress(CROSS));
+		digitalWrite(dSquare, this->getButtonPress(SQUARE));
+	
+		/* Non-bipolar Analog Buttons */
+
+		/* [0, 255] -> [2047, 0] */
+		aL2->outputRaw((256 - this->getAnalogButton(L2)) << 3);
+		aR2->outputRaw((256 - this->getAnalogButton(R2)) << 3);
+		aL1->outputRaw((256 - this->getAnalogButton(L1)) << 3);
+		aR1->outputRaw((256 - this->getAnalogButton(R1)) << 3);
+
+		aTriangle->outputRaw((256 - this->getAnalogButton(TRIANGLE)) << 3);
+		aCircle->outputRaw((256 - this->getAnalogButton(CIRCLE)) << 3);
+		aCross->outputRaw((256 - this->getAnalogButton(CROSS)) << 3);
+		aSquare->outputRaw((256 - this->getAnalogButton(SQUARE)) << 3);
+		
+		/* Only do the angle every Nth iteration, those are pretty intense */
+		//if (iterationcount & 0x10) Serial.println(this->getAngle(Pitch));
+		//if (millis() % 100 == 0) Serial.println(this->getAngle(Pitch));
+				
+		if (this->bipolar)
+		{
+			/* [0, 255] -> [0, 4096]  */			
+			aLHatX->outputRaw((this->getAnalogHat(LeftHatX)) << 4);
+			aLHatY->outputRaw((this->getAnalogHat(LeftHatY)) << 4);
+			aRHatX->outputRaw((this->getAnalogHat(RightHatX)) << 4);
+			aRHatY->outputRaw((this->getAnalogHat(RightHatY)) << 4);
+			
+			//TODO: This will be working soon. 
+			/* Useful range of the accellerometers seems to be about 400-600 */
+			/* Resting value is 511 */
+			/* [511] -> [2048] */
+			
+			//TODO: This is a little clunky right now
+			if (iterationcount == 0) aPitch->outputRaw(this->getAngle(Pitch));
+			if (iterationcount == 1) aRoll->outputRaw(this->getAngle(Roll));			
+		}
+		else
+		{
+			/* [0, 255] -> [2048, 0] */
+			aLHatX->outputRaw((256 - this->getAnalogHat(LeftHatX)) << 3);
+			aLHatY->outputRaw((256 - this->getAnalogHat(LeftHatY)) << 3);
+			aRHatX->outputRaw((256 - this->getAnalogHat(RightHatX)) << 3);
+			aRHatY->outputRaw((256 - this->getAnalogHat(RightHatY)) << 3);			
+		}		
+	}	
+}
+
+
+
+

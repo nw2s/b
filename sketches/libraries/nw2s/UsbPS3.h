@@ -33,7 +33,7 @@
 #ifndef USBPS3_H
 #define USBPS3_H
 
-//include "usb_ch9.h"
+#include "IO.h"
 #include "Usb.h"
 #include "EventManager.h"
 #include "confdescparser.h"
@@ -331,7 +331,7 @@ class nw2s::UsbPS3 : public USBDeviceConfig, public UsbBasedDevice
         uint8_t getAnalogButton(ButtonEnum a);
         uint8_t getAnalogHat(AnalogHatEnum a);
         uint16_t getSensor(SensorEnum a);
-        double getAngle(AngleEnum a);
+        int getAngle(AngleEnum a);
         bool getStatus(StatusEnum c);
         void setAllOff();
         void setRumbleOff();
@@ -359,56 +359,65 @@ class nw2s::UsbPS3 : public USBDeviceConfig, public UsbBasedDevice
 		
         /* Private commands */
         void PS3_Command(uint8_t *data, uint16_t nbytes);
-        void enable_sixaxis();
-		 
+        void enable_sixaxis(); 
 };
 
-class nw2s::UsbPS3CV : public nw2s::UsbPS3
-{
-	/* 
-	
-		Triggers:
-	
-		1 U
-		2 D 
-		3 L
-		4 R
-		5 SELECT
-		6 START
-		7 L3
-		8 R3
-		9 L2
-		10 R2
-		11 L1
-		12 R1
-		13 TRIANGLE
-		14 CIRCLE
-		15 CROSS
-		16 SQUARE
+class nw2s::UsbPS3CV : public nw2s::UsbPS3, public TimeBasedDevice
+{	
+	public:
 		
-		CV:
-	
-		1 L2
-		2 R2
-		3 L1
-		4 R1
-		5 TRIANGLE
-		6 CIRCLE
-		7 CROSS
-		8 SQUARE
-		9 PITCH
-		10 ROLL
-		11 LEFT HAT X
-		12 LEFT HAT Y
-		13 RIGHT HAT X
-		14 RIGHT HAT Y
-	
-		15 ACC Y
-		16 ACC Z
-	
-		(TODO: Ignore front to back accelleration)
-	
-	*/
+		static UsbPS3CV* create(bool bipolar);
+		static UsbPS3CV* create(aJsonObject* data);
+		
+		virtual void timer(unsigned long t);
+		
+	private:
+		
+		UsbPS3CV(bool bipolar);
+		
+		bool bipolar = true;
+		uint8_t quartersecond = 0;
+		uint8_t iterationcount = 0;
+		
+		PinDigitalOut dUp = DUE_OUT_D00;
+		PinDigitalOut dDown = DUE_OUT_D01;
+		PinDigitalOut dLeft = DUE_OUT_D02;
+		PinDigitalOut dRight = DUE_OUT_D03;
+		
+		PinDigitalOut dSelect = DUE_OUT_D04;
+		PinDigitalOut dStart = DUE_OUT_D05;
+		PinDigitalOut dL3 = DUE_OUT_D06;
+		PinDigitalOut dR3 = DUE_OUT_D07;
+		
+		PinDigitalOut dL2 = DUE_OUT_D08;
+		PinDigitalOut dR2 = DUE_OUT_D09;
+		PinDigitalOut dL1 = DUE_OUT_D10;
+		PinDigitalOut dR1 = DUE_OUT_D11;
+		
+		PinDigitalOut dTriangle = DUE_OUT_D12;
+		PinDigitalOut dCircle = DUE_OUT_D13;
+		PinDigitalOut dCross = DUE_OUT_D14;
+		PinDigitalOut dSquare = DUE_OUT_D15;
+		
+		AnalogOut* aL2;
+		AnalogOut* aR2;
+		AnalogOut* aL1;
+		AnalogOut* aR1;
+		
+		AnalogOut* aTriangle;
+		AnalogOut* aCircle;
+		AnalogOut* aCross;
+		AnalogOut* aSquare;
+		
+		AnalogOut* aLHatX;
+		AnalogOut* aLHatY;
+		AnalogOut* aRHatX;
+		AnalogOut* aRHatY;
+
+		AnalogOut* aPitch;
+		AnalogOut* aRoll;
+		AnalogOut* aAccX;
+		AnalogOut* aAccY;
 };
 
 #endif
