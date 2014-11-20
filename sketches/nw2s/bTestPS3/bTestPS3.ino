@@ -38,6 +38,29 @@ void loop()
 {
 	EventManager::loop();
 
+	if (ps3->isReady())
+	{
+		ps3->setLedOn(LED1);
+		delay(5);
+		ps3->setLedOff(LED1);
+		delay(5);
+		ps3->setLedOn(LED2);
+		delay(5);
+		ps3->setLedOff(LED2);
+		delay(5);
+		ps3->setLedOn(LED3);
+		delay(5);
+		ps3->setLedOff(LED3);
+		delay(5);
+		ps3->setLedOn(LED4);
+		delay(5);
+		ps3->setLedOff(LED4);
+		
+		bool triangle = ps3->getButtonPress(TRIANGLE);
+		
+		digitalWrite(DUE_OUT_D00, triangle);
+	}
+
 	delay(1);
 
 }

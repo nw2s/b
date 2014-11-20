@@ -321,17 +321,9 @@ class nw2s::UsbPS3 : public USBDeviceConfig, public UsbBasedDevice
 		virtual uint32_t GetAddress() { return bAddress; };
 		virtual bool isReady() { return ready; };
 
-		/* UsbConfigXtracter implementation */
-		//virtual void EndpointXtract(uint32_t conf, uint32_t iface, uint32_t alt, uint32_t proto, const USB_ENDPOINT_DESCRIPTOR *ep);
-
-        // virtual uint8_t Release();
-        // virtual uint8_t Poll();
-        // virtual bool isReady() {
-        //         return bPollEnable;
-        // };
-
-        virtual boolean VIDPIDOK(uint16_t vid, uint16_t pid) {
-                return (vid == PS3_VID && (pid == PS3_PID || pid == PS3NAVIGATION_PID || pid == PS3MOVE_PID));
+        virtual boolean VIDPIDOK(uint16_t vid, uint16_t pid) 
+		{
+			return (vid == PS3_VID && (pid == PS3_PID || pid == PS3NAVIGATION_PID || pid == PS3MOVE_PID));
         };
 		
         bool getButtonPress(ButtonEnum b);
@@ -364,8 +356,6 @@ class nw2s::UsbPS3 : public USBDeviceConfig, public UsbBasedDevice
 		
         uint8_t readBuf[EP_MAXPKTSIZE]; 
         uint8_t writeBuf[EP_MAXPKTSIZE]; 		
-		
-        void readReport(); 
 		
         /* Private commands */
         void PS3_Command(uint8_t *data, uint16_t nbytes);
