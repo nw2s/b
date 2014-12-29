@@ -151,7 +151,9 @@ void AnalogOut::outputCV(int cv)
 
 	*/
 
-	int dacval = 4095 - (((cv + (b::cvGainMode ? 10000 : 5000)) * 4000UL) / 10000);
+	int dacval = b::cvGainMode ? 
+		(4095 - ((cv + 10000) * 4096UL) / 20000) : 
+		(4095 - ((cv +  5000) * 4096UL) / 10000);
 
 	// Grr... where is this - could be a single cycle operation!
 	//dacval = __usat(dacval, 12);
