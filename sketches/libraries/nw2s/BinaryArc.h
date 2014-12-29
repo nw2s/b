@@ -64,26 +64,29 @@ class nw2s::BinaryArc : public BeatDevice, public USBArcController
 	private:
 		
 		BinaryArc(uint8_t encoderCount, bool pushButton);
-		void updateRingForNewDivider(uint8_t ring, bool refresh);
+		void updateRing(uint8_t ring, bool refresh);
+		int aRead(PinAnalogIn analogIn);
 		
 		PinDigitalIn clockInput	= DIGITAL_IN_NONE;
+		PinAnalogIn phaseCvIn[ARC_MAX_ENCODERS];
 		AnalogOut* cvOut[ARC_MAX_ENCODERS];
 		AnalogOut* mainCvOut;
 		
 		uint8_t divider[MAX_DIVIDERS] = {1, 2, 4, 8, 16, 32};
 		unsigned long clockState = 0;
-		uint8_t oldCounter = 0;
+		unsigned long readCvClockState = 0;
 		uint8_t counter = 0;
 		uint8_t dividers[ARC_MAX_ENCODERS];
 		uint8_t level[ARC_MAX_ENCODERS];
-		int voltage[ARC_MAX_ENCODERS];
+		bool flip[ARC_MAX_ENCODERS];
+		uint8_t prevValue[ARC_MAX_ENCODERS];
+		uint8_t phase[ARC_MAX_ENCODERS];
+		int phaseCv[ARC_MAX_ENCODERS];
+		
 		uint8_t divisionDelta = 40;
 		uint8_t voltageDelta = 25;
 		uint8_t deltaDivState = 0;
 		uint8_t deltaVolState = 0;
-		bool flip[ARC_MAX_ENCODERS];
-		uint8_t prevValue[ARC_MAX_ENCODERS];
-
 };
 
 #endif

@@ -67,17 +67,18 @@ BinaryArc::BinaryArc(uint8_t encoderCount, bool pushButton) : USBArcController(e
 	uint8_t dividerIndex = 1;
 	for (int i = 0; i < ARC_MAX_ENCODERS; i++)
 	{	
+		phaseCvIn[i] = INDEX_ANALOG_IN[i+1];
+		phaseCv[i] = aRead(phaseCvIn[i]);
+		phase[i] = phaseCv[i] * ARC_MAX_LEDS / 4096;
 		cvOut[i] = AnalogOut::create(INDEX_ANALOG_OUT[i+1]);
 		dividers[i] = dividerIndex++ % MAX_DIVIDERS;
-		updateRingForNewDivider(i, false);
 		level[i] = 0;
-		voltage[i] = 0;
-		flip[i] = true;
-		prevValue[i] = 0;
+		updateRing(i, false);
 	}
 	
 	/* Give it a moment... */
 	delay(200);	
+	IOUtils::displayBeat(this->beat, this);
 	refreshArc();
 }
 
@@ -88,10 +89,35 @@ void BinaryArc::setClockInput(PinDigitalIn input)
 
 void BinaryArc::timer(unsigned long t)
 {
+	bool refresh = false;
+	if (readCvClockState < t)
+	{
+		for (int ring = 0; ring < ARC_MAX_ENCODERS; ring++)
+		{
+			int readPhase = aRead(phaseCvIn[ring]);
+			
+			if (ring == 0) Serial.println(readPhase);
+			
+			if (abs(readPhase - phaseCv[ring]) >= (8192 / ARC_MAX_LEDS))
+			{
+				phaseCv[ring] = readPhase;
+				phase[ring] = readPhase * ARC_MAX_LEDS / 4096;
+				updateRing(ring, false);
+				refresh = true;
+			}
+		}
+		readCvClockState = t + 100; // only read CVs every 100ms
+	}
+
 	if (this->clockInput != DIGITAL_IN_NONE && !this->clockState && digitalRead(this->clockInput))
 	{
 		this->clockState = t;
 		this->reset();
+	}
+	else if (refresh && isReady())
+	{
+		this->refreshArc();
+		delay(2);
 	}
 
 	if (this->clockInput != DIGITAL_IN_NONE && this->clockState && ((this->clockState + 20) < t) && !digitalRead(this->clockInput))
@@ -102,7 +128,8 @@ void BinaryArc::timer(unsigned long t)
 
 void BinaryArc::reset()
 {
-	beat = (beat + 1) % 16; // thought this was for the clock LED (red) but doesn't seem to be the case...
+	beat = (beat + 1) % 16;
+	IOUtils::displayBeat(beat, this);
 	
 	for (int ring = 0; ring < ARC_MAX_ENCODERS; ring++)
 	{
@@ -112,40 +139,43 @@ void BinaryArc::reset()
 	int mainCv = 0;
 	for (int ring = 0; ring < ARC_MAX_ENCODERS; ring++)
 	{
-		if (counter % divider[dividers[ring]] == 0)
+		if ((counter + ARC_MAX_LEDS - phase[ring]) % divider[dividers[ring]] == 0)
 		{
 			flip[ring] = !flip[ring];
-			// voltage[ring] = 4096 * (flip[ring] ? level[ring] : 0) / 5 / 12 / 15;
-			/* Converts to either -10/+10 or -5/+5 depending on which model you have */
-			//int cv = (level[ring] > 11 ? 2000 : 1000) + SEMITONE_MV[flip[ring] ? level[ring] % 12 : 0];
-			//voltage[ring] = constrain(4095 - (((cv + (b::cvGainMode ? 10000 : 5000)) * 4000UL) / 10000), 0, 4095);
-			voltage[ring] = flip[ring] ? level[ring] * 100 : 0;
-			cvOut[ring]->outputCV(2000 + voltage[ring]);
+			int cv = flip[ring] ? ((level[ring] > 11 ? 1000 : 0) + SEMITONE_MV[level[ring] % 12]) : 0;
+			cvOut[ring]->outputCV(cv);
 		}
 		prevValue[ring] = values[0][ring][counter];
 		values[0][ring][counter] = 15;
-		mainCv += voltage[ring];
+		mainCv += flip[ring] ? level[ring] : 0;
 	}
-	mainCvOut->outputCV(constrain(mainCv, 0, 4095));
+	mainCvOut->outputCV((mainCv / 12) * 1000 + SEMITONE_MV[mainCv % 12]);
+	
 	if (isReady()) this->refreshArc();
 	delay(2);
 }
 
-void BinaryArc::updateRingForNewDivider(uint8_t ring, bool refresh)
+void BinaryArc::updateRing(uint8_t ring, bool refresh)
 {
-	bool f = true;
+	bool f = (phase[ring] / divider[dividers[ring]] % 2) == 0;
 	for(int led = 0; led < ARC_MAX_LEDS; led++)
 	{
-		if (led % divider[dividers[ring]] == 0) f = !f;
+		if ((led + ARC_MAX_LEDS - phase[ring]) % divider[dividers[ring]] == 0) f = !f;
 		values[0][ring][led] = f ? level[ring] : 0;
 		if (led == counter)
 		{
 			prevValue[ring] = values[0][ring][led];
+			flip[ring] = f;
 			values[0][ring][led] = 15;
 		}
 		
 	}
 	if (refresh && isReady()) this->refreshArc();
+}
+
+int BinaryArc::aRead(PinAnalogIn analogIn)
+{
+	return constrain((analogRead(analogIn) - 2048) * 2, 0, 4095);
 }
 
 void BinaryArc::encoderPositionChanged(uint8_t ring, int8_t delta)
@@ -157,7 +187,7 @@ void BinaryArc::encoderPositionChanged(uint8_t ring, int8_t delta)
 		{
 			deltaDivState = 0;
 			dividers[ring] = (dividers[ring] + 1) % MAX_DIVIDERS;
-			updateRingForNewDivider(ring, true);
+			updateRing(ring, true);
 		}
 	}
 	else
@@ -167,17 +197,15 @@ void BinaryArc::encoderPositionChanged(uint8_t ring, int8_t delta)
 		{
 			deltaVolState = 0;
 			level[ring] = (level[ring] + 1) % 15;
-			updateRingForNewDivider(ring, true);
-			// voltage[ring] = 4096 * (flip[ring] ? level[ring] : 0) / 5 / 12 / 15;
-			voltage[ring] = flip[ring] ? level[ring] * 100 : 0;
-			cvOut[ring]->outputCV(2000 + voltage[ring]);
-			// int cv = level[ring] > 11 ? 2000 : 1000 + SEMITONE_MV[level[ring] % 12];
-			// voltage[ring] = constrain(4095 - (((cv + (b::cvGainMode ? 10000 : 5000)) * 4000UL) / 10000), 0, 4095);
-			// cvOut[ring]->outputCV(voltage[ring]);
+			updateRing(ring, true);
+
+			int cv = flip[ring] ? ((level[ring] > 11 ? 1000 : 0) + SEMITONE_MV[level[ring] % 12]) : 0;
+			cvOut[ring]->outputCV(cv);
+			
 			int mainCv = 0;
 			for (int ring = 0; ring < ARC_MAX_ENCODERS; ring++)
-				mainCv += voltage[ring];
-			mainCvOut->outputCV(constrain(mainCv, 0, 4095));
+				mainCv += flip[ring] ? level[ring] : 0;
+			mainCvOut->outputCV((mainCv / 12) * 1000 + SEMITONE_MV[mainCv % 12]);
 		}
 	}
 	delay(1);
