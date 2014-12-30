@@ -68,13 +68,17 @@ class nw2s::BinaryArc : public BeatDevice, public USBArcController
 		int aRead(PinAnalogIn analogIn);
 		
 		PinDigitalIn clockInput	= DIGITAL_IN_NONE;
+		PinDigitalOut gateOutput[ARC_MAX_ENCODERS];
+		PinDigitalOut triggerOutput[ARC_MAX_ENCODERS];
 		PinAnalogIn phaseCvIn[ARC_MAX_ENCODERS];
 		AnalogOut* cvOut[ARC_MAX_ENCODERS];
 		AnalogOut* mainCvOut;
 		
 		uint8_t divider[MAX_DIVIDERS] = {1, 2, 4, 8, 16, 32};
+		unsigned long currentTime = 0;
 		unsigned long clockState = 0;
 		unsigned long readCvClockState = 0;
+		unsigned long triggerState[ARC_MAX_ENCODERS];
 		uint8_t counter = 0;
 		uint8_t dividers[ARC_MAX_ENCODERS];
 		uint8_t level[ARC_MAX_ENCODERS];

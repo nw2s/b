@@ -73,6 +73,10 @@ BinaryArc::BinaryArc(uint8_t encoderCount, bool pushButton) : USBArcController(e
 		cvOut[i] = AnalogOut::create(INDEX_ANALOG_OUT[i+1]);
 		dividers[i] = dividerIndex++ % MAX_DIVIDERS;
 		level[i] = 0;
+		gateOutput[i] = INDEX_DIGITAL_OUT[i*2+1];
+		triggerOutput[i] = INDEX_DIGITAL_OUT[i*2+2];
+		triggerState[i] = 0;
+
 		updateRing(i, false);
 	}
 	
@@ -89,6 +93,7 @@ void BinaryArc::setClockInput(PinDigitalIn input)
 
 void BinaryArc::timer(unsigned long t)
 {
+	currentTime = t;
 	bool refresh = false;
 	if (readCvClockState < t)
 	{
@@ -109,6 +114,15 @@ void BinaryArc::timer(unsigned long t)
 		readCvClockState = t + 100; // only read CVs every 100ms
 	}
 
+	for (int ring = 0; ring < ARC_MAX_ENCODERS; ring++)
+	{
+		if (triggerState[ring] && triggerState[ring] < t)
+		{
+			digitalWrite(triggerOutput[ring], LOW);
+			triggerState[ring] = 0;
+		}
+	}
+	
 	if (this->clockInput != DIGITAL_IN_NONE && !this->clockState && digitalRead(this->clockInput))
 	{
 		this->clockState = t;
@@ -144,6 +158,9 @@ void BinaryArc::reset()
 			flip[ring] = !flip[ring];
 			int cv = flip[ring] ? ((level[ring] > 11 ? 1000 : 0) + SEMITONE_MV[level[ring] % 12]) : 0;
 			cvOut[ring]->outputCV(cv);
+			digitalWrite(gateOutput[ring], flip[ring] ? HIGH : LOW);
+			digitalWrite(triggerOutput[ring], HIGH);
+			triggerState[ring] = currentTime + TRIGGER_LENGTH;
 		}
 		prevValue[ring] = values[0][ring][counter];
 		values[0][ring][counter] = 15;
@@ -166,6 +183,7 @@ void BinaryArc::updateRing(uint8_t ring, bool refresh)
 		{
 			prevValue[ring] = values[0][ring][led];
 			flip[ring] = f;
+			digitalWrite(gateOutput[ring], flip[ring] ? HIGH : LOW);
 			values[0][ring][led] = 15;
 		}
 		
