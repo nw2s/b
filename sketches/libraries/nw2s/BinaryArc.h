@@ -62,7 +62,10 @@ class nw2s::BinaryArc : public BeatDevice, public USBArcController
 		virtual void buttonReleased(uint8_t encoder);
 
 	private:
-		
+	
+		// Phrygian dominant scale
+		int SCALE[16] = {0, 83, 333, 417, 583, 667, 833, 1000, 1083, 1333, 1417, 1583, 1667, 1833, 2000, 2083};
+	
 		BinaryArc(uint8_t encoderCount, bool pushButton);
 		void updateRing(uint8_t ring, bool refresh);
 		int aRead(PinAnalogIn analogIn);
@@ -71,6 +74,7 @@ class nw2s::BinaryArc : public BeatDevice, public USBArcController
 		PinDigitalOut gateOutput[ARC_MAX_ENCODERS];
 		PinDigitalOut triggerOutput[ARC_MAX_ENCODERS];
 		PinAnalogIn phaseCvIn[ARC_MAX_ENCODERS];
+		PinAnalogIn transposeCvIn[ARC_MAX_ENCODERS];
 		AnalogOut* cvOut[ARC_MAX_ENCODERS];
 		AnalogOut* mainCvOut;
 		
@@ -78,6 +82,7 @@ class nw2s::BinaryArc : public BeatDevice, public USBArcController
 		unsigned long currentTime = 0;
 		unsigned long clockState = 0;
 		unsigned long readCvClockState = 0;
+		uint8_t readCvCounter = 0;
 		unsigned long triggerState[ARC_MAX_ENCODERS];
 		uint8_t counter = 0;
 		uint8_t dividers[ARC_MAX_ENCODERS];
@@ -86,6 +91,7 @@ class nw2s::BinaryArc : public BeatDevice, public USBArcController
 		uint8_t prevValue[ARC_MAX_ENCODERS];
 		uint8_t phase[ARC_MAX_ENCODERS];
 		int phaseCv[ARC_MAX_ENCODERS];
+		int transposeCv[ARC_MAX_ENCODERS];
 		
 		uint8_t divisionDelta = 40;
 		uint8_t voltageDelta = 25;
