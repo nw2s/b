@@ -36,7 +36,8 @@
 #include "Gate.h"
 #include "JSONUtil.h"
 
-#define MAX_DIVIDERS 6
+#define MAX_DIVISORS 6
+#define MAX_SCALES 16
 
 namespace nw2s
 {
@@ -70,22 +71,34 @@ class nw2s::BinaryArc : public BeatDevice, public USBArcController
 		void updateRing(uint8_t ring, bool refresh);
 		int aRead(PinAnalogIn analogIn);
 		
-		PinDigitalIn clockInput	= DIGITAL_IN_NONE;
+		PinDigitalIn clockInput	= DUE_IN_D0;
+		PinDigitalIn resetInput = DUE_IN_D1;
+		PinDigitalIn nextScaleInput = DUE_IN_D2;
+		PinDigitalIn reservedInput = DUE_IN_D3;
+		PinDigitalIn sumInput[4] = {DUE_IN_D4, DUE_IN_D5, DUE_IN_D6, DUE_IN_D7};
+		
 		PinDigitalOut gateOutput[ARC_MAX_ENCODERS];
 		PinDigitalOut triggerOutput[ARC_MAX_ENCODERS];
+		
 		PinAnalogIn phaseCvIn[ARC_MAX_ENCODERS];
 		PinAnalogIn transposeCvIn[ARC_MAX_ENCODERS];
+		PinAnalogIn divisorCvIn[ARC_MAX_ENCODERS];
+		
+		AnalogOut* pitchCvOut[ARC_MAX_ENCODERS];
 		AnalogOut* cvOut[ARC_MAX_ENCODERS];
 		AnalogOut* mainCvOut;
 		
-		uint8_t divider[MAX_DIVIDERS] = {1, 2, 4, 8, 16, 32};
+		uint8_t divisor[MAX_DIVISORS] = {1, 2, 4, 8, 16, 32};
 		unsigned long currentTime = 0;
 		unsigned long clockState = 0;
+		unsigned long resetState = 0;
+		unsigned long scaleState = 0;
 		unsigned long readCvClockState = 0;
 		uint8_t readCvCounter = 0;
 		unsigned long triggerState[ARC_MAX_ENCODERS];
 		uint8_t counter = 0;
-		uint8_t dividers[ARC_MAX_ENCODERS];
+		uint8_t scale = 0;
+		uint8_t divisors[ARC_MAX_ENCODERS];
 		uint8_t level[ARC_MAX_ENCODERS];
 		bool flip[ARC_MAX_ENCODERS];
 		uint8_t prevValue[ARC_MAX_ENCODERS];
