@@ -67,76 +67,22 @@ AnalogOut::AnalogOut(PinAnalogOut pin)
 {
 	this->pin = pin;
 
-	if ((pin >= DUE_SPI_4822_14) && (pin <= DUE_SPI_4822_01))
-	{
-		/* Calculate the CS and latch pins from the out pin */
-		int cspin = ((pin - DUE_SPI_4822_PREFIX) / 2) + 2;
-		int ldacpin = DUE_SPI_LATCH;
+	int cspin = INDEX_SPI_DAC_PIN[pin];
+	int ldacpin = DUE_SPI_LATCH;
 
-		this->spidac_index = pin % 2;
-		this->spidac = MCP4822(cspin,ldacpin);
-		
-	    this->spidac.begin();
-	    SPI.setDataMode(SPI_MODE0);
-	    SPI.setBitOrder(MSBFIRST);
-	    SPI.setClockDivider(42);
-	    SPI.begin();
-		
-		this->spidac.setGain1X(this->spidac_index);				
-		
-		/* Calculate the LED pin on the PCA9685 driver */
-		switch(pin)
-		{
-			case DUE_SPI_4822_00:
-				this->ledpin = 0;
-				break;
-			case DUE_SPI_4822_01:
-				this->ledpin = 1;
-				break;
-			case DUE_SPI_4822_02:
-				this->ledpin = 2;
-				break;
-			case DUE_SPI_4822_03:
-				this->ledpin = 3;
-				break;
-			case DUE_SPI_4822_04:
-				this->ledpin = 4;
-				break;
-			case DUE_SPI_4822_05:
-				this->ledpin = 5;
-				break;
-			case DUE_SPI_4822_06:
-				this->ledpin = 6;
-				break;
-			case DUE_SPI_4822_07:
-				this->ledpin = 7;
-				break;
-			case DUE_SPI_4822_08:
-				this->ledpin = 8;
-				break;
-			case DUE_SPI_4822_09:
-				this->ledpin = 9;
-				break;
-			case DUE_SPI_4822_10:
-				this->ledpin = 10;
-				break;
-			case DUE_SPI_4822_11:
-				this->ledpin = 11;
-				break;
-			case DUE_SPI_4822_12:
-				this->ledpin = 12;
-				break;
-			case DUE_SPI_4822_13:
-				this->ledpin = 13;
-				break;
-			case DUE_SPI_4822_14:
-				this->ledpin = 14;
-				break;
-			case DUE_SPI_4822_15:
-				this->ledpin = 15;
-				break;
-		}
-	}
+	this->spidac_index = INDEX_SPI_DAC_CHANNEL[pin];
+	this->spidac = MCP4822(cspin,ldacpin);
+
+	/* LED pin on PCA9685 is just the index */
+	this->ledpin = pin;
+	
+    this->spidac.begin();
+    SPI.setDataMode(SPI_MODE0);
+    SPI.setBitOrder(MSBFIRST);
+    SPI.setClockDivider(42);
+    SPI.begin();
+	
+	this->spidac.setGain1X(this->spidac_index);						
 }
 
 void AnalogOut::outputCV(int cv)
@@ -151,9 +97,18 @@ void AnalogOut::outputCV(int cv)
 
 	*/
 
+	int cv_old = cv;
+
+	/* Scale the values if we're using software tuning */
+	if (b::softTune)
+	{
+		cv = ((cv * b::scale[this->pin]) / TUNE_SCALE_FACTOR) + b::offset[this->pin];
+	}
+
 	int dacval = b::cvGainMode ? 
-		(4095 - ((cv + 10000) * 4096UL) / 20000) : 
-		(4095 - ((cv +  5000) * 4096UL) / 10000);
+		(4095 - ((cv + 10000) * 4000UL) / 20000) : 
+		(4095 - ((cv +  5000) * 4000UL) / 10000);
+
 
 	// Grr... where is this - could be a single cycle operation!
 	//dacval = __usat(dacval, 12);
@@ -167,7 +122,7 @@ void AnalogOut::outputCV(int cv)
 
 	if (IOUtils::enableLED)
 	{
-		int ledval = (cv == 0) ? 0 : (dacval < 2000) ? 4000 - (dacval * 2) : (dacval - 2000) * 2;
+		int ledval = (cv_old == 0) ? 0 : (dacval < 2000) ? 4000 - (dacval * 2) : (dacval - 2000) * 2;
 		
 		AnalogOut::ledDriver.setLEDDimmed(this->ledpin, ledval);
 	}

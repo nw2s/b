@@ -75,31 +75,35 @@ namespace nw2s
 		DUE_IN_A_NONE = -1,
 	};
 
-	static const int DUE_SPI_4822_PREFIX = 1000;
 	static const int DUE_SPI_LATCH = 11;
 	
 	enum PinAnalogOut
 	{
-		ANALOG_OUT_NONE = -2,
+		ANALOG_OUT_NONE = -1,
 		
-		/* Yes, the hardware didn't quite line up correctly */
-		DUE_SPI_4822_14 = 1000,
-		DUE_SPI_4822_15 = 1001,
-		DUE_SPI_4822_12 = 1002,
-		DUE_SPI_4822_13 = 1003,
-		DUE_SPI_4822_10 = 1004,
-		DUE_SPI_4822_11 = 1005,
-		DUE_SPI_4822_08 = 1006,
-		DUE_SPI_4822_09 = 1007,
-		DUE_SPI_4822_06 = 1008,
-		DUE_SPI_4822_07 = 1009,
-		DUE_SPI_4822_04 = 1010,
-		DUE_SPI_4822_05 = 1011,
-		DUE_SPI_4822_02 = 1012,
-		DUE_SPI_4822_03 = 1013,
-		DUE_SPI_4822_00 = 1014,
-		DUE_SPI_4822_01 = 1015,		
+		DUE_SPI_4822_00 = 0,
+		DUE_SPI_4822_01 = 1,
+		DUE_SPI_4822_02 = 2,
+		DUE_SPI_4822_03 = 3,
+		DUE_SPI_4822_04 = 4,
+		DUE_SPI_4822_05 = 5,
+		DUE_SPI_4822_06 = 6,
+		DUE_SPI_4822_07 = 7,
+		DUE_SPI_4822_08 = 8,
+		DUE_SPI_4822_09 = 9,
+		DUE_SPI_4822_10 = 10,
+		DUE_SPI_4822_11 = 11,
+		DUE_SPI_4822_12 = 12,
+		DUE_SPI_4822_13 = 13,
+		DUE_SPI_4822_14 = 14,
+		DUE_SPI_4822_15 = 15,		
+
 	};
+
+	/* Getting rid of the old formula for calculating these and using a lookup instead */
+	// int cspin = ((pin - DUE_SPI_4822_PREFIX) / 2) + 2;
+	static const uint8_t INDEX_SPI_DAC_PIN[16] = { 9, 9, 8, 8, 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2 };
+	static const uint8_t INDEX_SPI_DAC_CHANNEL[16] = { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1 };
 	
 	enum PinAudioOut
 	{
@@ -4256,9 +4260,9 @@ class nw2s::AnalogOut
 		AnalogOut(PinAnalogOut out);
 
 		MCP4822 spidac;
-		int spidac_index;
+		uint8_t spidac_index;
 		int csvalue;
-		int ledpin;
+		uint8_t ledpin;
 };
 
 

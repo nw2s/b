@@ -24,6 +24,9 @@
 
 #include <SD.h>
 
+
+#define TUNE_SCALE_FACTOR 1000
+
 namespace nw2s
 {
 	class b;
@@ -40,6 +43,10 @@ class nw2s::b
 	public:
 		static bool debugMode;
 		static bool cvGainMode;
+		
+		static bool softTune;
+		static int16_t offset[16];
+		static int32_t scale[16];
 		
 		static SdFile getSDRoot();
 		

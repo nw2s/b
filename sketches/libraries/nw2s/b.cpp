@@ -29,6 +29,13 @@ bool b::debugMode = false;
 bool b::cvGainMode = CV_GAIN_LOW;
 bool b::rootInitialized = false;
 
+bool b::softTune = false;
+int16_t b::offset[16] = {-5, -2, -1, -3, -5, -6, -4, -6, -5, -31, -3, -4, -7, -5, -5, -8};
+int32_t b::scale[16] = {998, 996, 997, 998, 996, 1002, 1011, 1003, 1000, 996, 1009, 1001, 997, 999, 996, 991};
+
+
+
+
 SdFile b::root;
 Sd2Card b::card;
 SdVolume b::volume;
