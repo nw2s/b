@@ -36,25 +36,35 @@ namespace nw2s
 		CV_GAIN_HIGH = 1,  // This is for when you're biasing to -10V and +10V
 		CV_GAIN_LOW = 0,   // This is for when you've biased to -5V to +5V
 	};
+	
+	enum DeviceModel
+	{
+		NW2S_B_1_0_0
+	};
 }
 
 class nw2s::b
 {
 	public:
+
+		//TOD: most (all?) of these should be read-only getters
+		static DeviceModel model;
 		static bool debugMode;
 		static bool cvGainMode;
 		
 		static bool softTune;
 		static int16_t offset[16];
 		static int32_t scale[16];
+		static void configure();
 		
 		static SdFile getSDRoot();
 		
 	private:
+
 		static SdFile root;
 		static bool rootInitialized;
 		static Sd2Card card;
-		static SdVolume volume;
+		static SdVolume volume;		
 };
 
 

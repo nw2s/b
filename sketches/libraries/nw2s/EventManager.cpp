@@ -44,6 +44,8 @@ void UsbBasedDevice::task()
 
 void EventManager::initialize()
 {
+	b::configure();
+	
 	IOUtils::setupPins();
 }
 

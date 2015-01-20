@@ -21,6 +21,7 @@
 #include <SD.h>
 #include "IO.h"
 #include "b.h"
+#include "../aJSON/aJSON.h"
 
 using namespace nw2s;
 
@@ -28,10 +29,11 @@ using namespace nw2s;
 bool b::debugMode = false;
 bool b::cvGainMode = CV_GAIN_LOW;
 bool b::rootInitialized = false;
+DeviceModel b::model = NW2S_B_1_0_0;
 
 bool b::softTune = false;
-int16_t b::offset[16] = {-5, -2, -1, -3, -5, -6, -4, -6, -5, -31, -3, -4, -7, -5, -5, -8};
-int32_t b::scale[16] = {998, 996, 997, 998, 996, 1002, 1011, 1003, 1000, 996, 1009, 1001, 997, 999, 996, 991};
+int16_t b::offset[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+int32_t b::scale[16] = { 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000 };
 
 
 
@@ -71,6 +73,146 @@ SdFile b::getSDRoot()
 		b::root = root;
 		return root;
 	}	
+}
+
+void b::configure()
+{
+	/* Loads the config JSON file from SD card (if it exists) and sets up the system variables */
+	/* Loads the config JSON file from SD card (if it exists) and sets up the system variables */
+	/* Loads the config JSON file from SD card (if it exists) and sets up the system variables */
+	
+	SdFile root;
+	SdFile configDir;
+	SdFile configFile;
+
+	/* Open the file '/config/sys.b' */
+
+	root = getSDRoot();
+	
+	if (!configDir.open(root, "CONFIG", O_READ))
+	{
+	    Serial.println("No config folder found. Using default configuration.");
+	    return;
+	}
+	
+	if (!configFile.open(configDir, "SYS.B", O_READ))
+	{
+	    Serial.println("Error opening '/config/sys.b'. Using default configuration.");
+	    return;
+	}
+
+	/* Load and parse the config definition file */
+
+	uint fileSize = configFile.fileSize();
+	char configData[fileSize + 1];
+
+	configFile.read(configData, fileSize);
+	configData[fileSize] == '\0';
+		
+	aJsonObject* config = aJson.parse(configData);
+
+    if (config == NULL) 
+	{
+		static const char error[] = "Configuration not parsed successfully. Check to see that it's properly formatted JSON."; 
+        Serial.println(error);
+		return;
+	}
+	else
+	{
+		static const char msg[] = "Configuration parsed successfully.";
+        Serial.println(msg);
+	}
+	
+	/* Get the root node and iterate over the properties, updating what's available. */
+	
+	aJsonObject* configNode = aJson.getObjectItem(config, "config"); 
+	
+	
+	/* Module types */
+	
+	aJsonObject* moduleNode = aJson.getObjectItem(configNode, "module"); 
+	
+	if (strcmp(moduleNode->valuestring, "NW2S-B-1-0-0") == 0)
+	{
+		Serial.println("Model: nw2s::b 1.0.0");
+		b::model = NW2S_B_1_0_0;
+	}
+	else
+	{
+		Serial.print("Unknown Model, skipping: ");
+		Serial.println(moduleNode->valuestring);
+	}
+	
+	/* Gain mode */
+
+	aJsonObject* gainNode = aJson.getObjectItem(configNode, "gainmode"); 
+	
+	if (strcmp(gainNode->valuestring, "HIGH") == 0)
+	{
+		Serial.println("Gain: HIGH +/- 10V operation");
+		b::cvGainMode = CV_GAIN_HIGH;
+	}
+	else if (strcmp(gainNode->valuestring, "LOW") == 0)
+	{
+		Serial.println("Gain: LOW +/- 5V operation");
+		b::cvGainMode = CV_GAIN_LOW;
+	}
+	else
+	{
+		Serial.print("Unknown gain, skipping: ");
+		Serial.println(gainNode->valuestring);
+	}
+	
+	/* Output config */
+
+	aJsonObject* outputNode = aJson.getObjectItem(configNode, "outputs"); 
+	
+	aJsonObject* outputTuneNode = aJson.getObjectItem(outputNode, "software-tune"); 
+	
+	if (outputTuneNode->valuebool)
+	{
+		aJsonObject* scaleNode = aJson.getObjectItem(outputNode, "scale"); 
+		
+		if (aJson.getArraySize(scaleNode) == 16)
+		{
+			for (int i = 0; i < aJson.getArraySize(scaleNode); i++)
+			{
+				aJsonObject* valueNode = aJson.getArrayItem(scaleNode, i);
+				
+				b::scale[i] = valueNode->valueint;
+			}
+		}
+		else
+		{
+			Serial.println("Configuration requires 16 scale values, skipping.");
+		}
+		
+		
+		aJsonObject* offsetNode = aJson.getObjectItem(outputNode, "offset"); 
+		
+		if (aJson.getArraySize(offsetNode) == 16)
+		{
+			for (int i = 0; i < aJson.getArraySize(offsetNode); i++)
+			{
+				aJsonObject* valueNode = aJson.getArrayItem(offsetNode, i);
+				
+				b::offset[i] = valueNode->valueint;
+			}
+		}
+		else
+		{
+			Serial.println("Configuration requires 16 offset values, skipping.");
+		}
+	}
+	else
+	{
+		Serial.println("Using default output tuning");
+	}
+	
+	
+	
+	
+	
 }
 
 
