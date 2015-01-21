@@ -125,7 +125,7 @@ void b::configure()
 	
 	/* Get the root node and iterate over the properties, updating what's available. */
 	
-	aJsonObject* configNode = aJson.getObjectItem(config, "config"); 
+	aJsonObject* configNode = aJson.getObjectItem(config, "configuration"); 
 	
 	
 	/* Module types */
@@ -175,12 +175,19 @@ void b::configure()
 		
 		if (aJson.getArraySize(scaleNode) == 16)
 		{
+			Serial.print("Scale: { ");
+			
 			for (int i = 0; i < aJson.getArraySize(scaleNode); i++)
 			{
 				aJsonObject* valueNode = aJson.getArrayItem(scaleNode, i);
 				
 				b::scale[i] = valueNode->valueint;
+				
+				Serial.print(b::scale[i]);
+				Serial.print(" ");
 			}
+			
+			Serial.println("}");
 		}
 		else
 		{
@@ -192,12 +199,19 @@ void b::configure()
 		
 		if (aJson.getArraySize(offsetNode) == 16)
 		{
+			Serial.print("Offset: { ");
+			
 			for (int i = 0; i < aJson.getArraySize(offsetNode); i++)
 			{
 				aJsonObject* valueNode = aJson.getArrayItem(offsetNode, i);
 				
 				b::offset[i] = valueNode->valueint;
+
+				Serial.print(b::offset[i]);
+				Serial.print(" ");
 			}
+			
+			Serial.println("}");
 		}
 		else
 		{

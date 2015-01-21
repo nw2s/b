@@ -212,7 +212,7 @@ int
 aJsonStream::parseNumber(aJsonObject *item)
 {
   int i = 0;
-  char sign = 1;
+  int sign = 1;
 
   int in = this->getch();
   if (in == EOF)
@@ -242,6 +242,7 @@ aJsonStream::parseNumber(aJsonObject *item)
   if (!(in == '.' || in == 'e' || in == 'E'))
     {
       item->valueint = i * (int) sign;
+	  
       item->type = aJson_Int;
     }
   //ok it seems to be a double
