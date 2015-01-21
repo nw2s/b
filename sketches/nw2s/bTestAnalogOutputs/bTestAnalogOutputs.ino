@@ -55,19 +55,34 @@ PinAnalogOut outpins[16] = {
 
 };
 
+// int values[11] = {
+//
+// 	-5000,
+// 	-4000,
+// 	-3000,
+// 	-2000,
+// 	-1000,
+// 	0,
+// 	1000,
+// 	2000,
+// 	3000,
+// 	4000,
+// 	5000
+// };
+
 int values[11] = {
 	
-	-5000,
+	-10000,
+	-8000,
+	-6000,
 	-4000,
-	-3000,
 	-2000,
-	-1000,
 	0,
-	1000,
 	2000,
-	3000,
 	4000,
-	5000
+	6000,
+	8000,
+	10000
 };
 
 bool checkToggle = false;
@@ -80,9 +95,6 @@ void setup()
 {
 	Serial.begin(19200);
 	Serial.println("Starting...");
-
-	/* Always set up the gain mode first - use HIGH if you are biased for -10V - +10V */
-	b::cvGainMode = CV_GAIN_LOW;
 
 	/* Set up a clock to have something to watch :P */
 	EventManager::initialize();

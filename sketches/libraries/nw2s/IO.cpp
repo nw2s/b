@@ -194,7 +194,7 @@ void IOUtils::setupPins()
 
 	/* Setup the I2C bus and LED driver */
 	Wire1.begin();
-	AnalogOut::ledDriver.begin(B000000);
+	AnalogOut::ledDriver.begin(B000000, b::dimming);
 	IOUtils::enableLED = AnalogOut::ledDriver.init();
 	Serial.println("LED driver status: " + String(IOUtils::enableLED));
 

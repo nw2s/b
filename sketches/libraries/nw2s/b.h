@@ -55,6 +55,7 @@ class nw2s::b
 		static bool softTune;
 		static int16_t offset[16];
 		static int32_t scale[16];
+		static int32_t dimming;
 		static void configure();
 		
 		static SdFile getSDRoot();

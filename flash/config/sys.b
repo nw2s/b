@@ -4,6 +4,7 @@
 		
 		"module" : "NW2S-B-1-0-0",
 		"gainmode" : "HIGH",
+		"dimming" : 50,
 
 		"outputs" : 
 		{

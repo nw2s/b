@@ -18,10 +18,14 @@
 
 PCA9685::PCA9685() {}
 
-void PCA9685::begin(int i2cAddress) {
+void PCA9685::begin(int i2cAddress, int dim) 
+{
 	_i2cAddress = PCA9685_I2C_BASE_ADDRESS | (i2cAddress & B00111111);
+	this->dim = dim;
 }
-bool PCA9685::init() {
+
+bool PCA9685::init() 
+{
 
 	delay(1);
 	writeRegister(PCA9685_MODE1, (byte)0x01);	// reset the device
@@ -49,7 +53,7 @@ void PCA9685::setLEDOff(int ledNumber) {
 
 void PCA9685::setLEDDimmed(int ledNumber, int amount) 
 {		
-	writeLED(ledNumber, 0, 0 + ((amount * 10) / 50));
+	writeLED(ledNumber, 0, 0 + ((amount * 10) / this->dim));
 }
 
 void PCA9685::writeLED(int ledNumber, word LED_ON, word LED_OFF) {	// LED_ON and LED_OFF are 12bit values (0-4095); ledNumber is 0-15

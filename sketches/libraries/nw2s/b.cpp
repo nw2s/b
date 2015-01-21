@@ -32,6 +32,7 @@ bool b::rootInitialized = false;
 DeviceModel b::model = NW2S_B_1_0_0;
 
 bool b::softTune = false;
+int32_t b::dimming = 50;
 int16_t b::offset[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 int32_t b::scale[16] = { 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000 };
 
@@ -163,6 +164,15 @@ void b::configure()
 		Serial.println(gainNode->valuestring);
 	}
 	
+	/* Brightness/Dimming */
+	/* Values can range from 10 to 100. 10 = no dimming. 100 = 1/10 the brightness level */
+
+	aJsonObject* dimNode = aJson.getObjectItem(configNode, "dimming"); 
+	
+	Serial.print("Dim: ");
+	Serial.println(dimNode->valueint);
+	b::dimming = dimNode->valueint;
+	
 	/* Output config */
 
 	aJsonObject* outputNode = aJson.getObjectItem(configNode, "outputs"); 
@@ -171,6 +181,8 @@ void b::configure()
 	
 	if (outputTuneNode->valuebool)
 	{
+		b::softTune = true;
+		
 		aJsonObject* scaleNode = aJson.getObjectItem(outputNode, "scale"); 
 		
 		if (aJson.getArraySize(scaleNode) == 16)
