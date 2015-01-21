@@ -37,7 +37,7 @@
 #include "JSONUtil.h"
 
 #define MAX_DIVISORS 6
-#define MAX_SCALES 16
+#define MAX_SCALES 2
 
 namespace nw2s
 {
@@ -63,13 +63,18 @@ class nw2s::BinaryArc : public BeatDevice, public USBArcController
 		virtual void buttonReleased(uint8_t encoder);
 
 	private:
-	
-		// Phrygian dominant scale
-		int SCALE[16] = {0, 83, 333, 417, 583, 667, 833, 1000, 1083, 1333, 1417, 1583, 1667, 1833, 2000, 2083};
-	
+		
+		// will add more scales, should probably add them to Key.h
+		Scale SCALES[MAX_SCALES] = {
+			{ 7, { 0, 2, 4, 5, 7, 9, 10 } },
+			{ 7, { 0, 2, 3, 5, 7, 8, 10 } }
+		};
+		
 		BinaryArc(uint8_t encoderCount, bool pushButton);
 		void updateRing(uint8_t ring, bool refresh);
 		int aRead(PinAnalogIn analogIn);
+		int getNoteCv(int transpose, uint8_t level);
+		uint8_t getDivisor(uint8_t ring);
 		
 		PinDigitalIn clockInput	= DUE_IN_D0;
 		PinDigitalIn resetInput = DUE_IN_D1;
@@ -105,6 +110,7 @@ class nw2s::BinaryArc : public BeatDevice, public USBArcController
 		uint8_t phase[ARC_MAX_ENCODERS];
 		int phaseCv[ARC_MAX_ENCODERS];
 		int transposeCv[ARC_MAX_ENCODERS];
+		int divisorCv[ARC_MAX_ENCODERS];
 		
 		uint8_t divisionDelta = 40;
 		uint8_t voltageDelta = 25;

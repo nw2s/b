@@ -72,10 +72,14 @@ BinaryArc::BinaryArc(uint8_t encoderCount, bool pushButton) : USBArcController(e
 		delay(10); // give the ADC time to recover
 		phaseCvIn[i] = INDEX_ANALOG_IN[i+1+ARC_MAX_ENCODERS];
 		phaseCv[i] = aRead(phaseCvIn[i]);
+		delay(10);
+		divisorCvIn[i] = INDEX_ANALOG_IN[i+1+ARC_MAX_ENCODERS*2];
+		divisorCv[i] = aRead(divisorCvIn[i]) * MAX_DIVISORS / 2048;
+		divisors[i] = i % MAX_DIVISORS;
+
 		phase[i] = constrain(phaseCv[i] * ARC_MAX_LEDS / 2048, 0, 63);
 		pitchCvOut[i] = AnalogOut::create(INDEX_ANALOG_OUT[i*2+1]);
 		cvOut[i] = AnalogOut::create(INDEX_ANALOG_OUT[i*2+2]);
-		divisors[i] = divisorIndex++ % MAX_DIVISORS;
 		level[i] = 0;
 		gateOutput[i] = INDEX_DIGITAL_OUT[i*2+1];
 		triggerOutput[i] = INDEX_DIGITAL_OUT[i*2+2];
@@ -106,10 +110,10 @@ void BinaryArc::timer(unsigned long t)
 		if (readCvCounter < ARC_MAX_ENCODERS)
 		{
 			transposeCv[cvIndex] = aRead(transposeCvIn[cvIndex]);
+			// Serial.println(analogRead(transposeCvIn[0]));
 		}
-		else
+		else if (readCvCounter < ARC_MAX_ENCODERS * 2)
 		{
-			// if (cvIndex == 0) Serial.println(phaseCv[cvIndex]);
 			int newPhaseCv = aRead(phaseCvIn[cvIndex]);
 			if (abs(newPhaseCv - phaseCv[cvIndex]) > 35)
 			{
@@ -119,11 +123,19 @@ void BinaryArc::timer(unsigned long t)
 				refresh = true;
 			}
 		}
+		else
+		{
+			int newDivisor = aRead(divisorCvIn[cvIndex]) * MAX_DIVISORS / 2048;
+			if (abs(newDivisor - divisorCv[cvIndex]) > 0)
+			{
+				divisorCv[cvIndex] = newDivisor;
+				updateRing(cvIndex, false);
+				refresh = true;
+			}
+		}
 		
-		readCvCounter = (readCvCounter + 1) % (ARC_MAX_ENCODERS * 2);
+		readCvCounter = (readCvCounter + 1) % (ARC_MAX_ENCODERS * 3);
 		readCvClockState = t + 10; // stagger reading CVs
-
-		//Serial.println(analogRead(transposeCvIn[0]));
 	}
 
 	for (int ring = 0; ring < ARC_MAX_ENCODERS; ring++)
@@ -179,21 +191,19 @@ void BinaryArc::timer(unsigned long t)
 
 void BinaryArc::reset()
 {
-	// beat = (beat + 1) % 16;
-	// IOUtils::displayBeat(beat, this);
-	
 	for (int ring = 0; ring < ARC_MAX_ENCODERS; ring++)
 	{
 		values[0][ring][counter] = prevValue[ring];
 	}
 	counter = (counter + 1) % ARC_MAX_LEDS;
-	int mainCv = 0;
+	int totalTranspose, totalLevel;
+	totalTranspose = totalLevel = 0;
 	for (int ring = 0; ring < ARC_MAX_ENCODERS; ring++)
 	{
-		if ((counter + ARC_MAX_LEDS - phase[ring]) % divisor[divisors[ring]] == 0)
+		if ((counter + ARC_MAX_LEDS - phase[ring]) % getDivisor(ring) == 0)
 		{
 			flip[ring] = !flip[ring];
-			int cv = flip[ring] ? SCALE[level[ring]] : 0;
+			int cv = getNoteCv(transposeCv[ring], flip[ring] ? level[ring] : 0);
 			pitchCvOut[ring]->outputCV(cv);
 			cvOut[ring]->outputCV(flip[ring] ? level[ring] * 273 : 0);
 			digitalWrite(gateOutput[ring], flip[ring] ? HIGH : LOW);
@@ -202,17 +212,21 @@ void BinaryArc::reset()
 		}
 		prevValue[ring] = values[0][ring][counter];
 		values[0][ring][counter] = 15;
-		mainCv += flip[ring] & digitalRead(sumInput[ring]) ? level[ring] : 0;
+		if (digitalRead(sumInput[ring]))
+		{
+			totalTranspose += transposeCv[ring];
+			totalLevel += flip[ring] ? level[ring] : 0;
+		}
 	}
-	mainCvOut->outputCV((mainCv / 16) * 1000 + SCALE[mainCv % 8]);
+	mainCvOut->outputCV(getNoteCv(totalTranspose, totalLevel));
 }
 
 void BinaryArc::updateRing(uint8_t ring, bool refresh)
 {
-	bool f = (phase[ring] / divisor[divisors[ring]] % 2) == 0;
+	bool f = (phase[ring] / getDivisor(ring) % 2) == 0;
 	for(int led = 0; led < ARC_MAX_LEDS; led++)
 	{
-		if ((led + ARC_MAX_LEDS - phase[ring]) % divisor[divisors[ring]] == 0) f = !f;
+		if ((led + ARC_MAX_LEDS - phase[ring]) % getDivisor(ring) == 0) f = !f;
 		values[0][ring][led] = f ? level[ring] : 0;
 		if (led == counter)
 		{
@@ -229,6 +243,17 @@ void BinaryArc::updateRing(uint8_t ring, bool refresh)
 int BinaryArc::aRead(PinAnalogIn analogIn)
 {
 	return constrain(analogRead(analogIn) - 2048 - 20, 0, 2047);
+}
+
+int BinaryArc::getNoteCv(int transpose, uint8_t level)
+{
+	int realLevel = transpose*16/2048 + level;
+	return realLevel/SCALES[scale].length * 1000 + SEMITONE_MV[SCALES[scale].semis[realLevel%SCALES[scale].length]];
+}
+
+uint8_t BinaryArc::getDivisor(uint8_t ring)
+{
+	return divisor[(divisors[ring] + divisorCv[ring]) % MAX_DIVISORS];
 }
 
 void BinaryArc::encoderPositionChanged(uint8_t ring, int8_t delta)
@@ -252,14 +277,19 @@ void BinaryArc::encoderPositionChanged(uint8_t ring, int8_t delta)
 			level[ring] = (level[ring] + 1) % 15;
 			updateRing(ring, true);
 
-			int cv = flip[ring] ? SCALE[level[ring]] : 0;
+			int cv = getNoteCv(transposeCv[ring], flip[ring] ? level[ring] : 0);
 			pitchCvOut[ring]->outputCV(cv);
 			cvOut[ring]->outputCV(flip[ring] ? level[ring] * 273 : 0);
 			
-			int mainCv = 0;
+			int totalTranspose, totalLevel;
+			totalTranspose = totalLevel = 0;
 			for (int ring = 0; ring < ARC_MAX_ENCODERS; ring++)
-				mainCv += flip[ring] & digitalRead(sumInput[ring]) ? level[ring] : 0;
-			mainCvOut->outputCV((mainCv / 16) * 1000 + SCALE[mainCv % 8]);
+				if (digitalRead(sumInput[ring]))
+				{
+					totalTranspose += transposeCv[ring];
+					totalLevel += flip[ring] ? level[ring] : 0;
+				}
+			mainCvOut->outputCV(getNoteCv(totalTranspose, totalLevel));
 		}
 	}
 	delay(1);
