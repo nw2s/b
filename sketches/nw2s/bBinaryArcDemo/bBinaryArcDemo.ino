@@ -55,20 +55,12 @@ void setup()
     binaryArc->setClockInput(DUE_IN_D0);
     EventManager::registerDevice(binaryArc);
     EventManager::registerUsbDevice(binaryArc);
-	
-	/*
-		Each ring represents a binary division. 
-		Turning encoders CCW changes the division (1/2/4/8/16/32)
-		Turning encoders CW changes the note (15 note range)
-
-                Initial and still buggy implementation! But most things seem to work...
-	*/
 }
 
 void loop()
 {
     EventManager::loop();
-    delay(5);
+    delay(1);
 }
 
 

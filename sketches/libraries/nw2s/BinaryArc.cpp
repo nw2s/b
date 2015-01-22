@@ -1,6 +1,6 @@
 /*
 	BinaryArc - a binary sequencer for nw2s::b and monome arc
-	copyright (c) 2014 scannerdarkly (fuzzybeacon@gmail.com)
+	copyright (c) 2015 scanner darkly (fuzzybeacon@gmail.com)
 
 	This code is developed for the the nw2s::b framework 
 	Copyright (C) 2013 Scott Wilson (thomas.scott.wilson@gmail.com)
@@ -27,6 +27,10 @@
 #include "BinaryArc.h"
 
 #define TRIGGER_LENGTH 40 // must be over 20 for the triggers out to be used reliably as triggers in with 20ms jitter protection threshold
+#define DIVISOR_DELTA 40
+#define LEVEL_DELTA 25
+#define CONFIG_FOLDER "CONFIG"
+#define CONFIG_FILE_NAME "binarc.cfg"
 
 using namespace nw2s;
 
@@ -64,35 +68,182 @@ BinaryArc::BinaryArc(uint8_t encoderCount, bool pushButton) : USBArcController(e
 	this->clock_division = DIV_SIXTEENTH;
 
 	mainCvOut = AnalogOut::create(DUE_SPI_4822_15);
-	uint8_t divisorIndex = 1;
 	for (int i = 0; i < ARC_MAX_ENCODERS; i++)
 	{	
 		transposeCvIn[i] = INDEX_ANALOG_IN[i+1];
-		transposeCv[i] = aRead(transposeCvIn[i]);
-		delay(10); // give the ADC time to recover
 		phaseCvIn[i] = INDEX_ANALOG_IN[i+1+ARC_MAX_ENCODERS];
-		phaseCv[i] = aRead(phaseCvIn[i]);
-		delay(10);
 		divisorCvIn[i] = INDEX_ANALOG_IN[i+1+ARC_MAX_ENCODERS*2];
-		divisorCv[i] = aRead(divisorCvIn[i]) * MAX_DIVISORS / 2048;
-		divisors[i] = i % MAX_DIVISORS;
-
-		phase[i] = constrain(phaseCv[i] * ARC_MAX_LEDS / 2048, 0, 63);
 		pitchCvOut[i] = AnalogOut::create(INDEX_ANALOG_OUT[i*2+1]);
 		cvOut[i] = AnalogOut::create(INDEX_ANALOG_OUT[i*2+2]);
-		level[i] = 0;
 		gateOutput[i] = INDEX_DIGITAL_OUT[i*2+1];
 		triggerOutput[i] = INDEX_DIGITAL_OUT[i*2+2];
 		triggerState[i] = 0;
-
-		updateRing(i, false);
-		delay(10); // give the ADC time to recover
 	}
 	
-	/* Give it a moment... */
+	readConfig();
+	
+	for (int i = 0; i < ARC_MAX_ENCODERS; i++)
+	{	
+		updateRing(i);
+	}
+
 	delay(100);	
 	IOUtils::displayBeat(scale, this);
 	refreshArc();
+}
+
+void BinaryArc::readConfig()
+{
+	for (int i = 0; i < ARC_MAX_ENCODERS; i++)
+	{	
+		transposeCv[i] = aRead(transposeCvIn[i]);
+		delay(10); // give the ADC time to recover
+		phaseCv[i] = aRead(phaseCvIn[i]);
+		phase[i] = phaseCv[i] * ARC_MAX_LEDS / 2048;
+		delay(10);
+		divisorCv[i] = aRead(divisorCvIn[i]) * MAX_DIVISORS / 2048;
+		delay(10);
+	}
+
+	scale = 0;
+	for (int i = 0; i < ARC_MAX_ENCODERS; i++)
+	{	
+		divisor[i] = i % MAX_DIVISORS;
+		level[i] = 0;
+	}
+
+	SdFile root = b::getSDRoot(); 
+	SdFile configFolder;
+	SdFile configFile;
+
+	if (!configFolder.open(root, CONFIG_FOLDER, O_READ))
+	{
+	    Serial.println("Could not find config folder");
+	    return;
+	}
+	
+	if (!configFile.open(configFolder, CONFIG_FILE_NAME, O_READ))
+	{
+	    Serial.print("Could not read config, error opening config file ");
+		Serial.println(CONFIG_FILE_NAME);
+	    return;
+	}
+	
+	uint fileSize = configFile.fileSize();
+	char configData[fileSize + 1];
+	configFile.read(configData, fileSize);
+	configData[fileSize] == '\0';
+		
+	aJsonObject* sdConfig = aJson.parse(configData);
+
+    if (sdConfig == NULL) 
+	{
+        Serial.println("Config file not parsed successfully. Check to see that it's properly formatted JSON.");
+		return;
+	}
+	else
+	{
+        Serial.println("Config file parsed successfully.");
+	}
+	
+	scale = getIntFromJSON(sdConfig, "scale", 0, 0, MAX_SCALES);
+	
+	aJsonObject* jsonArray;
+	
+	jsonArray = aJson.getObjectItem(sdConfig, "divisors");
+	if (jsonArray == NULL)
+	{
+		Serial.println("Could not find divisors in the config data");
+		return;
+	}
+	for (int i = 0; i < aJson.getArraySize(jsonArray); i++)
+	{
+		if (i >= ARC_MAX_ENCODERS) break;
+		aJsonObject* item = aJson.getArrayItem(jsonArray, i);
+		divisor[i] = item->valueint;
+	}
+	jsonArray = aJson.getObjectItem(sdConfig, "levels");
+	if (jsonArray == NULL)
+	{
+		Serial.println("Could not find levels in the config data");
+		return;
+	}
+	for (int i = 0; i < aJson.getArraySize(jsonArray); i++)
+	{
+		if (i >= ARC_MAX_ENCODERS) break;
+		aJsonObject* item = aJson.getArrayItem(jsonArray, i);
+		level[i] = item->valueint;
+	}
+
+	aJson.deleteItem(sdConfig);
+	Serial.println("Config data loaded successfully");
+}
+
+void BinaryArc::saveConfig()
+{
+	aJsonObject *root;
+	root = aJson.createObject();
+	
+	aJson.addNumberToObject(root, "scale", scale);
+	
+	aJsonObject* jsonArray;
+
+	jsonArray = aJson.createArray();
+	for (int i = 0; i < ARC_MAX_ENCODERS; i++)
+	{
+		aJsonObject* item = aJson.createItem(divisor[i]);
+		aJson.addItemToArray(jsonArray, item);
+	}
+	aJson.addItemToObject(root, "divisors", jsonArray);	
+
+	jsonArray = aJson.createArray();
+	for (int i = 0; i < ARC_MAX_ENCODERS; i++)
+	{
+		aJsonObject* item = aJson.createItem(level[i]);
+		aJson.addItemToArray(jsonArray, item);
+	}
+	aJson.addItemToObject(root, "levels", jsonArray);	
+	
+	aJsonStringStream stringStream(NULL, jsonBuffer, 512);
+	aJson.print(root, &stringStream);
+
+	Serial.println("--- config JSON created ----------------------------");
+	Serial.println(jsonBuffer);
+	Serial.println("----------------------------------------------------");
+	
+	SdFile rootFile = b::getSDRoot(); 
+	SdFile configFolder;
+	if (!configFolder.open(rootFile, CONFIG_FOLDER, O_READ))
+	{
+	    if (configFolder.makeDir(rootFile, CONFIG_FOLDER))
+		{
+			Serial.println("Config folder not found, created");
+		}
+		else
+		{
+			Serial.println("Config folder not found and could not create one");
+			return;
+		}
+		if (!configFolder.open(rootFile, CONFIG_FOLDER, O_READ))
+		{
+			Serial.println("Could not open config folder after creating one");
+		}
+	}
+	
+	SdFile configFile;
+	if (configFile.open(configFolder, CONFIG_FILE_NAME, O_CREAT | O_WRITE | O_TRUNC))
+	{
+		configFile.println(jsonBuffer);
+		configFile.close();
+		Serial.println("Config saved!");
+	}
+	else
+	{
+	    Serial.print("Could not write config, error opening config file for writing ");
+		Serial.println(CONFIG_FILE_NAME);
+	}
+	
+	aJson.deleteItem(root);
 }
 
 void BinaryArc::setClockInput(PinDigitalIn input)
@@ -103,14 +254,12 @@ void BinaryArc::setClockInput(PinDigitalIn input)
 void BinaryArc::timer(unsigned long t)
 {
 	currentTime = t;
-	bool refresh = false;
 	if (readCvClockState < t)
 	{
 		uint8_t cvIndex = readCvCounter % ARC_MAX_ENCODERS;
 		if (readCvCounter < ARC_MAX_ENCODERS)
 		{
 			transposeCv[cvIndex] = aRead(transposeCvIn[cvIndex]);
-			// Serial.println(analogRead(transposeCvIn[0]));
 		}
 		else if (readCvCounter < ARC_MAX_ENCODERS * 2)
 		{
@@ -119,8 +268,7 @@ void BinaryArc::timer(unsigned long t)
 			{
 				phaseCv[cvIndex] = newPhaseCv;
 				phase[cvIndex] = constrain(phaseCv[cvIndex] * ARC_MAX_LEDS / 2048, 0, 63);
-				updateRing(cvIndex, false);
-				refresh = true;
+				updateRing(cvIndex);
 			}
 		}
 		else
@@ -129,8 +277,7 @@ void BinaryArc::timer(unsigned long t)
 			if (abs(newDivisor - divisorCv[cvIndex]) > 0)
 			{
 				divisorCv[cvIndex] = newDivisor;
-				updateRing(cvIndex, false);
-				refresh = true;
+				updateRing(cvIndex);
 			}
 		}
 		
@@ -152,8 +299,7 @@ void BinaryArc::timer(unsigned long t)
 		resetState = t + 20;
 		counter = 0;
 		for (int ring = 0; ring < ARC_MAX_ENCODERS; ring++)
-			updateRing(ring, false);
-		refresh = true;
+			updateRing(ring);
 	} 
 	else if (resetState && (resetState < t) && !digitalRead(resetInput))
 	{
@@ -171,21 +317,41 @@ void BinaryArc::timer(unsigned long t)
 		scaleState = 0;
 	}
 
-	if (this->clockInput != DIGITAL_IN_NONE && !this->clockState && digitalRead(this->clockInput))
+	if (!saveConfigState && digitalRead(saveConfigInput))
 	{
-		this->clockState = t + 20;
-		this->reset();
-		refresh = true;
+		saveConfigState = t + 20;
+		saveConfig();
 	}
-	else if (this->clockInput != DIGITAL_IN_NONE && this->clockState && (this->clockState < t) && !digitalRead(this->clockInput))
+	else if (saveConfigState && (saveConfigState < t) && !digitalRead(saveConfigInput))
 	{
-		this->clockState = 0;
+		saveConfigState = 0;
+	}
+
+	if (clockInput != DIGITAL_IN_NONE && !clockState && digitalRead(clockInput))
+	{
+		clockState = t + 20;
+		reset();
+	}
+	else if (clockInput != DIGITAL_IN_NONE && clockState && (clockState < t) && !digitalRead(clockInput))
+	{
+		clockState = 0;
 	}
 	
-	if (refresh && isReady())
+	if (refresh)
 	{
-		this->refreshArc();
-		delay(2);
+		if (isReady()) refreshArc();
+		for (int ring = 0; ring < ARC_MAX_ENCODERS; ring++)
+		{
+			if (prevValue[ring] != values[0][ring][(counter + ARC_MAX_LEDS - 1) % ARC_MAX_LEDS])
+			{
+				digitalWrite(gateOutput[ring], values[0][ring][counter] ? HIGH : LOW);
+				digitalWrite(triggerOutput[ring], HIGH);
+				triggerState[ring] = currentTime + TRIGGER_LENGTH;
+			}
+			updateOutputCvs(ring);
+		}
+		updateMainCv();
+		refresh = false;
 	}
 }
 
@@ -196,48 +362,45 @@ void BinaryArc::reset()
 		values[0][ring][counter] = prevValue[ring];
 	}
 	counter = (counter + 1) % ARC_MAX_LEDS;
-	int totalTranspose, totalLevel;
-	totalTranspose = totalLevel = 0;
 	for (int ring = 0; ring < ARC_MAX_ENCODERS; ring++)
 	{
-		if ((counter + ARC_MAX_LEDS - phase[ring]) % getDivisor(ring) == 0)
-		{
-			flip[ring] = !flip[ring];
-			int cv = getNoteCv(transposeCv[ring], flip[ring] ? level[ring] : 0);
-			pitchCvOut[ring]->outputCV(cv);
-			cvOut[ring]->outputCV(flip[ring] ? level[ring] * 273 : 0);
-			digitalWrite(gateOutput[ring], flip[ring] ? HIGH : LOW);
-			digitalWrite(triggerOutput[ring], HIGH);
-			triggerState[ring] = currentTime + TRIGGER_LENGTH;
-		}
 		prevValue[ring] = values[0][ring][counter];
 		values[0][ring][counter] = 15;
-		if (digitalRead(sumInput[ring]))
-		{
-			totalTranspose += transposeCv[ring];
-			totalLevel += flip[ring] ? level[ring] : 0;
-		}
 	}
-	mainCvOut->outputCV(getNoteCv(totalTranspose, totalLevel));
+	refresh = true;
 }
 
-void BinaryArc::updateRing(uint8_t ring, bool refresh)
+void BinaryArc::updateRing(uint8_t ring)
 {
-	bool f = (phase[ring] / getDivisor(ring) % 2) == 0;
 	for(int led = 0; led < ARC_MAX_LEDS; led++)
 	{
-		if ((led + ARC_MAX_LEDS - phase[ring]) % getDivisor(ring) == 0) f = !f;
-		values[0][ring][led] = f ? level[ring] : 0;
+		values[0][ring][led] = (led / getDivisor(ring)) % 2 ? 0 : level[ring];
 		if (led == counter)
 		{
 			prevValue[ring] = values[0][ring][led];
-			flip[ring] = f;
-			digitalWrite(gateOutput[ring], flip[ring] ? HIGH : LOW);
 			values[0][ring][led] = 15;
 		}
-		
 	}
-	if (refresh && isReady()) this->refreshArc();
+	refresh = true;
+}
+
+void BinaryArc::updateOutputCvs(uint8_t ring)
+{
+	pitchCvOut[ring]->outputCV(getNoteCv(transposeCv[ring], prevValue[ring]));
+	cvOut[ring]->outputCV(prevValue[ring] * 273);
+}
+
+void BinaryArc::updateMainCv()
+{
+	int totalTranspose, totalLevel;
+	totalTranspose = totalLevel = 0;
+	for (int ring = 0; ring < ARC_MAX_ENCODERS; ring++)
+		if (digitalRead(sumInput[ring]))
+		{
+			totalTranspose += transposeCv[ring];
+			totalLevel += prevValue[ring];
+		}
+	mainCvOut->outputCV(getNoteCv(totalTranspose, totalLevel));
 }
 
 int BinaryArc::aRead(PinAnalogIn analogIn)
@@ -247,13 +410,13 @@ int BinaryArc::aRead(PinAnalogIn analogIn)
 
 int BinaryArc::getNoteCv(int transpose, uint8_t level)
 {
-	int realLevel = transpose*16/2048 + level;
-	return realLevel/SCALES[scale].length * 1000 + SEMITONE_MV[SCALES[scale].semis[realLevel%SCALES[scale].length]];
+	int realLevel = transpose * SCALES[scale].length / 2048 + level;
+	return realLevel/SCALES[scale].length*1000 + SEMITONE_MV[SCALES[scale].semis[realLevel%SCALES[scale].length]];
 }
 
 uint8_t BinaryArc::getDivisor(uint8_t ring)
 {
-	return divisor[(divisors[ring] + divisorCv[ring]) % MAX_DIVISORS];
+	return divisors[(divisor[ring] + divisorCv[ring]) % MAX_DIVISORS];
 }
 
 void BinaryArc::encoderPositionChanged(uint8_t ring, int8_t delta)
@@ -261,38 +424,23 @@ void BinaryArc::encoderPositionChanged(uint8_t ring, int8_t delta)
 	if (delta < 0)
 	{
 		deltaDivState += abs(delta);
-		if (deltaDivState > divisionDelta)
+		if (deltaDivState > DIVISOR_DELTA)
 		{
 			deltaDivState = 0;
-			divisors[ring] = (divisors[ring] + 1) % MAX_DIVISORS;
-			updateRing(ring, true);
+			divisor[ring] = (divisor[ring] + 1) % MAX_DIVISORS;
+			updateRing(ring);
 		}
 	}
 	else
 	{
-		deltaVolState += delta;
-		if (deltaVolState > voltageDelta)
+		deltaLevelState += delta;
+		if (deltaLevelState > LEVEL_DELTA)
 		{
-			deltaVolState = 0;
-			level[ring] = (level[ring] + 1) % 15;
-			updateRing(ring, true);
-
-			int cv = getNoteCv(transposeCv[ring], flip[ring] ? level[ring] : 0);
-			pitchCvOut[ring]->outputCV(cv);
-			cvOut[ring]->outputCV(flip[ring] ? level[ring] * 273 : 0);
-			
-			int totalTranspose, totalLevel;
-			totalTranspose = totalLevel = 0;
-			for (int ring = 0; ring < ARC_MAX_ENCODERS; ring++)
-				if (digitalRead(sumInput[ring]))
-				{
-					totalTranspose += transposeCv[ring];
-					totalLevel += flip[ring] ? level[ring] : 0;
-				}
-			mainCvOut->outputCV(getNoteCv(totalTranspose, totalLevel));
+			deltaLevelState = 0;
+			level[ring] = (level[ring] + 1) % 16;
+			updateRing(ring);
 		}
 	}
-	delay(1);
 }
 
 void BinaryArc::buttonPressed(uint8_t encoder) {}
