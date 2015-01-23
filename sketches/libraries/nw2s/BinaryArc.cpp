@@ -374,7 +374,7 @@ void BinaryArc::updateRing(uint8_t ring)
 {
 	for(int led = 0; led < ARC_MAX_LEDS; led++)
 	{
-		values[0][ring][led] = (led / getDivisor(ring)) % 2 ? 0 : level[ring];
+		values[0][ring][led] = ((led + phase[ring])/ getDivisor(ring)) % 2 ? 0 : level[ring];
 		if (led == counter)
 		{
 			prevValue[ring] = values[0][ring][led];
