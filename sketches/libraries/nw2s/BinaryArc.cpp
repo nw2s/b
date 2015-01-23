@@ -342,9 +342,9 @@ void BinaryArc::timer(unsigned long t)
 		if (isReady()) refreshArc();
 		for (int ring = 0; ring < ARC_MAX_ENCODERS; ring++)
 		{
+			digitalWrite(gateOutput[ring], prevValue[ring] ? HIGH : LOW);
 			if (prevValue[ring] != values[0][ring][(counter + ARC_MAX_LEDS - 1) % ARC_MAX_LEDS])
 			{
-				digitalWrite(gateOutput[ring], values[0][ring][counter] ? HIGH : LOW);
 				digitalWrite(triggerOutput[ring], HIGH);
 				triggerState[ring] = currentTime + TRIGGER_LENGTH;
 			}
@@ -411,7 +411,7 @@ int BinaryArc::aRead(PinAnalogIn analogIn)
 int BinaryArc::getNoteCv(int transpose, uint8_t level)
 {
 	int realLevel = transpose * SCALES[scale].length / 2048 + level;
-	return realLevel/SCALES[scale].length*1000 + SEMITONE_MV[SCALES[scale].semis[realLevel%SCALES[scale].length]];
+	return constrain(realLevel/SCALES[scale].length*1000, 0, 2000) + SEMITONE_MV[SCALES[scale].semis[realLevel%SCALES[scale].length]];
 }
 
 uint8_t BinaryArc::getDivisor(uint8_t ring)
