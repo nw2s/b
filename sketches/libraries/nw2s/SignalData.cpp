@@ -284,7 +284,12 @@ int16_t StreamingSignalData::getNextSample()
 
 		return nextsample;
 	}
-	//TODO: reversed
+	else if (reversed && this->subEndIndex < STREAM_BUFFER_SIZE && this->nextsampleindex == (STREAM_BUFFER_SIZE - this->subEndIndex))
+	{
+		this->nextsampleindex = STREAM_BUFFER_SIZE - 1;
+
+		return nextsample;
+	}
 
 	/* If we're at the end of a buffer, move to the next */
 	if ((!reversed && (this->nextsampleindex == (this->size[readbufferindex] - 1))) || (reversed && (this->nextsampleindex == 0)))
