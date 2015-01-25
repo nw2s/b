@@ -56,18 +56,18 @@ namespace nw2s
 
 	enum PinAnalogIn
 	{
-		DUE_IN_A00 = A0,
-		DUE_IN_A01 = A1,
-		DUE_IN_A02 = A2,
-		DUE_IN_A03 = A3,
-		DUE_IN_A04 = A4,
-		DUE_IN_A05 = A5,
-		DUE_IN_A06 = A6,
-		DUE_IN_A07 = A7,
-		DUE_IN_A08 = A8,
-		DUE_IN_A09 = A9,
-		DUE_IN_A10 = A10,
-		DUE_IN_A11 = A11,
+		DUE_IN_A00 = 0,
+		DUE_IN_A01 = 1,
+		DUE_IN_A02 = 2,
+		DUE_IN_A03 = 3,
+		DUE_IN_A04 = 4,
+		DUE_IN_A05 = 5,
+		DUE_IN_A06 = 6,
+		DUE_IN_A07 = 7,
+		DUE_IN_A08 = 8,
+		DUE_IN_A09 = 9,
+		DUE_IN_A10 = 10,
+		DUE_IN_A11 = 11,
 		
 		ANALOG_IN_NONE = -1,
 		
@@ -75,7 +75,7 @@ namespace nw2s
 		DUE_IN_A_NONE = -1,
 	};
 
-	static const int DUE_SPI_LATCH = 11;
+	static const uint32_t INDEX_DUE_INPUT[12] = { A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11 };
 	
 	enum PinAnalogOut
 	{
@@ -102,6 +102,7 @@ namespace nw2s
 
 	/* Getting rid of the old formula for calculating these and using a lookup instead */
 	// int cspin = ((pin - DUE_SPI_4822_PREFIX) / 2) + 2;
+	static const int DUE_SPI_LATCH = 11;
 	static const uint8_t INDEX_SPI_DAC_PIN[16] = { 9, 9, 8, 8, 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2 };
 	static const uint8_t INDEX_SPI_DAC_CHANNEL[16] = { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1 };
 	

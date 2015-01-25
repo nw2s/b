@@ -73,7 +73,9 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		void setDensityInput(PinAnalogIn density);
 		void setMixControl(PinAnalogIn mixcontrol);
 		void setLengthControl(PinAnalogIn lengthcontrol);
+		void setFineLengthControl(PinAnalogIn finelengthcontrol);
 		void setStartControl(PinAnalogIn startcontrol);
+		void setBitControl(PinAnalogIn bitcontrol);
 		void setMixTrigger(PinDigitalIn mixtrigger);
 		void setMixMode(MixMode mixmode);
 		virtual void timer(unsigned long t);
@@ -84,7 +86,9 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		PinDigitalIn reverseTrigger = DIGITAL_IN_NONE;
 		PinAnalogIn density = ANALOG_IN_NONE;
 		PinAnalogIn mixcontrol = ANALOG_IN_NONE;
+		PinAnalogIn bitcontrol = ANALOG_IN_NONE;
 		PinAnalogIn lengthcontrol = ANALOG_IN_NONE;
+		PinAnalogIn finelengthcontrol = ANALOG_IN_NONE;
 		PinAnalogIn startcontrol = ANALOG_IN_NONE;
 		bool mixtrigger_bounce;
 		PinDigitalIn mixtrigger;
@@ -95,14 +99,10 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		unsigned int mixfactor;
 		unsigned int loop1index;
 		unsigned int loop2index;
-		// unsigned int loop1length = 0;
-		// unsigned int loop2length = 0;
-		// unsigned int startindex1 = 0;
-		// unsigned int looplength1 = 0;
-		// unsigned int startindex2 = 0;
-		// unsigned int looplength2 = 0;
+		uint16_t bitDepthMask = 0xFFFF;
 		uint16_t laststartval = 0;
 		uint16_t lastlenval = 0;
+		uint16_t lastfinelenval = 0;
 		bool glitched_bounce;
 		bool glitchmode_stream;
 		unsigned long glitched;

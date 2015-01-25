@@ -64,6 +64,7 @@ class nw2s::StreamingSignalData
 
 		void setStartFactor(uint16_t startfactor);
 		void setEndFactor(uint16_t lengthFactor);
+		void setFineEndFactor(uint16_t fineLengthFactor);
 		
 	private:
 		short int buffer[2][nw2s::STREAM_BUFFER_SIZE];
@@ -73,6 +74,7 @@ class nw2s::StreamingSignalData
 		uint32_t sampleCount = 0;
 		uint16_t startFactor = 0;
 		uint16_t endFactor = 4095;
+		uint16_t fineEndFactor = 0;
 		volatile int nextsampleindex;
 		bool available;
 		bool loop;

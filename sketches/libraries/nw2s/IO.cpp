@@ -31,11 +31,30 @@ using namespace nw2s;
 
 int nw2s::analogRead(int input)
 {
-	return 4096 - ::analogRead(input);
+	if (input == ANALOG_IN_NONE)
+	{
+		return 0;
+	}
+	
+	/* Get the Raw value */
+	int32_t val = 4095 - ::analogRead(INDEX_DUE_INPUT[input]);
+	
+	if (!b::inputSoftTune)
+	{
+		return val;
+	}
+	
+	/* Adjust the offset and gain */
+	return  ((val * b::inputScale[input]) / 1000) + b::inputOffset[input];
 }
 
 int nw2s::analogReadmV(int input)
 {
+	if (input == ANALOG_IN_NONE)
+	{
+		return 0;
+	}
+
 	/* Get the value from ADC, inverted */
 	int val = ::analogRead(input);
 

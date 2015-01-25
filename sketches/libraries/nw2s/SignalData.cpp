@@ -165,8 +165,16 @@ void StreamingSignalData::setStartFactor(uint16_t startfactor)
 
 void StreamingSignalData::setEndFactor(uint16_t endFactor)
 {
-	/* Pass in a 12 bit value that specifies sample to start with */
+	/* Pass in a 12 bit value that specifies overall length of loop */
 	this->endFactor = (endFactor < 0) ? 0 : (endFactor > 4095) ? 4095 : endFactor;
+
+	this->calculateEndpoints();
+}
+
+void StreamingSignalData::setFineEndFactor(uint16_t endFactor)
+{
+	/* Pass in a 12 bit value that specifies a fine grained loop length */
+	this->fineEndFactor = (fineEndFactor < 0) ? 0 : (fineEndFactor > 4095) ? 4095 : fineEndFactor;
 
 	this->calculateEndpoints();
 }
@@ -175,27 +183,16 @@ void StreamingSignalData::calculateEndpoints()
 {
 	this->startIndex = ((this->sampleCount - STREAM_BUFFER_SIZE) * this->startFactor) / 4095;
 	
-	uint32_t looplength = (this->sampleCount * this->endFactor) / 4095;
+	uint32_t looplength = ((this->sampleCount * this->endFactor) / 4095) + this->fineEndFactor; 
 	this->endIndex = this->startIndex + STREAM_BUFFER_SIZE + looplength;
 	this->endIndex = (this->endIndex >= this->sampleCount) ? this->sampleCount - 1 : this->endIndex;
 
 	this->subEndIndex = (looplength < STREAM_BUFFER_SIZE) ? looplength : STREAM_BUFFER_SIZE;
 
-	if (!this->reversed && ((this->startIndex > ((this->file.curPosition() / 2) + STREAM_BUFFER_SIZE)) || (this->endIndex < ((this->file.curPosition() / 2) - STREAM_BUFFER_SIZE))))
+	if ((this->startIndex > ((this->file.curPosition() / 2) + STREAM_BUFFER_SIZE)) || (this->endIndex < ((this->file.curPosition() / 2) - STREAM_BUFFER_SIZE)))
 	{
 		this->reset();
-	}
-	//else if (this->reversed && this->startIndex)
-	//TODO: what about reversed?
-
-	
-	Serial.print(this->sampleCount);
-	Serial.print(" ");
-	Serial.print(this->startIndex);
-	Serial.print(" ");
-	Serial.print(this->endIndex);
-	Serial.print(" ");
-	Serial.println(this->subEndIndex);
+	}	
 }
 
 void StreamingSignalData::refresh()

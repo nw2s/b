@@ -30,6 +30,8 @@
 
 using namespace nw2s;
 
+static const uint16_t BIT_CRUSH_MASK[16] = { 0xFFFF, 0xFFFE, 0xFFFC, 0xFFF8, 0xFFF0, 0xFFE0, 0xFFC0, 0xFF80, 0xFF00, 0xFE00, 0xFC00, 0xF800, 0xF000, 0xE000, 0xC000, 0x8000 };
+
 
 SampleRateInterrupt sampleRateFromName(char* name)
 {
@@ -76,6 +78,7 @@ Looper* Looper::create(aJsonObject* data)
 	static const char mixcontrolNodeName[] = "mixcontrol";
 	static const char mixtriggerNodeName[] = "mixtrigger";
 	static const char lengthcontrolNodeName[] = "lengthcontrol";
+	static const char finelengthcontrolNodeName[] = "finelengthcontrol";
 	static const char startcontrolNodeName[] = "startcontrol";
 	
 	char* subfolder = getStringFromJSON(data, subFolderNodeName);
@@ -88,6 +91,7 @@ Looper* Looper::create(aJsonObject* data)
 	PinAnalogIn density = getAnalogInputFromJSON(data, densityNodeName);
 	PinAnalogIn mixcontrol = getAnalogInputFromJSON(data, mixcontrolNodeName);
 	PinAnalogIn lengthcontrol = getAnalogInputFromJSON(data, lengthcontrolNodeName);
+	PinAnalogIn finelengthcontrol = getAnalogInputFromJSON(data, finelengthcontrolNodeName);
 	PinAnalogIn startcontrol = getAnalogInputFromJSON(data, startcontrolNodeName);
 	char* mixmodeVal = getStringFromJSON(data, mixmodeNodeName);
 
@@ -154,6 +158,12 @@ Looper* Looper::create(aJsonObject* data)
 	if (lengthcontrol != ANALOG_IN_NONE)
 	{
 		looper->setLengthControl(lengthcontrol);
+	}
+
+	/* FINELENGTHCONTROL INPUT */
+	if (finelengthcontrol != ANALOG_IN_NONE)
+	{
+		looper->setFineLengthControl(finelengthcontrol);
 	}
 
 	/* STARTCONTROL INPUT */
@@ -380,6 +390,12 @@ void Looper::timer_handler()
 			}
 		}
 		
+		/* Bit crushing */
+		if (this->bitcontrol != ANALOG_IN_NONE)
+		{
+			outputval = outputval & this->bitDepthMask;
+		}
+		
 		/* For now, we're doing all audio as 12 bit unsigned, so we have to do the conversion before writing the register */
 		dacc_write_conversion_data(DACC_INTERFACE, (outputval + 0x7FFF) >> 4);
 	}
@@ -423,15 +439,33 @@ void Looper::timer(unsigned long t)
 		this->mixfactor = (4095 * (controlval % this->looprange)) / this->looprange;  		
 	}
 	
+	/* Every 10ms, read the analog input of the bit control */
+	if ((this->bitcontrol != ANALOG_IN_NONE) && (t % 10 == 0))
+	{
+		//TODO: This only works for 12 bit audio for now.
+		
+		/* Get the bit factor between 0 and 16 for 0-5V */
+		int controlval = (analogRead(this->bitcontrol) - 2048) >> 2;
+
+		/* Calculate the bitmask */
+		this->bitDepthMask = BIT_CRUSH_MASK[controlval];
+	}
+	
 	if ((this->startcontrol != ANALOG_IN_NONE) && (t % 10 == 0))
 	{
 		/* Get the mix factor between 0 and 4096 for 0-5V */
-		int controlval = (analogRead(this->startcontrol) - 2048) << 1;
+		int controlval = (analogRead(this->startcontrol) - 2048) * 2;
 
 		controlval = (controlval < 0) ? 0 : (controlval > 4095) ? 4095 : controlval;
 
+		/* Snap to zero if we're close to ensure starting at the beginning */
+		if (controlval < 4)
+		{
+			controlval = 0;
+		}
+		
 		/* Only update if the change is greater than some threshold */
-		if (controlval > (this->laststartval + CONTROL_CHANGE_THRESHOLD) || controlval < (this->laststartval - CONTROL_CHANGE_THRESHOLD))
+		if (controlval < (CONTROL_CHANGE_THRESHOLD * 2) || controlval > (this->laststartval + CONTROL_CHANGE_THRESHOLD) || controlval < (this->laststartval - CONTROL_CHANGE_THRESHOLD))
 		{
 			/* Update all of our samples with that info */
 			for (int i = 0; i < this->signalData.size(); i++) 
@@ -460,6 +494,26 @@ void Looper::timer(unsigned long t)
 			}
 			
 			this->lastlenval = controlval;
+		}
+	}
+
+	if ((this->finelengthcontrol != ANALOG_IN_NONE) && (t % 10 == 0))
+	{
+		/* Get the mix factor between 0 and 4096 for 0-5V */
+		int controlval = (analogRead(this->finelengthcontrol) - 2048) << 1;
+
+		controlval = (controlval < 0) ? 0 : (controlval > 4095) ? 4095 : controlval;
+		
+		/* Only update if the change is greater than some threshold */
+		if (controlval > (this->lastfinelenval + CONTROL_CHANGE_THRESHOLD) || controlval < (this->lastfinelenval - CONTROL_CHANGE_THRESHOLD))
+		{
+			/* Update all of our samples with that info */
+			for (int i = 0; i < this->signalData.size(); i++) 
+			{
+				this->signalData[i]->setFineEndFactor(controlval);
+			}
+			
+			this->lastfinelenval = controlval;
 		}
 	}
 
@@ -526,7 +580,17 @@ void Looper::setMixControl(PinAnalogIn mixcontrol)
 	this->mixcontrol = mixcontrol;
 }
 
+void Looper::setBitControl(PinAnalogIn mixcontrol)
+{
+	this->mixcontrol = mixcontrol;
+}
+
 void Looper::setLengthControl(PinAnalogIn lengthcontrol)
+{
+	this->lengthcontrol = lengthcontrol;
+}
+
+void Looper::setFineLengthControl(PinAnalogIn lengthcontrol)
 {
 	this->lengthcontrol = lengthcontrol;
 }
