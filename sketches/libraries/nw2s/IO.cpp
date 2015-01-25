@@ -100,9 +100,9 @@ void AnalogOut::outputCV(int cv)
 	int cv_old = cv;
 
 	/* Scale the values if we're using software tuning */
-	if (b::softTune)
+	if (b::outputSoftTune)
 	{
-		cv = ((cv * b::scale[this->pin]) / TUNE_SCALE_FACTOR) + b::offset[this->pin];
+		cv = ((cv * b::outputScale[this->pin]) / TUNE_SCALE_FACTOR) + b::outputOffset[this->pin];
 	}
 
 	int dacval = b::cvGainMode ? 

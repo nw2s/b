@@ -31,18 +31,17 @@ bool b::cvGainMode = CV_GAIN_LOW;
 bool b::rootInitialized = false;
 DeviceModel b::model = NW2S_B_1_0_0;
 
-bool b::softTune = false;
+bool b::inputSoftTune = false;
+bool b::outputSoftTune = false;
 int32_t b::dimming = 50;
-int16_t b::offset[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-int32_t b::scale[16] = { 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000 };
-
-
-
+int16_t b::outputOffset[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+int32_t b::outputScale[16] = { 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000 };
+int16_t b::inputOffset[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+int32_t b::inputScale[12] = { 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000 };
 
 SdFile b::root;
 Sd2Card b::card;
 SdVolume b::volume;
-
 
 SdFile b::getSDRoot()
 {
@@ -171,7 +170,7 @@ void b::configure()
 	
 	Serial.print("Dim: ");
 	Serial.println(dimNode->valueint);
-	b::dimming = dimNode->valueint;
+	b::dimming = (dimNode->valueint < 10) ? 10 : (dimNode->valueint > 1000) ? 1000 : dimNode->valueint;
 	
 	/* Output config */
 
@@ -181,21 +180,21 @@ void b::configure()
 	
 	if (outputTuneNode->valuebool)
 	{
-		b::softTune = true;
+		b::outputSoftTune = true;
 		
 		aJsonObject* scaleNode = aJson.getObjectItem(outputNode, "scale"); 
 		
 		if (aJson.getArraySize(scaleNode) == 16)
 		{
-			Serial.print("Scale: { ");
+			Serial.print("Output Scale: { ");
 			
 			for (int i = 0; i < aJson.getArraySize(scaleNode); i++)
 			{
 				aJsonObject* valueNode = aJson.getArrayItem(scaleNode, i);
 				
-				b::scale[i] = valueNode->valueint;
+				b::outputScale[i] = valueNode->valueint;
 				
-				Serial.print(b::scale[i]);
+				Serial.print(b::outputScale[i]);
 				Serial.print(" ");
 			}
 			
@@ -205,21 +204,20 @@ void b::configure()
 		{
 			Serial.println("Configuration requires 16 scale values, skipping.");
 		}
-		
-		
+				
 		aJsonObject* offsetNode = aJson.getObjectItem(outputNode, "offset"); 
 		
 		if (aJson.getArraySize(offsetNode) == 16)
 		{
-			Serial.print("Offset: { ");
+			Serial.print("Output Offset: { ");
 			
 			for (int i = 0; i < aJson.getArraySize(offsetNode); i++)
 			{
 				aJsonObject* valueNode = aJson.getArrayItem(offsetNode, i);
 				
-				b::offset[i] = valueNode->valueint;
+				b::outputOffset[i] = valueNode->valueint;
 
-				Serial.print(b::offset[i]);
+				Serial.print(b::outputOffset[i]);
 				Serial.print(" ");
 			}
 			
@@ -235,8 +233,67 @@ void b::configure()
 		Serial.println("Using default output tuning");
 	}
 	
+
+	/* Input config */
+
+	aJsonObject* inputNode = aJson.getObjectItem(configNode, "inputs"); 
 	
+	aJsonObject* inputTuneNode = aJson.getObjectItem(inputNode, "software-tune"); 
 	
+	if (inputTuneNode->valuebool)
+	{
+		b::inputSoftTune = true;
+		
+		aJsonObject* scaleNode = aJson.getObjectItem(inputNode, "scale"); 
+		
+		if (aJson.getArraySize(scaleNode) == 12)
+		{
+			Serial.print("Input Scale: { ");
+			
+			for (int i = 0; i < aJson.getArraySize(scaleNode); i++)
+			{
+				aJsonObject* valueNode = aJson.getArrayItem(scaleNode, i);
+				
+				b::inputScale[i] = valueNode->valueint;
+				
+				Serial.print(b::inputScale[i]);
+				Serial.print(" ");
+			}
+			
+			Serial.println("}");
+		}
+		else
+		{
+			Serial.println("Configuration requires 12 scale values, skipping.");
+		}
+				
+		aJsonObject* offsetNode = aJson.getObjectItem(outputNode, "offset"); 
+		
+		if (aJson.getArraySize(offsetNode) == 12)
+		{
+			Serial.print("Input Offset: { ");
+			
+			for (int i = 0; i < aJson.getArraySize(offsetNode); i++)
+			{
+				aJsonObject* valueNode = aJson.getArrayItem(offsetNode, i);
+				
+				b::inputOffset[i] = valueNode->valueint;
+
+				Serial.print(b::inputOffset[i]);
+				Serial.print(" ");
+			}
+			
+			Serial.println("}");
+		}
+		else
+		{
+			Serial.println("Configuration requires 12 offset values, skipping.");
+		}
+	}
+	else
+	{
+		Serial.println("Using default output tuning");
+	}
 	
 	
 }

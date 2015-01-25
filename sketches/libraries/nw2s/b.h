@@ -52,9 +52,12 @@ class nw2s::b
 		static bool debugMode;
 		static bool cvGainMode;
 		
-		static bool softTune;
-		static int16_t offset[16];
-		static int32_t scale[16];
+		static bool outputSoftTune;
+		static bool inputSoftTune;
+		static int16_t outputOffset[16];
+		static int32_t outputScale[16];
+		static int16_t inputOffset[12];
+		static int32_t inputScale[12];
 		static int32_t dimming;
 		static void configure();
 		
