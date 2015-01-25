@@ -327,9 +327,11 @@ void BinaryArc::timer(unsigned long t)
 		saveConfigState = 0;
 	}
 
+	bool counterChanged = false;
 	if (clockInput != DIGITAL_IN_NONE && !clockState && digitalRead(clockInput))
 	{
 		clockState = t + 20;
+		counterChanged = true;
 		reset();
 	}
 	else if (clockInput != DIGITAL_IN_NONE && clockState && (clockState < t) && !digitalRead(clockInput))
@@ -343,7 +345,7 @@ void BinaryArc::timer(unsigned long t)
 		for (int ring = 0; ring < ARC_MAX_ENCODERS; ring++)
 		{
 			digitalWrite(gateOutput[ring], prevValue[ring] ? HIGH : LOW);
-			if (prevValue[ring] != values[0][ring][(counter + ARC_MAX_LEDS - 1) % ARC_MAX_LEDS])
+			if (counterChanged && prevValue[ring] != values[0][ring][(counter + ARC_MAX_LEDS - 1) % ARC_MAX_LEDS])
 			{
 				digitalWrite(triggerOutput[ring], HIGH);
 				triggerState[ring] = currentTime + TRIGGER_LENGTH;
