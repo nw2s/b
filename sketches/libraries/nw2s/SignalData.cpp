@@ -77,18 +77,6 @@ SignalData* SignalData::fromSDFile(char *filepath)
 	} 
 }
 
-// SignalData* SignalData::fromArray(unsigned short int* source, long size)
-// {
-//  	unsigned short int *data = new unsigned short int[size];
-//
-// 	for (int i = 0; i < size; i++)
-// 	{
-// 		data[i] = source[i];
-// 	}
-//
-// 	return new SignalData(data, size);
-// }
-
 SignalData::SignalData(short int *data, long size)
 {
 	this->data = data;
@@ -144,7 +132,7 @@ StreamingSignalData::StreamingSignalData(char* foldername, char* subfoldername, 
 	this->reversed = false;
 	this->available = file.fileSize() > 0;
 	this->sampleCount = file.fileSize() / 2;
-	this->endIndex = this->sampleCount;
+	this->endIndex = this->sampleCount - 1;
 	this->size[0] = 0;
 	this->size[1] = 0;
 
@@ -169,13 +157,45 @@ bool StreamingSignalData::isReadyForRefresh()
 
 void StreamingSignalData::setStartFactor(uint16_t startfactor)
 {
-	/* Pass in a 16 bit value that specifies sample to start with */
-	uint32_t start = (this->sampleCount * startfactor) / 0xFFFF;
+	/* Pass in a 12 bit value that specifies sample to start with */
+	this->startFactor = (startfactor < 0) ? 0 : (startfactor > 4095) ? 4095 : startfactor;
+	
+	this->calculateEndpoints();	
 }
 
-void StreamingSignalData::setEndFactor(uint16_t lengthFactor)
+void StreamingSignalData::setEndFactor(uint16_t endFactor)
 {
+	/* Pass in a 12 bit value that specifies sample to start with */
+	this->endFactor = (endFactor < 0) ? 0 : (endFactor > 4095) ? 4095 : endFactor;
+
+	this->calculateEndpoints();
+}
+
+void StreamingSignalData::calculateEndpoints()
+{
+	this->startIndex = ((this->sampleCount - STREAM_BUFFER_SIZE) * this->startFactor) / 4095;
 	
+	uint32_t looplength = (this->sampleCount * this->endFactor) / 4095;
+	this->endIndex = this->startIndex + STREAM_BUFFER_SIZE + looplength;
+	this->endIndex = (this->endIndex >= this->sampleCount) ? this->sampleCount - 1 : this->endIndex;
+
+	this->subEndIndex = (looplength < STREAM_BUFFER_SIZE) ? looplength : STREAM_BUFFER_SIZE;
+
+	if (!this->reversed && ((this->startIndex > ((this->file.curPosition() / 2) + STREAM_BUFFER_SIZE)) || (this->endIndex < ((this->file.curPosition() / 2) - STREAM_BUFFER_SIZE))))
+	{
+		this->reset();
+	}
+	//else if (this->reversed && this->startIndex)
+	//TODO: what about reversed?
+
+	
+	Serial.print(this->sampleCount);
+	Serial.print(" ");
+	Serial.print(this->startIndex);
+	Serial.print(" ");
+	Serial.print(this->endIndex);
+	Serial.print(" ");
+	Serial.println(this->subEndIndex);
 }
 
 void StreamingSignalData::refresh()
@@ -210,14 +230,23 @@ void StreamingSignalData::refresh()
 				}
 			}
 			
+			/* If we're past where we should be, move to the start */
+			if (file.curPosition() > (this->endIndex * 2))
+			{
+				file.seekSet(this->startIndex * 2);
+			}
+			
 			/* Read up to the buffer size number of bytes */
+			//uint16_t readsize = this->endIndex - this->startIndex;
+			//if (readsize > READ_BUFFER_SIZE) readsize = READ_BUFFER_SIZE;
+			
 			dsize = this->file.read(d, READ_BUFFER_SIZE);
 			this->available = dsize > -1;
 
 			/* If we're looping and didn't get enough bytes, rewind and start over */
 			while (loop && available && dsize < READ_BUFFER_SIZE)
 			{
-				this->file.seekSet(this->startIndex);
+				this->file.seekSet(this->startIndex * 2);
 				dsize += this->file.read(&(d[dsize]), READ_BUFFER_SIZE - dsize);
 			}
 
@@ -241,7 +270,7 @@ void StreamingSignalData::refresh()
 	}
 }
 
-short int StreamingSignalData::getNextSample()
+int16_t StreamingSignalData::getNextSample()
 {
 	if (!available)
 	{
@@ -250,6 +279,15 @@ short int StreamingSignalData::getNextSample()
 	
 	/* Get the next sample and hold on to it */
 	short int nextsample = this->buffer[readbufferindex][nextsampleindex];
+
+	/* If the loop length is less than a full buffer and we're at the end, just keep looping */
+	if (!reversed && this->subEndIndex < STREAM_BUFFER_SIZE && this->nextsampleindex == this->subEndIndex)
+	{
+		this->nextsampleindex = 0;
+
+		return nextsample;
+	}
+	//TODO: reversed
 
 	/* If we're at the end of a buffer, move to the next */
 	if ((!reversed && (this->nextsampleindex == (this->size[readbufferindex] - 1))) || (reversed && (this->nextsampleindex == 0)))
@@ -281,7 +319,7 @@ void StreamingSignalData::reset()
 {
 	this->writebufferindex = !this->readbufferindex;
 
-	this->file.seekSet(this->startIndex);	
+	this->file.seekSet(this->startIndex * 2);	
 	this->refresh();
 
 	this->readbufferindex = this->writebufferindex;
@@ -291,7 +329,7 @@ void StreamingSignalData::reset()
 void StreamingSignalData::seekRandom()
 {
 	/* We have to end up on an even word, and not on the last sample */
-	this->file.seekSet(Entropy::getValue(this->startIndex, this->endIndex - 1));
+	this->file.seekSet(Entropy::getValue(this->startIndex, this->endIndex - 1) * 2);
 	
 	this->writebufferindex = !this->readbufferindex;
 	this->refresh();

@@ -25,6 +25,8 @@
 #include "Entropy.h"
 #include <Arduino.h>
 
+#define CONTROL_CHANGE_THRESHOLD 25
+
 
 using namespace nw2s;
 
@@ -157,7 +159,7 @@ Looper* Looper::create(aJsonObject* data)
 	/* STARTCONTROL INPUT */
 	if (startcontrol != ANALOG_IN_NONE)
 	{
-		looper->setMixControl(startcontrol);
+		looper->setStartControl(startcontrol);
 	}
 	
 	/* MIXMODE */
@@ -403,10 +405,11 @@ void Looper::timer(unsigned long t)
 	}
 
 	/* Every 10ms, read the analog input of the mix control */
-	if ((mixcontrol != ANALOG_IN_NONE) && (t % 10 == 0))
+	if ((this->mixcontrol != ANALOG_IN_NONE) && (t % 10 == 0))
 	{
 		/* Get the mix factor between 0 and 4096 for 0-5V */
 		int controlval = (analogRead(this->mixcontrol) - 2048) << 1;
+
 		if (controlval < 0)
 		{
 			controlval = 0;
@@ -418,6 +421,46 @@ void Looper::timer(unsigned long t)
 		
 		/* Calculate the mix factor between these two waves */
 		this->mixfactor = (4095 * (controlval % this->looprange)) / this->looprange;  		
+	}
+	
+	if ((this->startcontrol != ANALOG_IN_NONE) && (t % 10 == 0))
+	{
+		/* Get the mix factor between 0 and 4096 for 0-5V */
+		int controlval = (analogRead(this->startcontrol) - 2048) << 1;
+
+		controlval = (controlval < 0) ? 0 : (controlval > 4095) ? 4095 : controlval;
+
+		/* Only update if the change is greater than some threshold */
+		if (controlval > (this->laststartval + CONTROL_CHANGE_THRESHOLD) || controlval < (this->laststartval - CONTROL_CHANGE_THRESHOLD))
+		{
+			/* Update all of our samples with that info */
+			for (int i = 0; i < this->signalData.size(); i++) 
+			{
+				this->signalData[i]->setStartFactor(controlval);
+			}
+			
+			this->laststartval = controlval;		
+		}		
+	}
+
+	if ((this->lengthcontrol != ANALOG_IN_NONE) && (t % 10 == 0))
+	{
+		/* Get the mix factor between 0 and 4096 for 0-5V */
+		int controlval = (analogRead(this->lengthcontrol) - 2048) << 1;
+
+		controlval = (controlval < 0) ? 0 : (controlval > 4095) ? 4095 : controlval;
+		
+		/* Only update if the change is greater than some threshold */
+		if (controlval > (this->lastlenval + CONTROL_CHANGE_THRESHOLD) || controlval < (this->lastlenval - CONTROL_CHANGE_THRESHOLD))
+		{
+			/* Update all of our samples with that info */
+			for (int i = 0; i < this->signalData.size(); i++) 
+			{
+				this->signalData[i]->setEndFactor(controlval);
+			}
+			
+			this->lastlenval = controlval;
+		}
 	}
 
 	/* If the glitch trigger is high, seek to a random location */
