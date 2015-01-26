@@ -60,6 +60,7 @@ class nw2s::StreamingSignalData
 		void refresh();
 		void reset();
 		void seekRandom();
+		void seekModPosition(uint32_t samplepos);
 		void reverse();
 
 		void setStartFactor(uint16_t startfactor);

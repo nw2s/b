@@ -340,3 +340,11 @@ void StreamingSignalData::seekRandom()
 	this->nextsampleindex = 0;
 }
 
+void StreamingSignalData::seekModPosition(uint32_t samplepos)
+{
+	/* Lets us sync up to a master sample clock without having to keep up with each sample */
+	/* Note that this ignores any loop windows that have been defined... so it'll realign afterwards, if necessary */
+	
+	this->file.seekSet((samplepos * 2) % (this->file.fileSize()));	
+}
+

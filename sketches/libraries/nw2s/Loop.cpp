@@ -75,17 +75,21 @@ Looper* Looper::create(aJsonObject* data)
 	static const char densityNodeName[] = "density";
 	static const char loopsNodeName[] = "loops";
 	static const char mixmodeNodeName[] = "mixmode";
+	static const char reversemodeNodeName[] = "reversemode";
 	static const char mixcontrolNodeName[] = "mixcontrol";
 	static const char mixtriggerNodeName[] = "mixtrigger";
+	static const char resettriggerNodeName[] = "resettrigger";
 	static const char lengthcontrolNodeName[] = "lengthcontrol";
 	static const char finelengthcontrolNodeName[] = "finelengthcontrol";
 	static const char startcontrolNodeName[] = "startcontrol";
+	static const char syncmodeNodeName[] = "startcontrol";
 	
 	char* subfolder = getStringFromJSON(data, subFolderNodeName);
 	char* filename = getStringFromJSON(data, filenameNodeName);
 	SampleRateInterrupt sri = getSampleRateFromJSON(data);
 	PinAudioOut output = getAudioOutputFromJSON(data);
 	PinDigitalIn glitch = getDigitalInputFromJSON(data, glitchNodeName);
+	PinDigitalIn resettrigger = getDigitalInputFromJSON(data, resettriggerNodeName);
 	PinDigitalIn reverse = getDigitalInputFromJSON(data, reverseNodeName);
 	PinDigitalIn mixtrigger = getDigitalInputFromJSON(data, mixtriggerNodeName);
 	PinAnalogIn density = getAnalogInputFromJSON(data, densityNodeName);
@@ -94,6 +98,8 @@ Looper* Looper::create(aJsonObject* data)
 	PinAnalogIn finelengthcontrol = getAnalogInputFromJSON(data, finelengthcontrolNodeName);
 	PinAnalogIn startcontrol = getAnalogInputFromJSON(data, startcontrolNodeName);
 	char* mixmodeVal = getStringFromJSON(data, mixmodeNodeName);
+	char* reversemodeVal = getStringFromJSON(data, reversemodeNodeName);
+	char* syncmodeVal = getStringFromJSON(data, syncmodeNodeName);
 
 	aJsonObject* loops = aJson.getObjectItem(data, loopsNodeName);
 		
@@ -140,6 +146,12 @@ Looper* Looper::create(aJsonObject* data)
 	if (reverse != DIGITAL_IN_NONE)
 	{
 		looper->setReverseTrigger(reverse);
+	}
+
+	/* RESET TRIGGER */
+	if (resettrigger != DIGITAL_IN_NONE)
+	{
+		looper->setResetTrigger(resettrigger);
 	}
 
 	/* DENSITY INPUT */
@@ -196,6 +208,26 @@ Looper* Looper::create(aJsonObject* data)
 	else if (strcmp(mixmodeVal, "ring") == 0)
 	{
 		looper->setMixMode(MIXMODE_RING);
+	}
+
+	/* REVERSEMODE */
+	if (strcmp(reversemodeVal, "gate") == 0)
+	{
+		looper->setReverseMode(REVERSE_GATE);
+	}
+	else if (strcmp(reversemodeVal, "trigger") == 0)
+	{
+		looper->setReverseMode(REVERSE_TRIGGER);
+	}
+
+	/* SYNCMODE */
+	if (strcmp(syncmodeVal, "continuous") == 0)
+	{
+		looper->setSyncMode(SYNC_CONTINUOUS);
+	}
+	else if (strcmp(syncmodeVal, "pause") == 0)
+	{
+		looper->setSyncMode(SYNC_PAUSE);
 	}
 
 	return looper;
@@ -365,7 +397,6 @@ void Looper::timer_handler()
 			}
 			else if (this->mixmode == MIXMODE_BLEND)
 			{
-				//TODO: Really, we should be mixing across the range of waves 
 				int val1 = (this->signalData[loop1index]->getNextSample() * (4096 - this->mixfactor)) >> 12;
 				int val2 = (this->signalData[loop2index]->getNextSample() * this->mixfactor) >> 12;
 
@@ -398,26 +429,36 @@ void Looper::timer_handler()
 		
 		/* For now, we're doing all audio as 12 bit unsigned, so we have to do the conversion before writing the register */
 		dacc_write_conversion_data(DACC_INTERFACE, (outputval + 0x7FFF) >> 4);
+		
+		sampleCount++;
 	}
 }
 
 void Looper::timer(unsigned long t)
 {
-	/* If the reverse trigger is high, reverse direction of the loop playback */
-	if ((reverseTrigger != DIGITAL_IN_NONE) && !reversed && digitalRead(reverseTrigger))
+	if (this->reverseMode == REVERSE_TRIGGER)
 	{
-		this->reversed = true;
-
-		for(int i = 0; i < this->loopcount; i++)
+		/* If the reverse trigger is high, reverse direction of the loop playback */
+		if ((reverseTrigger != DIGITAL_IN_NONE) && !reversed && digitalRead(reverseTrigger))
 		{
-			this->signalData[i]->reverse();
+			this->reversed = true;
+
+			for(int i = 0; i < this->loopcount; i++)
+			{
+				this->signalData[i]->reverse();
+			}
+		}
+	
+		/* Unset the reversal flag if the signal is no longer high */
+		if ((reverseTrigger != DIGITAL_IN_NONE) && reversed && !digitalRead(reverseTrigger))
+		{
+			this->reversed = false;
 		}
 	}
-	
-	/* Unset the reversal flag if the signal is no longer high */
-	if ((reverseTrigger != DIGITAL_IN_NONE) && reversed && !digitalRead(reverseTrigger))
+	else
 	{
-		this->reversed = false;
+		/* If the reverse gate is high, then reverse direction */
+		this->reversed = digitalRead(reverseTrigger);
 	}
 
 	/* Every 10ms, read the analog input of the mix control */
@@ -437,6 +478,14 @@ void Looper::timer(unsigned long t)
 		
 		/* Calculate the mix factor between these two waves */
 		this->mixfactor = (4095 * (controlval % this->looprange)) / this->looprange;  		
+
+		// TODO: continuous sync for blended mix mode
+		// /* If sync mode = continuous, sync up the new loop with our current position */
+		// if (this->syncMode == SYNC_CONTINUOUS)
+		// {
+		// 	signalData[loop2index]->seekModPosition(sampleCount);
+		// }
+
 	}
 	
 	/* Every 10ms, read the analog input of the bit control */
@@ -544,6 +593,12 @@ void Looper::timer(unsigned long t)
 		mixtrigger_bounce = true;
 		loop1index = (loop1index + 1) % loopcount;
 		loop2index = (loop2index + 1) % loopcount;
+		
+		/* If sync mode = continuous, sync up the new loop with our current position */
+		if (this->syncMode == SYNC_CONTINUOUS)
+		{
+			signalData[loop2index]->seekModPosition(sampleCount);
+		}		
 	}
 	else if (mixtrigger_bounce && !digitalRead(mixtrigger))
 	{
@@ -610,6 +665,11 @@ void Looper::setReverseTrigger(PinDigitalIn reverseTrigger)
 	this->reverseTrigger = reverseTrigger;
 }
 
+void Looper::setResetTrigger(PinDigitalIn resetTrigger)
+{
+	this->resetTrigger = resetTrigger;
+}
+
 void Looper::setMixTrigger(PinDigitalIn mixtrigger)
 {
 	this->mixtrigger = mixtrigger;
@@ -618,6 +678,16 @@ void Looper::setMixTrigger(PinDigitalIn mixtrigger)
 void Looper::setMixMode(MixMode mixmode)
 {
 	this->mixmode = mixmode;
+}
+
+void Looper::setReverseMode(ReverseMode reverseMode)
+{
+	this->reverseMode = reverseMode;
+}
+
+void Looper::setSyncMode(SyncMode syncMode)
+{
+	this->syncMode = syncMode;
 }
 
 // ClockedLooper* ClockedLooper::create(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri, int beats, int clockdivision)

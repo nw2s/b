@@ -55,6 +55,18 @@ namespace nw2s
 		MIXMODE_RING
 	};
 	
+	enum ReverseMode
+	{
+		REVERSE_TRIGGER,
+		REVERSE_GATE
+	};
+	
+	enum SyncMode
+	{
+		SYNC_CONTINUOUS,
+		SYNC_PAUSE
+	};
+	
 	class Looper;
 	class ClockedLooper;
 	class EFLooper;
@@ -70,6 +82,7 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		static Looper* create(aJsonObject* data);
 		void setGlitchTrigger(PinDigitalIn glitchTrigger);
 		void setReverseTrigger(PinDigitalIn reverseTrigger);
+		void setReverseMode(ReverseMode reverseMode);
 		void setDensityInput(PinAnalogIn density);
 		void setMixControl(PinAnalogIn mixcontrol);
 		void setLengthControl(PinAnalogIn lengthcontrol);
@@ -77,13 +90,16 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		void setStartControl(PinAnalogIn startcontrol);
 		void setBitControl(PinAnalogIn bitcontrol);
 		void setMixTrigger(PinDigitalIn mixtrigger);
+		void setResetTrigger(PinDigitalIn resettrigger);
 		void setMixMode(MixMode mixmode);
+		void setSyncMode(SyncMode syncMode);
 		virtual void timer(unsigned long t);
 		virtual void timer_handler();
 			
 	protected:
 		PinDigitalIn glitchTrigger = DIGITAL_IN_NONE;
 		PinDigitalIn reverseTrigger = DIGITAL_IN_NONE;
+		PinDigitalIn resetTrigger = DIGITAL_IN_NONE;
 		PinAnalogIn density = ANALOG_IN_NONE;
 		PinAnalogIn mixcontrol = ANALOG_IN_NONE;
 		PinAnalogIn bitcontrol = ANALOG_IN_NONE;
@@ -93,12 +109,14 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		bool mixtrigger_bounce;
 		PinDigitalIn mixtrigger;
 		MixMode mixmode;
+		SyncMode syncMode = SYNC_PAUSE;
 		
 		unsigned int loopcount;
 		int looprange;
 		unsigned int mixfactor;
 		unsigned int loop1index;
 		unsigned int loop2index;
+		uint32_t sampleCount = 0;
 		uint16_t bitDepthMask = 0xFFFF;
 		uint16_t laststartval = 0;
 		uint16_t lastlenval = 0;
@@ -108,6 +126,7 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		unsigned long glitched;
 		bool reversed;
 		bool muted;
+		ReverseMode reverseMode = REVERSE_TRIGGER;
 		PinAudioOut pin;
 		std::vector<StreamingSignalData*> signalData;
 		int channel;
