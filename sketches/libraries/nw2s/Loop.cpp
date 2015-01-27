@@ -82,7 +82,8 @@ Looper* Looper::create(aJsonObject* data)
 	static const char lengthcontrolNodeName[] = "lengthcontrol";
 	static const char finelengthcontrolNodeName[] = "finelengthcontrol";
 	static const char startcontrolNodeName[] = "startcontrol";
-	static const char syncmodeNodeName[] = "startcontrol";
+	static const char bitcontrolNodeName[] = "bitcontrol";
+	static const char syncmodeNodeName[] = "syncmode";
 	
 	char* subfolder = getStringFromJSON(data, subFolderNodeName);
 	char* filename = getStringFromJSON(data, filenameNodeName);
@@ -93,6 +94,7 @@ Looper* Looper::create(aJsonObject* data)
 	PinDigitalIn reverse = getDigitalInputFromJSON(data, reverseNodeName);
 	PinDigitalIn mixtrigger = getDigitalInputFromJSON(data, mixtriggerNodeName);
 	PinAnalogIn density = getAnalogInputFromJSON(data, densityNodeName);
+	PinAnalogIn bitcontrol = getAnalogInputFromJSON(data, bitcontrolNodeName);
 	PinAnalogIn mixcontrol = getAnalogInputFromJSON(data, mixcontrolNodeName);
 	PinAnalogIn lengthcontrol = getAnalogInputFromJSON(data, lengthcontrolNodeName);
 	PinAnalogIn finelengthcontrol = getAnalogInputFromJSON(data, finelengthcontrolNodeName);
@@ -182,6 +184,12 @@ Looper* Looper::create(aJsonObject* data)
 	if (startcontrol != ANALOG_IN_NONE)
 	{
 		looper->setStartControl(startcontrol);
+	}
+	
+	/* BITCONTROL INPUT */
+	if (bitcontrol != ANALOG_IN_NONE)
+	{
+		looper->setBitControl(bitcontrol);
 	}
 	
 	/* MIXMODE */
