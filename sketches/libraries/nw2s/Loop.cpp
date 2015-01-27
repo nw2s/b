@@ -499,10 +499,10 @@ void Looper::timer(unsigned long t)
 	/* Every 10ms, read the analog input of the bit control */
 	if ((this->bitcontrol != ANALOG_IN_NONE) && (t % 10 == 0))
 	{
-		//TODO: This only works for 12 bit audio for now.
-		
 		/* Get the bit factor between 0 and 16 for 0-5V */
-		int controlval = (analogRead(this->bitcontrol) - 2048) >> 2;
+		int controlval = (analogRead(this->bitcontrol) - 2048) >> 7;
+		
+		Serial.println(controlval);
 
 		/* Calculate the bitmask */
 		this->bitDepthMask = BIT_CRUSH_MASK[controlval];
@@ -643,9 +643,9 @@ void Looper::setMixControl(PinAnalogIn mixcontrol)
 	this->mixcontrol = mixcontrol;
 }
 
-void Looper::setBitControl(PinAnalogIn mixcontrol)
+void Looper::setBitControl(PinAnalogIn bitcontrol)
 {
-	this->mixcontrol = mixcontrol;
+	this->bitcontrol = bitcontrol;
 }
 
 void Looper::setLengthControl(PinAnalogIn lengthcontrol)
