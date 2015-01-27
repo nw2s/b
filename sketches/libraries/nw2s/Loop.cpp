@@ -502,8 +502,6 @@ void Looper::timer(unsigned long t)
 		/* Get the bit factor between 0 and 16 for 0-5V */
 		int controlval = (analogRead(this->bitcontrol) - 2048) >> 7;
 		
-		Serial.println(controlval);
-
 		/* Calculate the bitmask */
 		this->bitDepthMask = BIT_CRUSH_MASK[controlval];
 	}
@@ -569,6 +567,8 @@ void Looper::timer(unsigned long t)
 			{
 				this->signalData[i]->setFineEndFactor(controlval);
 			}
+			
+			Serial.println(controlval);
 			
 			this->lastfinelenval = controlval;
 		}
@@ -653,9 +653,9 @@ void Looper::setLengthControl(PinAnalogIn lengthcontrol)
 	this->lengthcontrol = lengthcontrol;
 }
 
-void Looper::setFineLengthControl(PinAnalogIn lengthcontrol)
+void Looper::setFineLengthControl(PinAnalogIn finelengthcontrol)
 {
-	this->lengthcontrol = lengthcontrol;
+	this->finelengthcontrol = finelengthcontrol;
 }
 
 void Looper::setStartControl(PinAnalogIn startcontrol)

@@ -171,7 +171,7 @@ void StreamingSignalData::setEndFactor(uint16_t endFactor)
 	this->calculateEndpoints();
 }
 
-void StreamingSignalData::setFineEndFactor(uint16_t endFactor)
+void StreamingSignalData::setFineEndFactor(uint16_t fineEndFactor)
 {
 	/* Pass in a 12 bit value that specifies a fine grained loop length */
 	this->fineEndFactor = (fineEndFactor < 0) ? 0 : (fineEndFactor > 4095) ? 4095 : fineEndFactor;
@@ -193,6 +193,8 @@ void StreamingSignalData::calculateEndpoints()
 	{
 		this->reset();
 	}	
+	
+	Serial.println(looplength);
 }
 
 void StreamingSignalData::refresh()
