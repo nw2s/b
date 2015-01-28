@@ -29,7 +29,7 @@ namespace nw2s
 	class SignalData;
 	class StreamingSignalData;
 
-	static const int STREAM_BUFFER_SIZE = 4096;
+	static const int STREAM_BUFFER_SIZE = 256;
 	static const int READ_BUFFER_SIZE = STREAM_BUFFER_SIZE * 2;
 }
 
@@ -60,7 +60,6 @@ class nw2s::StreamingSignalData
 		void refresh();
 		void reset();
 		void seekRandom();
-		void seekModPosition(uint32_t samplepos);
 		void reverse();
 
 		void setStartFactor(uint16_t startfactor);
@@ -68,9 +67,11 @@ class nw2s::StreamingSignalData
 		void setFineEndFactor(uint16_t fineLengthFactor);
 		
 	private:
-		short int buffer[2][nw2s::STREAM_BUFFER_SIZE];
-		short volatile unsigned int readbufferindex;
-		short volatile unsigned int writebufferindex;
+		int16_t buffer[2][nw2s::STREAM_BUFFER_SIZE];
+		int16_t resetCache[nw2s::STREAM_BUFFER_SIZE];
+		bool refreshCache = true;
+		volatile uint8_t readbufferindex;
+		volatile uint8_t writebufferindex;
 		int size[2];
 		uint32_t sampleCount = 0;
 		uint16_t startFactor = 0;

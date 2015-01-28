@@ -181,7 +181,13 @@ void StreamingSignalData::setFineEndFactor(uint16_t fineEndFactor)
 
 void StreamingSignalData::calculateEndpoints()
 {
-	this->startIndex = ((this->sampleCount - STREAM_BUFFER_SIZE) * this->startFactor) / 4095;
+	uint32_t newStartIndex = ((this->sampleCount - STREAM_BUFFER_SIZE) * this->startFactor) / 4095;
+	
+	if (newStartIndex != this->startIndex)
+	{
+		this->refreshCache = true;
+		this->startIndex = newStartIndex;
+	}
 	
 	uint32_t looplength = ((this->sampleCount * this->endFactor) / 4095) + this->fineEndFactor; 
 	this->endIndex = this->startIndex + STREAM_BUFFER_SIZE + looplength;
@@ -193,8 +199,6 @@ void StreamingSignalData::calculateEndpoints()
 	{
 		this->reset();
 	}	
-	
-	Serial.println(looplength);
 }
 
 void StreamingSignalData::refresh()
@@ -256,11 +260,20 @@ void StreamingSignalData::refresh()
 				unsigned char d0 = d[i];
 				unsigned short int d1 = d[i + 1];
 	
-				/* We were making this unsigned, but need to keep it signed */
-				/* We were also making it 12 bit, but let's leave that to the very end */
-				short int value = (d1 << 8) | d0;
+				int16_t value = (d1 << 8) | d0;
 
 				this->buffer[writebufferindex][i / 2] = value;
+				
+				/* if the cache is dirty, fill it up with what we're reading now. */
+				if (this->refreshCache)
+				{
+					this->resetCache[i / 2] = value;
+				}
+			}
+			
+			if (this->refreshCache)
+			{
+				this->refreshCache = false;
 			}
 		}
 	
@@ -294,10 +307,10 @@ int16_t StreamingSignalData::getNextSample()
 	}
 
 	/* If we're at the end of a buffer, move to the next */
-	if ((!reversed && (this->nextsampleindex == (this->size[readbufferindex] - 1))) || (reversed && (this->nextsampleindex == 0)))
+	if ((!reversed && (this->nextsampleindex == (STREAM_BUFFER_SIZE - 1))) || (reversed && (this->nextsampleindex == 0)))
 	{
 		this->readbufferindex = !this->readbufferindex;
-		this->nextsampleindex = reversed ? this->size[readbufferindex] - 1 : 0;
+		this->nextsampleindex = reversed ? STREAM_BUFFER_SIZE - 1 : 0;
 	}
 	else
 	{
@@ -321,13 +334,23 @@ void StreamingSignalData::reverse()
 
 void StreamingSignalData::reset()
 {
+	//TODO: crossfade with a few of the upcoming samples
+	
 	this->writebufferindex = !this->readbufferindex;
 
-	this->file.seekSet(this->startIndex * 2);	
-	this->refresh();
+	/* Seek to where we would be after loading the cache */
+	this->file.seekSet((this->startIndex + STREAM_BUFFER_SIZE) * 2);	
 
+	/* Copy what's in our cache into the readbuffer */
+	memcpy(buffer[writebufferindex], resetCache, STREAM_BUFFER_SIZE * sizeof(buffer[0][0]));
+
+	/* Line up the new read/write buffers */
 	this->readbufferindex = this->writebufferindex;
+	this->writebufferindex = !this->readbufferindex;
 	this->nextsampleindex = 0;	
+	
+	/* And signal that we can start reading from the new position into the write buffer */
+	this->refresh();
 }
 
 void StreamingSignalData::seekRandom()
@@ -340,13 +363,5 @@ void StreamingSignalData::seekRandom()
 
 	this->readbufferindex = this->writebufferindex;
 	this->nextsampleindex = 0;
-}
-
-void StreamingSignalData::seekModPosition(uint32_t samplepos)
-{
-	/* Lets us sync up to a master sample clock without having to keep up with each sample */
-	/* Note that this ignores any loop windows that have been defined... so it'll realign afterwards, if necessary */
-	
-	this->file.seekSet((samplepos * 2) % (this->file.fileSize()));	
 }
 

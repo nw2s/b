@@ -23,6 +23,7 @@
 #include "Loop.h"
 #include "JSONUtil.h"
 #include "Entropy.h"
+#include "Constants.h"
 #include <Arduino.h>
 
 #define CONTROL_CHANGE_THRESHOLD 25
@@ -200,6 +201,10 @@ Looper* Looper::create(aJsonObject* data)
 	else if (strcmp(mixmodeVal, "blend") == 0)
 	{
 		looper->setMixMode(MIXMODE_BLEND);
+	}
+	else if (strcmp(mixmodeVal, "cv") == 0)
+	{
+		looper->setMixMode(MIXMODE_CV);
 	}
 	else if (strcmp(mixmodeVal, "glitch") == 0)
 	{
@@ -391,7 +396,7 @@ void Looper::timer_handler()
 		else
 		{
 			/* Mix the two according to the current mix mode */
-			if (this->mixmode == MIXMODE_TOGGLE)
+			if (this->mixmode == MIXMODE_TOGGLE || this->mixmode == MIXMODE_CV)
 			{
 				outputval = this->signalData[loop1index]->getNextSample();			
 			}
@@ -405,8 +410,13 @@ void Looper::timer_handler()
 			}
 			else if (this->mixmode == MIXMODE_BLEND)
 			{
-				int val1 = (this->signalData[loop1index]->getNextSample() * (4096 - this->mixfactor)) >> 12;
-				int val2 = (this->signalData[loop2index]->getNextSample() * this->mixfactor) >> 12;
+				uint16_t gainindex = this->mixfactor >> 2;
+				uint16_t gain1 = EQUAL_POWER_1024[1023 - gainindex];
+				uint16_t gain2 = EQUAL_POWER_1024[gainindex];
+
+				/* Our gain lookup table converts linear values to an equal power curve */
+				int val1 = (this->signalData[loop1index]->getNextSample() * gain1) >> 10;
+				int val2 = (this->signalData[loop2index]->getNextSample() * gain2) >> 10;
 
 				/* Sum and dither */
 				outputval = (val1 + val2) ^ Entropy::getBit();
@@ -438,12 +448,25 @@ void Looper::timer_handler()
 		/* For now, we're doing all audio as 12 bit unsigned, so we have to do the conversion before writing the register */
 		dacc_write_conversion_data(DACC_INTERFACE, (outputval + 0x7FFF) >> 4);
 		
-		sampleCount++;
+		// sampleCount++;
 	}
 }
 
 void Looper::timer(unsigned long t)
 {
+	/* Every millisecond, check if it's ready to get more data loaded */
+	if (this->signalData[loop1index]->isReadyForRefresh())
+	{
+		this->signalData[loop1index]->refresh();
+	}
+		
+	/* Check the other one too */
+	if (loopcount > 1 && this->signalData[loop2index]->isReadyForRefresh())
+	{
+		this->signalData[loop2index]->refresh();
+	}
+		
+
 	if (this->reverseMode == REVERSE_TRIGGER)
 	{
 		/* If the reverse trigger is high, reverse direction of the loop playback */
@@ -472,28 +495,42 @@ void Looper::timer(unsigned long t)
 	/* Every 10ms, read the analog input of the mix control */
 	if ((this->mixcontrol != ANALOG_IN_NONE) && (t % 10 == 0))
 	{
+		//TODO: better mix factor calculation?
+		
 		/* Get the mix factor between 0 and 4096 for 0-5V */
 		int controlval = (analogRead(this->mixcontrol) - 2048) << 1;
 
-		if (controlval < 0)
+		/* Clip to unsigned 12 bits */
+		controlval = (controlval < 0) ? 0 : (controlval > 4095) ? 4095 : controlval;
+
+		/* Don't mess with the active loops if we're in a non-blended mode */
+		if (this->mixmode != MIXMODE_TOGGLE && this->mixmode != MIXMODE_NONE)
 		{
-			controlval = 0;
-		}	
-
-		/* Calculate the index of the waves to mix between */
-		this->loop1index = controlval / this->looprange;
-		this->loop2index = (this->loop1index + 1) % this->loopcount;
+			/* Calculate the index of the waves to mix between */
+			this->loop1index = controlval / this->looprange;
+			this->loop2index = (this->loop1index + 1) % this->loopcount;
 		
-		/* Calculate the mix factor between these two waves */
-		this->mixfactor = (4095 * (controlval % this->looprange)) / this->looprange;  		
-
-		// TODO: continuous sync for blended mix mode
-		// /* If sync mode = continuous, sync up the new loop with our current position */
-		// if (this->syncMode == SYNC_CONTINUOUS)
-		// {
-		// 	signalData[loop2index]->seekModPosition(sampleCount);
-		// }
-
+			/* Calculate the mix factor between these two waves */
+			this->mixfactorImmediate = (4095 * (controlval % this->looprange)) / this->looprange;
+		}
+	}
+	
+	/* Every millisecond, smooth the mix */
+	if (this->mixcontrol != ANALOG_IN_NONE)
+	{
+		int16_t mixdifference = this->mixfactorImmediate - this->mixfactor;
+		int16_t changeval = 0;
+		
+		if (mixdifference > 0)
+		{
+			changeval = (mixdifference > 1024) ? 8 : (mixdifference > 128) ? 2 : 1;
+		}
+		else if (mixdifference < 0)
+		{
+			changeval = (mixdifference < -1024) ? -8 : (mixdifference < -128) ? -2 : -1;
+		}
+		
+		this->mixfactor = this->mixfactor + changeval;		
 	}
 	
 	/* Every 10ms, read the analog input of the bit control */
@@ -567,13 +604,31 @@ void Looper::timer(unsigned long t)
 			{
 				this->signalData[i]->setFineEndFactor(controlval);
 			}
-			
-			Serial.println(controlval);
-			
+						
 			this->lastfinelenval = controlval;
 		}
 	}
 
+	/* If the reset trigger is high, seek to the beginning */
+	if ((resetTrigger != DIGITAL_IN_NONE) && !reset_bounce && digitalRead(resetTrigger))
+	{
+		this->reset_bounce = true;
+		this->resett = t;
+
+		/* Reset any of the loops that we need to */
+		this->signalData[loop1index]->reset();
+		
+		if (this->loopcount > 1)
+		{
+			this->signalData[loop2index]->reset();
+		}		
+	}
+	else if (this->reset_bounce && t > (this->resett + 1000) && !digitalRead(resetTrigger))
+	{
+		/* Debounce the reset every 1000 milliseconds */
+		this->reset_bounce = false;
+	}
+	
 	/* If the glitch trigger is high, seek to a random location */
 	if ((glitchTrigger != DIGITAL_IN_NONE) && !glitched_bounce && digitalRead(glitchTrigger))
 	{
@@ -600,13 +655,7 @@ void Looper::timer(unsigned long t)
 	{
 		mixtrigger_bounce = true;
 		loop1index = (loop1index + 1) % loopcount;
-		loop2index = (loop2index + 1) % loopcount;
-		
-		/* If sync mode = continuous, sync up the new loop with our current position */
-		if (this->syncMode == SYNC_CONTINUOUS)
-		{
-			signalData[loop2index]->seekModPosition(sampleCount);
-		}		
+		loop2index = (loop2index + 1) % loopcount;		
 	}
 	else if (mixtrigger_bounce && !digitalRead(mixtrigger))
 	{
@@ -614,23 +663,11 @@ void Looper::timer(unsigned long t)
 		mixtrigger_bounce = false;
 	}
 	
-	/* Every millisecond, check if it's ready to get more data loaded */
-	if (this->signalData[loop1index]->isReadyForRefresh())
-	{
-		this->signalData[loop1index]->refresh();
-	}
-		
-	/* Check the other one too */
-	if (loopcount > 1 && this->signalData[loop2index]->isReadyForRefresh())
-	{
-		this->signalData[loop2index]->refresh();
-	}
-		
 	/* Debounce the glitch every 1000 milliseconds */
 	if (this->glitched_bounce && t > (this->glitched + 1000))
 	{
 		this->glitched_bounce = false;
-	}
+	}		
 }
 
 void Looper::setDensityInput(PinAnalogIn density)

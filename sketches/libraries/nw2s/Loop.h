@@ -47,6 +47,7 @@ namespace nw2s
 	{
 		MIXMODE_NONE,
 		MIXMODE_TOGGLE,
+		MIXMODE_CV,
 		MIXMODE_BLEND,
 		MIXMODE_GLITCH,
 		MIXMODE_MIN,
@@ -113,7 +114,8 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		
 		unsigned int loopcount;
 		int looprange;
-		unsigned int mixfactor;
+		uint16_t mixfactor = 0;
+		uint16_t mixfactorImmediate = 0;
 		unsigned int loop1index;
 		unsigned int loop2index;
 		uint32_t sampleCount = 0;
@@ -121,9 +123,11 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		uint16_t laststartval = 0;
 		uint16_t lastlenval = 0;
 		uint16_t lastfinelenval = 0;
-		bool glitched_bounce;
+		bool glitched_bounce = false;
+		bool reset_bounce = false;
 		bool glitchmode_stream;
-		unsigned long glitched;
+		uint32_t glitched = 0;
+		uint32_t resett = 0;
 		bool reversed;
 		bool muted;
 		ReverseMode reverseMode = REVERSE_TRIGGER;
