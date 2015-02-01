@@ -114,10 +114,14 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		
 		unsigned int loopcount;
 		int looprange;
-		uint16_t mixfactor = 0;
-		uint16_t mixfactorImmediate = 0;
+		// uint16_t mixfactor = 0;
+		// uint16_t mixfactorImmediate = 0;
+		uint16_t controlval = 0;
+		uint16_t controlvalImmediate = 0;
 		unsigned int loop1index;
 		unsigned int loop2index;
+		unsigned int loop1gain;
+		unsigned int loop2gain;
 		uint32_t sampleCount = 0;
 		uint16_t bitDepthMask = 0xFFFF;
 		uint16_t laststartval = 0;
@@ -135,6 +139,9 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		std::vector<StreamingSignalData*> signalData;
 		int channel;
 		int dac;
+		
+		int lowval = 0xFFFFFFF;
+		int hival = 0;
 
 		Looper(PinAudioOut pin, LoopPath loops[], unsigned int loopcount,  SampleRateInterrupt sri);	
 		

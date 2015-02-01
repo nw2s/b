@@ -31,9 +31,6 @@
 
 using namespace nw2s;
 
-static const uint16_t BIT_CRUSH_MASK[16] = { 0xFFFF, 0xFFFE, 0xFFFC, 0xFFF8, 0xFFF0, 0xFFE0, 0xFFC0, 0xFF80, 0xFF00, 0xFE00, 0xFC00, 0xF800, 0xF000, 0xE000, 0xC000, 0x8000 };
-
-
 SampleRateInterrupt sampleRateFromName(char* name)
 {
 	if (strcmp(name, "10000") == 0)
@@ -343,7 +340,6 @@ Looper::Looper(PinAudioOut pin, LoopPath loops[], unsigned int loopcount, Sample
 	this->looprange = 4095 / loopcount;
 	this->loop1index = 0;
 	this->loop2index = 1;
-	this->mixfactor = 2048;
 	this->glitchmode_stream = 0;
 	this->mixmode = MIXMODE_NONE;
 			
@@ -383,10 +379,9 @@ void Looper::initializeTimer(PinAudioOut pin, SampleRateInterrupt sri)
 
 void Looper::timer_handler()
 {
-	/* Would it be better to just turn off the timer while muted? */
 	if (!this->muted)
 	{
-		int outputval = 0;
+		int32_t outputval = 0;
 		
 	 	dacc_set_channel_selection(DACC_INTERFACE, this->dac);
 		if (this->loopcount == 1)
@@ -410,16 +405,15 @@ void Looper::timer_handler()
 			}
 			else if (this->mixmode == MIXMODE_BLEND)
 			{
-				uint16_t gainindex = this->mixfactor >> 2;
-				uint16_t gain1 = EQUAL_POWER_1024[1023 - gainindex];
-				uint16_t gain2 = EQUAL_POWER_1024[gainindex];
-
 				/* Our gain lookup table converts linear values to an equal power curve */
-				int val1 = (this->signalData[loop1index]->getNextSample() * gain1) >> 10;
-				int val2 = (this->signalData[loop2index]->getNextSample() * gain2) >> 10;
+				int16_t sample1 = this->signalData[loop1index]->getNextSample();
+				int16_t sample2 = this->signalData[loop2index]->getNextSample();
+
+				int16_t val1 = (sample1 * this->loop1gain) / 1024;
+				int16_t val2 = (sample2 * this->loop2gain) / 1024;
 
 				/* Sum and dither */
-				outputval = (val1 + val2) ^ Entropy::getBit();
+				outputval = (val1 + val2) ^ Entropy::getBit();				
 			}
 			else if (this->mixmode == MIXMODE_GLITCH)
 			{
@@ -439,16 +433,23 @@ void Looper::timer_handler()
 			}
 		}
 		
+		/* Convert to unsigned range */
+		outputval = outputval + 0x7FFF;
+
+
+		/* Saturate at 16 bits */
+		outputval = (outputval > 0xFFFF) ? 0xFFFF : (outputval < 0) ? 0 : outputval;
+
 		/* Bit crushing */
 		if (this->bitcontrol != ANALOG_IN_NONE)
 		{
 			outputval = outputval & this->bitDepthMask;
 		}
-		
+					
 		/* For now, we're doing all audio as 12 bit unsigned, so we have to do the conversion before writing the register */
-		dacc_write_conversion_data(DACC_INTERFACE, (outputval + 0x7FFF) >> 4);
+		uint32_t dacval = outputval >> 4;
 		
-		// sampleCount++;
+		dacc_write_conversion_data(DACC_INTERFACE, dacval);
 	}
 }
 
@@ -493,44 +494,61 @@ void Looper::timer(unsigned long t)
 	}
 
 	/* Every 10ms, read the analog input of the mix control */
-	if ((this->mixcontrol != ANALOG_IN_NONE) && (t % 10 == 0))
-	{
-		//TODO: better mix factor calculation?
-		
+	if (this->mixcontrol != ANALOG_IN_NONE) 
+	{		
 		/* Get the mix factor between 0 and 4096 for 0-5V */
-		int controlval = (analogRead(this->mixcontrol) - 2048) << 1;
+		if (t % 10 == 0)
+		{
+			this->controlvalImmediate = (analogRead(this->mixcontrol) - 2048) << 1;
 
-		/* Clip to unsigned 12 bits */
-		controlval = (controlval < 0) ? 0 : (controlval > 4095) ? 4095 : controlval;
+			/* Clip to unsigned 12 bits */
+			this->controlvalImmediate = (controlvalImmediate < 0) ? 0 : (controlvalImmediate > 4095) ? 4095 : controlvalImmediate;
+		}
+
+		int16_t controldifference = this->controlvalImmediate - this->controlval;
+		int16_t changeval = 0;
+
+		if (controldifference > 0)
+		{
+			changeval = (controldifference > 1024) ? 8 : (controldifference > 128) ? 2 : 1;
+		}
+		else if (controldifference < 0)
+		{
+			changeval = (controldifference < -1024) ? -8 : (controldifference < -128) ? -2 : -1;
+		}
+
+		this->controlval = this->controlval + changeval;
 
 		/* Don't mess with the active loops if we're in a non-blended mode */
 		if (this->mixmode != MIXMODE_TOGGLE && this->mixmode != MIXMODE_NONE)
 		{
-			/* Calculate the index of the waves to mix between */
-			this->loop1index = controlval / this->looprange;
-			this->loop2index = (this->loop1index + 1) % this->loopcount;
-		
-			/* Calculate the mix factor between these two waves */
-			this->mixfactorImmediate = (4095 * (controlval % this->looprange)) / this->looprange;
+			uint16_t mixfactor = (this->controlval % (4095 / (this->loopcount - 1))) * (this->loopcount - 1);
+
+			if (this->mixmode == MIXMODE_CV)
+			{
+				this->loop1index = (this->controlval * this->loopcount) >> 12;
+			}
+			else
+			{
+				/* Calculate the index of the waves to mix between */
+				int z = (this->controlval * (this->loopcount - 1)) >> 12;
+						
+				if (z % 2 == 0)
+				{
+					this->loop1index = z;
+					this->loop2index = z + 1;
+					this->loop1gain = EQUAL_POWER_1024[1023 - (mixfactor >> 2)];
+					this->loop2gain = EQUAL_POWER_1024[mixfactor >> 2];
+				}
+				else
+				{
+					this->loop1index = z + 1;
+					this->loop2index = z;
+					this->loop1gain = EQUAL_POWER_1024[mixfactor >> 2];
+					this->loop2gain = EQUAL_POWER_1024[1023 - (mixfactor >> 2)];
+				}
+			}
 		}
-	}
-	
-	/* Every millisecond, smooth the mix */
-	if (this->mixcontrol != ANALOG_IN_NONE)
-	{
-		int16_t mixdifference = this->mixfactorImmediate - this->mixfactor;
-		int16_t changeval = 0;
-		
-		if (mixdifference > 0)
-		{
-			changeval = (mixdifference > 1024) ? 8 : (mixdifference > 128) ? 2 : 1;
-		}
-		else if (mixdifference < 0)
-		{
-			changeval = (mixdifference < -1024) ? -8 : (mixdifference < -128) ? -2 : -1;
-		}
-		
-		this->mixfactor = this->mixfactor + changeval;		
 	}
 	
 	/* Every 10ms, read the analog input of the bit control */
@@ -555,18 +573,18 @@ void Looper::timer(unsigned long t)
 		{
 			controlval = 0;
 		}
-		
+
 		/* Only update if the change is greater than some threshold */
 		if (controlval < (CONTROL_CHANGE_THRESHOLD * 2) || controlval > (this->laststartval + CONTROL_CHANGE_THRESHOLD) || controlval < (this->laststartval - CONTROL_CHANGE_THRESHOLD))
 		{
 			/* Update all of our samples with that info */
-			for (int i = 0; i < this->signalData.size(); i++) 
+			for (int i = 0; i < this->signalData.size(); i++)
 			{
 				this->signalData[i]->setStartFactor(controlval);
 			}
-			
-			this->laststartval = controlval;		
-		}		
+
+			this->laststartval = controlval;
+		}
 	}
 
 	if ((this->lengthcontrol != ANALOG_IN_NONE) && (t % 10 == 0))
@@ -575,16 +593,16 @@ void Looper::timer(unsigned long t)
 		int controlval = (analogRead(this->lengthcontrol) - 2048) << 1;
 
 		controlval = (controlval < 0) ? 0 : (controlval > 4095) ? 4095 : controlval;
-		
+
 		/* Only update if the change is greater than some threshold */
 		if (controlval > (this->lastlenval + CONTROL_CHANGE_THRESHOLD) || controlval < (this->lastlenval - CONTROL_CHANGE_THRESHOLD))
 		{
 			/* Update all of our samples with that info */
-			for (int i = 0; i < this->signalData.size(); i++) 
+			for (int i = 0; i < this->signalData.size(); i++)
 			{
 				this->signalData[i]->setEndFactor(controlval);
 			}
-			
+
 			this->lastlenval = controlval;
 		}
 	}
@@ -595,16 +613,16 @@ void Looper::timer(unsigned long t)
 		int controlval = (analogRead(this->finelengthcontrol) - 2048) << 1;
 
 		controlval = (controlval < 0) ? 0 : (controlval > 4095) ? 4095 : controlval;
-		
+
 		/* Only update if the change is greater than some threshold */
 		if (controlval > (this->lastfinelenval + CONTROL_CHANGE_THRESHOLD) || controlval < (this->lastfinelenval - CONTROL_CHANGE_THRESHOLD))
 		{
 			/* Update all of our samples with that info */
-			for (int i = 0; i < this->signalData.size(); i++) 
+			for (int i = 0; i < this->signalData.size(); i++)
 			{
 				this->signalData[i]->setFineEndFactor(controlval);
 			}
-						
+
 			this->lastfinelenval = controlval;
 		}
 	}

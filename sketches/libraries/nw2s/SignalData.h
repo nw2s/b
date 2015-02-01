@@ -54,7 +54,7 @@ class nw2s::StreamingSignalData
 {
 	public:
 		static StreamingSignalData* fromSDFile(char *foldername, char* subfoldername, char *filename, bool loop = false);
-		short int getNextSample();
+		int16_t getNextSample();
 		bool isAvailable();
 		bool isReadyForRefresh();
 		void refresh();

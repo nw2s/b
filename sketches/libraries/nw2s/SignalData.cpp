@@ -56,7 +56,7 @@ SignalData* SignalData::fromSDFile(char *filepath)
 		Serial.println("Loading Loop. Size: " + String(filebytes));
 
 		/* Allocate as much space as we have reported by file size */
-	 	short int *data = new short int[filewords];
+	 	short int *data = new int16_t[filewords];
 
 		for (int i = 0; i < filewords; i++)
 		{
@@ -209,6 +209,7 @@ void StreamingSignalData::refresh()
 	/* If we're not looping and have reached eof, then stop */
 	if (!this->loop && (this->file.curPosition() >= this->file.fileSize() - 1))
 	{
+		Serial.println("ERROR reading loop file");
 		this->available = false;
 		return;
 	}
@@ -252,7 +253,7 @@ void StreamingSignalData::refresh()
 				this->file.seekSet(this->startIndex * 2);
 				dsize += this->file.read(&(d[dsize]), READ_BUFFER_SIZE - dsize);
 			}
-
+			
 			/* Convert from signed little endian */
 			for (int i = 0; i < dsize; i += 2)
 			{
@@ -261,7 +262,7 @@ void StreamingSignalData::refresh()
 				unsigned short int d1 = d[i + 1];
 	
 				int16_t value = (d1 << 8) | d0;
-
+				
 				this->buffer[writebufferindex][i / 2] = value;
 				
 				/* if the cache is dirty, fill it up with what we're reading now. */
