@@ -454,7 +454,7 @@ void Looper::timer_handler()
 }
 
 void Looper::timer(unsigned long t)
-{
+{	
 	/* Every millisecond, check if it's ready to get more data loaded */
 	if (this->signalData[loop1index]->isReadyForRefresh())
 	{

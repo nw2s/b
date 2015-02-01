@@ -70,10 +70,11 @@ class nw2s::StreamingSignalData
 		int16_t buffer[2][nw2s::STREAM_BUFFER_SIZE];
 		int16_t resetCache[nw2s::STREAM_BUFFER_SIZE];
 		bool refreshCache = true;
+		volatile bool refreshing = false;
 		volatile uint8_t readbufferindex;
 		volatile uint8_t writebufferindex;
 		int size[2];
-		uint32_t sampleCount = 0;
+		uint64_t sampleCount = 0;
 		uint16_t startFactor = 0;
 		uint16_t endFactor = 4095;
 		uint16_t fineEndFactor = 0;
@@ -83,9 +84,11 @@ class nw2s::StreamingSignalData
 		bool reversed;
 		SdFile file;
 
-		uint32_t endIndex = 0;
+		uint64_t endIndex = 0;
 		uint16_t subEndIndex = READ_BUFFER_SIZE;
-		uint32_t startIndex = 0;
+		uint64_t startIndex = 0;
+		volatile uint32_t buffercount = 0;
+		volatile uint32_t bufferindex[2] = { 0, 0 };
 		
 		StreamingSignalData(char *foldername, char* subfoldername, char *filename, bool loop = false);
 		

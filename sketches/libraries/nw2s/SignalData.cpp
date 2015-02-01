@@ -203,6 +203,10 @@ void StreamingSignalData::calculateEndpoints()
 
 void StreamingSignalData::refresh()
 {
+	/* Make sure we don't get interrupted accidentally */
+	if (refreshing) return;
+	this->refreshing = true;
+
 	unsigned char d[READ_BUFFER_SIZE];
 	int dsize = 0;
 
@@ -241,9 +245,6 @@ void StreamingSignalData::refresh()
 			}
 			
 			/* Read up to the buffer size number of bytes */
-			//uint16_t readsize = this->endIndex - this->startIndex;
-			//if (readsize > READ_BUFFER_SIZE) readsize = READ_BUFFER_SIZE;
-			
 			dsize = this->file.read(d, READ_BUFFER_SIZE);
 			this->available = dsize > -1;
 
@@ -278,9 +279,12 @@ void StreamingSignalData::refresh()
 			}
 		}
 	
+		this->bufferindex[writebufferindex] = this->buffercount++;
 		this->size[writebufferindex] = dsize / 2;	
 		this->writebufferindex = !this->writebufferindex;
 	}
+	
+	this->refreshing = false;
 }
 
 int16_t StreamingSignalData::getNextSample()
@@ -309,9 +313,9 @@ int16_t StreamingSignalData::getNextSample()
 
 	/* If we're at the end of a buffer, move to the next */
 	if ((!reversed && (this->nextsampleindex == (STREAM_BUFFER_SIZE - 1))) || (reversed && (this->nextsampleindex == 0)))
-	{
+	{		
 		this->readbufferindex = !this->readbufferindex;
-		this->nextsampleindex = reversed ? STREAM_BUFFER_SIZE - 1 : 0;
+		this->nextsampleindex = reversed ? STREAM_BUFFER_SIZE - 1 : 0;	
 	}
 	else
 	{

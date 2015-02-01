@@ -139,9 +139,6 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		std::vector<StreamingSignalData*> signalData;
 		int channel;
 		int dac;
-		
-		int lowval = 0xFFFFFFF;
-		int hival = 0;
 
 		Looper(PinAudioOut pin, LoopPath loops[], unsigned int loopcount,  SampleRateInterrupt sri);	
 		
