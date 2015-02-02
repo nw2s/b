@@ -146,7 +146,7 @@ PinDigitalOut nw2s::getDigitalOutputFromJSON(aJsonObject* data, const char* node
 
 PinAudioOut nw2s::getAudioOutputFromJSON(aJsonObject* data)
 {
-	static const char nodeName[] = "dacOutput";
+	static const char nodeName[] = "dacoutput";
 	int val = getIntFromJSON(data, nodeName, 1, 1, 2);
 
 	return val == 1 ? DUE_DAC0 : DUE_DAC1;
