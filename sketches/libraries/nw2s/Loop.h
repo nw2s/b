@@ -91,12 +91,13 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		void setStartControl(PinAnalogIn startcontrol);
 		void setBitControl(PinAnalogIn bitcontrol);
 		void setMixTrigger(PinDigitalIn mixtrigger);
+		void setTriggerOut(PinDigitalOut triggerout);
 		void setResetTrigger(PinDigitalIn resettrigger);
 		void setMixMode(MixMode mixmode);
 		void setSyncMode(SyncMode syncMode);
 		virtual void timer(unsigned long t);
 		virtual void timer_handler();
-			
+		
 	protected:
 		PinDigitalIn glitchTrigger = DIGITAL_IN_NONE;
 		PinDigitalIn reverseTrigger = DIGITAL_IN_NONE;
@@ -107,6 +108,7 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		PinAnalogIn lengthcontrol = ANALOG_IN_NONE;
 		PinAnalogIn finelengthcontrol = ANALOG_IN_NONE;
 		PinAnalogIn startcontrol = ANALOG_IN_NONE;
+		PinDigitalOut triggerout = DIGITAL_OUT_NONE;
 		bool mixtrigger_bounce;
 		PinDigitalIn mixtrigger;
 		MixMode mixmode;
@@ -123,6 +125,9 @@ class nw2s::Looper : public AudioDevice, public nw2s::TimeBasedDevice
 		unsigned int loop1gain;
 		unsigned int loop2gain;
 		uint32_t sampleCount = 0;
+		uint32_t triggert = 0;
+		bool triggerstate = false;
+		bool nexttriggerstate = false;
 		uint16_t bitDepthMask = 0xFFFF;
 		uint16_t laststartval = 0;
 		uint16_t lastlenval = 0;

@@ -81,7 +81,7 @@ Looper* Looper::create(aJsonObject* data)
 	static const char finelengthcontrolNodeName[] = "finelengthcontrol";
 	static const char startcontrolNodeName[] = "startcontrol";
 	static const char bitcontrolNodeName[] = "bitcontrol";
-	static const char syncmodeNodeName[] = "syncmode";
+	static const char triggeroutputNodeName[] = "triggerout";
 	
 	char* subfolder = getStringFromJSON(data, subFolderNodeName);
 	char* filename = getStringFromJSON(data, filenameNodeName);
@@ -91,6 +91,7 @@ Looper* Looper::create(aJsonObject* data)
 	PinDigitalIn resettrigger = getDigitalInputFromJSON(data, resettriggerNodeName);
 	PinDigitalIn reverse = getDigitalInputFromJSON(data, reverseNodeName);
 	PinDigitalIn mixtrigger = getDigitalInputFromJSON(data, mixtriggerNodeName);
+	PinDigitalOut triggerout = getDigitalOutputFromJSON(data, triggeroutputNodeName);
 	PinAnalogIn density = getAnalogInputFromJSON(data, densityNodeName);
 	PinAnalogIn bitcontrol = getAnalogInputFromJSON(data, bitcontrolNodeName);
 	PinAnalogIn mixcontrol = getAnalogInputFromJSON(data, mixcontrolNodeName);
@@ -99,7 +100,6 @@ Looper* Looper::create(aJsonObject* data)
 	PinAnalogIn startcontrol = getAnalogInputFromJSON(data, startcontrolNodeName);
 	char* mixmodeVal = getStringFromJSON(data, mixmodeNodeName);
 	char* reversemodeVal = getStringFromJSON(data, reversemodeNodeName);
-	char* syncmodeVal = getStringFromJSON(data, syncmodeNodeName);
 
 	aJsonObject* loops = aJson.getObjectItem(data, loopsNodeName);
 		
@@ -166,6 +166,12 @@ Looper* Looper::create(aJsonObject* data)
 		looper->setMixControl(mixcontrol);
 	}
 	
+	/* TRIGGER OUTPUT */
+	if (triggerout != ANALOG_OUT_NONE)
+	{
+		looper->setTriggerOut(triggerout);
+	}
+	
 	/* LENGTHCONTROL INPUT */
 	if (lengthcontrol != ANALOG_IN_NONE)
 	{
@@ -228,16 +234,6 @@ Looper* Looper::create(aJsonObject* data)
 	else if (strcmp(reversemodeVal, "trigger") == 0)
 	{
 		looper->setReverseMode(REVERSE_TRIGGER);
-	}
-
-	/* SYNCMODE */
-	if (strcmp(syncmodeVal, "continuous") == 0)
-	{
-		looper->setSyncMode(SYNC_CONTINUOUS);
-	}
-	else if (strcmp(syncmodeVal, "pause") == 0)
-	{
-		looper->setSyncMode(SYNC_PAUSE);
 	}
 
 	return looper;
@@ -405,7 +401,7 @@ void Looper::timer_handler()
 			}
 			else if (this->mixmode == MIXMODE_BLEND)
 			{
-				/* Our gain lookup table converts linear values to an equal power curve */
+				/* Our gain lookup table converts linear values to a kinda equal power curve */
 				int16_t sample1 = this->signalData[loop1index]->getNextSample();
 				int16_t sample2 = this->signalData[loop2index]->getNextSample();
 
@@ -422,6 +418,8 @@ void Looper::timer_handler()
 				
 				/* Toggle from one stream to the other if the samples are equal */
 				this->glitchmode_stream = this->glitchmode_stream ^ (sample1 == sample2);
+				
+				if (!this->nexttriggerstate) this->nexttriggerstate = (sample1 == sample2);
 				
 				outputval = (this->glitchmode_stream) ? sample2 : sample1;
 			}
@@ -546,8 +544,25 @@ void Looper::timer(unsigned long t)
 					this->loop2index = z;
 					this->loop1gain = EQUAL_POWER_1024[mixfactor >> 2];
 					this->loop2gain = EQUAL_POWER_1024[1023 - (mixfactor >> 2)];
-				}
+				}				
 			}
+		}
+	}
+	
+	if (this->triggerout != DIGITAL_OUT_NONE)
+	{
+		if (this->nexttriggerstate && !this->triggerstate)
+		{
+			/* If the trigger is supposed to be high and we are not, then raise the output */
+			digitalWrite(this->triggerout, 1);
+			this->triggert = t + 50;
+			this->triggerstate = true;
+			this->nexttriggerstate = false;
+		}
+		else if (this->triggerstate && (t > this->triggert))
+		{
+			this->triggerstate = false;
+			digitalWrite(this->triggerout, 0);
 		}
 	}
 	
@@ -748,37 +763,7 @@ void Looper::setReverseMode(ReverseMode reverseMode)
 	this->reverseMode = reverseMode;
 }
 
-void Looper::setSyncMode(SyncMode syncMode)
+void Looper::setTriggerOut(PinDigitalOut triggerout)
 {
-	this->syncMode = syncMode;
+	this->triggerout = triggerout;
 }
-
-// ClockedLooper* ClockedLooper::create(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri, int beats, int clockdivision)
-// {
-// 	return new ClockedLooper(pin, subfoldername, filename, sri, beats, clockdivision);
-// }
-//
-// ClockedLooper::ClockedLooper(PinAudioOut pin, char* subfoldername, char* filename, SampleRateInterrupt sri, int beats, int clockdivision) : Looper(pin, subfoldername, filename, sri)
-// {
-// 	this->clock_division = clockdivision;
-// 	this->beats = beats;
-// 	this->currentbeat = 0;
-// }
-//
-// void ClockedLooper::timer(unsigned long t)
-// {
-// 	Looper::timer(t);
-// }
-//
-// void ClockedLooper::reset()
-// {
-// 	this->currentbeat++;
-//
-// 	if (this->currentbeat >= this->beats)
-// 	{
-// 		Serial.println("resetting...");
-// 		this->signalData->reset();
-// 		this->currentbeat = 0;
-// 	}
-// }
-

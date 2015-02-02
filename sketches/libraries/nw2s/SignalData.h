@@ -29,7 +29,7 @@ namespace nw2s
 	class SignalData;
 	class StreamingSignalData;
 
-	static const int STREAM_BUFFER_SIZE = 256;
+	static const int STREAM_BUFFER_SIZE = 512;
 	static const int READ_BUFFER_SIZE = STREAM_BUFFER_SIZE * 2;
 }
 
