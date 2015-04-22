@@ -1,6 +1,6 @@
 /*
 	BinaryArc - a binary sequencer for nw2s::b and monome arc
-	copyright (c) 2014 scannerdarkly (fuzzybeacon@gmail.com)
+	copyright (c) 2014 scannerdarkly (scannerdarkly.git@gmail.com)
 
 	This code is developed for the the nw2s::b framework 
 	Copyright (C) 2013 Scott Wilson (thomas.scott.wilson@gmail.com)
