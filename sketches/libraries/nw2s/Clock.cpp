@@ -188,15 +188,12 @@ RandomTempoClock* RandomTempoClock::create(aJsonObject* data)
 	return new RandomTempoClock(mintempo, maxtempo, beats);
 }
 
-// RandomDropoutClock* RandomDropoutClock::create(int tempo, unsigned char beats_per_measure, int chaos)
-// {	
-// 	return new RandomDropoutClock(tempo, beats_per_measure, chaos);
-// }
-//
-// SlaveClock* SlaveClock::create(PinDigitalIn input, unsigned char beats_per_measure)
-// {	
-// 	return new SlaveClock(input, beats_per_measure);
-// }
+TapTempoClock* TapTempoClock::create(PinDigitalIn input, unsigned char beats_per_measure)
+{
+	tapTempoClock = new TapTempoClock(input, beats_per_measure);
+	
+	return TapTempoClock::tapTempoClock;
+}
 
 void Clock::registerDevice(BeatDevice* device)
 {
@@ -233,16 +230,19 @@ FixedClock::FixedClock(int tempo, unsigned char beats_per_measure)
 void Clock::timer(unsigned long t)
 {	
 	/* Call reset on devices first */
-	for (int i = 0; i < this->devices.size(); i++)
+	if (this->period > 0)
 	{
-		if (this->devices[i]->getNextTime() <= t)
+		for (int i = 0; i < this->devices.size(); i++)
 		{
-			if (!this->devices[i]->isStopped())
+			if (this->devices[i]->getNextTime() <= t)
 			{
-				this->devices[i]->reset();
+				if (!this->devices[i]->isStopped())
+				{
+					this->devices[i]->reset();
+				}
 			}
-		}
-	}	
+		}	
+	}
 	
 	/* Then update the timer on all devices */
 	for (int i = 0; i < this->devices.size(); i++)
@@ -382,99 +382,45 @@ void RandomTempoClock::updateTempo(unsigned long t)
 	this->last_clock_t = t;	
 }
 
-// volatile bool SlaveClock::trigger = false;
-// volatile int SlaveClock::period = 0;
-// volatile unsigned long SlaveClock::t = 0;
-// volatile unsigned long SlaveClock::last_clock_t = 0;
-// volatile unsigned long SlaveClock::next_clock_t = 0;
-// PinDigitalIn SlaveClock::input = DIGITAL_IN_NONE;
-// 
-// 
-// SlaveClock::SlaveClock(PinDigitalIn input, unsigned char beats_per_measure)
-// {
-// 	SlaveClock::input = input;
-// 	SlaveClock::beats_per_measure = beats_per_measure;
-// 	
-// #ifdef __AVR__
-// 	attachInterrupt(0, SlaveClock::isr, RISING);
-// #else
-// 	attachInterrupt(input, SlaveClock::isr, RISING);
-// #endif	
-// }
-// 
-// void SlaveClock::isr()
-// {
-// 	SlaveClock::trigger = true;
-// }
-// 
-// void SlaveClock::timer(unsigned long t)
-// {	
-// 	SlaveClock::t = t;
-// 	
-// 	if (SlaveClock::trigger)
-// 	{
-// 		if (SlaveClock::period == 0)
-// 		{
-// 			if (SlaveClock::last_clock_t == 0)
-// 			{
-// 				SlaveClock::last_clock_t = t;
-// 			}
-// 			else
-// 			{
-// 				SlaveClock::period = t - last_clock_t;
-// 				SlaveClock::last_clock_t = t;
-// 			}
-// 		}
-// 		else
-// 		{
-// 			//TODO: Update the clock display on Due based boards
-// 			SlaveClock::period = SlaveClock::t - SlaveClock::last_clock_t;
-// 			SlaveClock::next_clock_t = (t + this->period);
-// 			SlaveClock::last_clock_t = t;
-// 		}
-// 
-// 		/* Reset */
-// 		trigger = false;		
-// 	}
-// 
-// 	for (int i = 0; i < this->devices.size(); i++)
-// 	{
-// 		if (t % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
-// 		{
-// 			this->devices[i]->reset();
-// 		}
-// 
-// 		this->devices[i]->timer(t);
-// 	}		
-// }
-// 
-// RandomDropoutClock::RandomDropoutClock(int tempo, unsigned char beats_per_measure, int chaos) : FixedClock(tempo, beats_per_measure)
-// {
-// 	this->chaos = chaos;
-// }
-// 
-// void RandomDropoutClock::timer(unsigned long t)
-// {
-// 	if (t % this->period == 0)
-// 	{
-// 		IOUtils::displayBeat(this->beat, this);				
-// 		this->beat = (this->beat + 1) % this->beats_per_measure;		
-// 	}
-// 
-// 	for (int i = 0; i < this->devices.size(); i++)
-// 	{		
-// 		if (t % (((unsigned long)this->devices[i]->getclockdivision() * (unsigned long)this->period) / 1000UL) == 0)
-// 		{
-// 			/* This clock occasionally forgets to call reset() on its devices */
-// 			if (this->chaos <= random(100))
-// 			{
-// 				this->devices[i]->reset();
-// 			}			
-// 		}
-// 		
-// 		this->devices[i]->timer(t);
-// 	}	
-// }
+TapTempoClock::TapTempoClock(PinDigitalIn input, unsigned char beats_per_measure)
+{
+	this->beat = 0;
+	this->input = input;
+	this->beats_per_measure = beats_per_measure;
+			
+	int tempo = 0;
+ 	this->period = 0;
+		
+	this->last_clock_t = 0;
+	
+	attachInterrupt(input, onTempoTap, RISING);
+}
 
+void TapTempoClock::updateTempo(unsigned long t)
+{
+	this->next_clock_t = (t + this->period);
+	this->last_clock_t = t;	
+}
 
+void TapTempoClock::tap(uint32_t t)
+{
+	/* If the clock hasn't wrapped around, it's not the first tap,        */
+	/* and it hasn't been 4 seconds since the last tap, update the period */
+	
+	if ((t > this->lastT) && (this->lastT > 0) && (t - this->lastT < 4000))
+	{
+		/* Update the period to be the difference in your taps */
+		this->period = t - lastT;	
+		
+		/* And since you just tapped, make sure a beat happens NOW */
+		this->next_clock_t = t;
+	}
 
+	lastT = t;	
+}
+
+void TapTempoClock::onTempoTap()
+{
+	/* Interrupt handler is static, so we have to keep a static reference to the clock */
+	TapTempoClock::tapTempoClock->tap(millis());
+}

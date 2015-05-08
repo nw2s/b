@@ -55,8 +55,7 @@ namespace nw2s
 	class FixedClock;
 	class VariableClock;
 	class RandomTempoClock;
-	// class SlaveClock;
-	// class RandomDropoutClock;
+	class TapTempoClock;
 	
 	int clockDivisionFromName(char* name);
 }
@@ -149,36 +148,28 @@ class nw2s::RandomTempoClock : public Clock
 		virtual void updateTempo(unsigned long t);
 };
 
-
-// class nw2s::RandomDropoutClock : public FixedClock
-// {
-// 	public:
-// 		static RandomDropoutClock* create(int tempo, unsigned char beats_per_measure, int chaos);
-// 		virtual void timer(unsigned long t);
-// 
-// 	private:
-// 		int chaos;
-// 		
-// 		RandomDropoutClock(int tempo, unsigned char beats_per_measure, int chaos);		
-// };
-//
-// class nw2s::SlaveClock : public Clock
-// {
-// 	public:
-// 		static SlaveClock* create(PinDigitalIn input, unsigned char beats_per_measure);
-// 		virtual void timer(unsigned long t);
-// 	
-// 	private:
-// 		static volatile bool trigger;
-// 		static volatile unsigned long t;
-// 		static volatile int period;
-// 		static PinDigitalIn input;
-// 		static volatile unsigned long last_clock_t;
-// 		static volatile unsigned long next_clock_t;
-// 
-// 		SlaveClock(PinDigitalIn input, unsigned char beats_per_measure);
-// 		static void isr();
-// };
+class nw2s::TapTempoClock : public Clock
+{
+	public: 
+		static TapTempoClock* create(PinDigitalIn input, unsigned char beats_per_measure);
+		static TapTempoClock* create(aJsonObject* data);
+	
+	private:
+		
+		/* Note - since this is interrupt-driven, only one can catch the taps at a time */
+		static TapTempoClock* tapTempoClock;
+		
+		uint32_t lastT = 0;
+		uint32_t tempo = 0;
+		
+		PinDigitalIn input;
+		
+		TapTempoClock(PinDigitalIn input, unsigned char beats_per_measure);
+		virtual void updateTempo(unsigned long t);
+		void reset();
+		void tap(uint32_t t);
+		static void onTempoTap();
+};
 
 #endif
 
