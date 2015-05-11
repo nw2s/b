@@ -251,7 +251,7 @@ void Clock::timer(unsigned long t)
 	}	
 
 	/* Then update the clock display */
-	if (t >= this->next_clock_t)
+	if ((t >= this->next_clock_t) && (this->period > 0))
 	{
 		//TODO: Disabling this cause we're having some perf problems.
 		//if (t > this->next_clock_t) Serial.println("Clock missed next clock T by (ms) " + String(t - this->next_clock_t));
@@ -406,10 +406,13 @@ void TapTempoClock::updateTempo(unsigned long t)
 
 void TapTempoClock::tap(uint32_t t)
 {
-	/* If the clock hasn't wrapped around, it's not the first tap,        */
-	/* and it hasn't been 4 seconds since the last tap, update the period */
+	/* If the following conditions are met, update the tempo: */ 
+	/* - the clock hasn't wrapped around */
+	/* - it's not the first tap,         */
+	/* - it's been at least 20mS since the last tap */
+	/* - it hasn't been more than 4 seconds since the last tap */
 	
-	if ((t > this->lastT) && (this->lastT > 0) && (t - this->lastT < 4000))
+	if ((t > (this->lastT + 20)) && (this->lastT > 0) && (t - this->lastT < 4000))
 	{
 		/* Update the period to be the difference in your taps */
 		this->period = t - lastT;	
@@ -418,7 +421,7 @@ void TapTempoClock::tap(uint32_t t)
 		this->next_clock_t = t;
 	}
 
-	lastT = t;	
+	this->lastT = t;	
 }
 
 void TapTempoClock::onTempoTap()
