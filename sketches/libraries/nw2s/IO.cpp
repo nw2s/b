@@ -29,6 +29,11 @@
 using namespace nw2s;
 
 
+int limitRange(int val, int min, int max)
+{
+	return (val < min) ? min : (val > max) ? max : val;
+}
+
 int nw2s::analogRead(int input)
 {
 	if (input == ANALOG_IN_NONE)
@@ -41,11 +46,11 @@ int nw2s::analogRead(int input)
 	
 	if (!b::inputSoftTune)
 	{
-		return val;
+		return limitRange(val, 0, 4095);
 	}
 	
 	/* Adjust the offset and gain */
-	return  ((val * b::inputScale[input]) / 1000) + b::inputOffset[input];
+	return  limitRange(((val * b::inputScale[input]) / 1000) + b::inputOffset[input], 0, 4095);
 }
 
 int nw2s::analogReadmV(int input)
