@@ -382,6 +382,8 @@ void RandomTempoClock::updateTempo(unsigned long t)
 	this->last_clock_t = t;	
 }
 
+TapTempoClock* TapTempoClock::tapTempoClock;
+
 TapTempoClock::TapTempoClock(PinDigitalIn input, unsigned char beats_per_measure)
 {
 	this->beat = 0;
