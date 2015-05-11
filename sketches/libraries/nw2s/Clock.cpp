@@ -195,6 +195,17 @@ TapTempoClock* TapTempoClock::create(PinDigitalIn input, unsigned char beats_per
 	return TapTempoClock::tapTempoClock;
 }
 
+TapTempoClock* TapTempoClock::create(aJsonObject* data)
+{
+	const char inputNodeName[] = "tapInput";
+	const char beatsNodeName[] = "beats";
+	
+	PinDigitalIn input = getDigitalInputFromJSON(data, inputNodeName);
+	int beats = getIntFromJSON(data, beatsNodeName, 16, 1, 16);
+		
+	return new TapTempoClock(input, beats);
+}
+
 void Clock::registerDevice(BeatDevice* device)
 {
 	this->devices.push_back(device);	

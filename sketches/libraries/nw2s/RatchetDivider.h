@@ -24,6 +24,7 @@
 #include "IO.h"
 #include "Clock.h"
 #include "aJson.h"
+#include "Gate.h"
 
 namespace nw2s
 {		
@@ -60,15 +61,15 @@ class nw2s::RatchetDivider : public nw2s::BeatDevice
 
 	private:
 		
-		volatile int state;
-		uint32_t t_start = 0;
-
-		PinDigitalOut output;
-		PinAnalogIn divisorInput;
-		PinAnalogIn densityInput;
+		Gate* output;
+		PinAnalogIn divisorInput = ANALOG_IN_NONE;
+		PinAnalogIn densityInput = ANALOG_IN_NONE;
+		uint32_t densityVal = 0;
+		uint32_t millisTimer = 0;
 		RatchetLimit mode = RATCHET_LIMIT_OFF;
 		
 		RatchetDivider(RatchetLimit limit, PinAnalogIn divisorInput, PinAnalogIn densityInput, PinDigitalOut output);
+		static RatchetLimit getLimitFromString(char* value);
 		uint32_t calculateClockDivision();		
 };
 

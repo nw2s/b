@@ -32,56 +32,83 @@ RatchetDivider* RatchetDivider::create(RatchetLimit limit, PinAnalogIn divisorIn
 
 RatchetDivider* RatchetDivider::create(aJsonObject* data)
 {
-	// static const char outputNodeName[] = "triggerOutput";
-	//
-	// int clock_division = getDivisionFromJSON(data);
-	// PinDigitalOut output = getDigitalOutputFromJSON(data, outputNodeName);
-	//
-	// return new RatchetDivider(output, clock_division);
+	static const char outputNodeName[] = "triggerOutput";
+	static const char divisorNodeName[] = "divisorInput";
+	static const char densityNodeName[] = "densityInput";
+	static const char limitNodeName[] = "limit";
+
+	PinAnalogIn divisorInput = getAnalogInputFromJSON(data, divisorNodeName);
+	PinAnalogIn densityInput = getAnalogInputFromJSON(data, densityNodeName);
+	RatchetLimit limit = getLimitFromString(getStringFromJSON(data, limitNodeName));
+	PinDigitalOut output = getDigitalOutputFromJSON(data, outputNodeName);
+	
+	return new RatchetDivider(limit, divisorInput, densityInput, output);
+}
+
+RatchetLimit RatchetDivider::getLimitFromString(char* value)
+{	
+	if (strcmp(value, "off") == 0)
+	{
+		return RATCHET_LIMIT_OFF;
+	}
+
+	if (strcmp(value, "even") == 0)
+	{
+		return RATCHET_LIMIT_EVEN;
+	}
+
+	if (strcmp(value, "odd") == 0)
+	{
+		return RATCHET_LIMIT_ODD;
+	}
+
+	if (strcmp(value, "primes") == 0)
+	{
+		return RATCHET_LIMIT_PRIMES;
+	}
+
+	if (strcmp(value, "trip") == 0)
+	{
+		return RATCHET_LIMIT_TRIP;
+	}
+
+	if (strcmp(value, "fibonacci") == 0)
+	{
+		return RATCHET_LIMIT_FIBONACCI;
+	}
+
+	if (strcmp(value, "poweroftwo") == 0)
+	{
+		return RATCHET_LIMIT_POWEROF2;
+	}
 }
 
 RatchetDivider::RatchetDivider(RatchetLimit limit, PinAnalogIn divisorInput, PinAnalogIn densityInput, PinDigitalOut output)
-{
-	
-	/* Make sure the pin is low */
-	pinMode(output, OUTPUT);
-	this->output = output;
-	this->state = LOW;
-	this->t_start = 0;
-	digitalWrite(this->output, LOW);		
-		
+{	
+	this->output = Gate::create(output, 35);		
 	this->clock_division = this->calculateClockDivision();
 }
 
 void RatchetDivider::reset()
 {
-	/* Reset turns the trigger on */
-	this->t_start = 0;
-	this->state = HIGH;
-	digitalWrite(this->output, HIGH);
-	
-	this->clock_division = this->calculateClockDivision();
+	this->output->reset();	
 }
 
 void RatchetDivider::timer(unsigned long t)
 {	
-	/* If the state is low, nothing else to do */
-	if (this->state == LOW) return;
+	this->output->timer(t);
 	
-	if (this->t_start == 0)
+	this->millisTimer++;
+	
+	if ((this->densityInput != ANALOG_IN_NONE) && (this->millisTimer % 251 == 0))
 	{
-		this->t_start = t;
+		this->densityVal = analogRead(this->densityInput);
 	}
-	else
-	{
-		if ((this->state == HIGH) && (t - this->t_start > RATCHET_TRIGGER_TIME))
-		{
-			this->state = LOW;
-			digitalWrite(this->output, LOW);
-		}	
-	}	
 	
-	//TODO: Occasionally check the potentiometer to see if the division changed	
+	if (this->millisTimer % 252 == 0)
+	{	
+		this->clock_division = this->calculateClockDivision();
+	}
 }
 
 uint32_t RatchetDivider::calculateClockDivision()

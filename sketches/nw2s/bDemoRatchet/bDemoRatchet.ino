@@ -51,11 +51,12 @@ void setup()
 	EventManager::registerDevice(tempoclock);
 	
 	RatchetDivider* divider1 = RatchetDivider::create(RATCHET_LIMIT_OFF, DUE_IN_A00, DUE_IN_A01, DUE_OUT_D01);
-	RatchetDivider* divider2 = RatchetDivider::create(RATCHET_LIMIT_OFF, DUE_IN_A02, DUE_IN_A03, DUE_OUT_D02);
-	RatchetDivider* divider3 = RatchetDivider::create(RATCHET_LIMIT_OFF, DUE_IN_A04, DUE_IN_A05, DUE_OUT_D03);
-	RatchetDivider* divider4 = RatchetDivider::create(RATCHET_LIMIT_OFF, DUE_IN_A06, DUE_IN_A07, DUE_OUT_D04);
-	RatchetDivider* divider5 = RatchetDivider::create(RATCHET_LIMIT_OFF, DUE_IN_A08, DUE_IN_A09, DUE_OUT_D05);
-	RatchetDivider* divider6 = RatchetDivider::create(RATCHET_LIMIT_OFF, DUE_IN_A10, DUE_IN_A11, DUE_OUT_D06);
+	RatchetDivider* divider2 = RatchetDivider::create(RATCHET_LIMIT_ODD, DUE_IN_A02, DUE_IN_A03, DUE_OUT_D02);
+	RatchetDivider* divider3 = RatchetDivider::create(RATCHET_LIMIT_EVEN, DUE_IN_A02, DUE_IN_A03, DUE_OUT_D03);
+	RatchetDivider* divider4 = RatchetDivider::create(RATCHET_LIMIT_PRIMES, DUE_IN_A04, DUE_IN_A05, DUE_OUT_D04);
+	RatchetDivider* divider5 = RatchetDivider::create(RATCHET_LIMIT_TRIP, DUE_IN_A06, DUE_IN_A07, DUE_OUT_D05);
+	RatchetDivider* divider6 = RatchetDivider::create(RATCHET_LIMIT_FIBONACCI, DUE_IN_A08, DUE_IN_A09, DUE_OUT_D06);
+	RatchetDivider* divider7 = RatchetDivider::create(RATCHET_LIMIT_POWEROF2, DUE_IN_A10, DUE_IN_A11, DUE_OUT_D07);
 
 	tempoclock->registerDevice(divider1);
 	tempoclock->registerDevice(divider2);
@@ -63,7 +64,7 @@ void setup()
 	tempoclock->registerDevice(divider4);
 	tempoclock->registerDevice(divider5);
 	tempoclock->registerDevice(divider6);
-
+	tempoclock->registerDevice(divider7);
 }
 
 void loop() 
