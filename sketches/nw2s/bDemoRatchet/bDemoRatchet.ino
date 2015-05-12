@@ -41,7 +41,7 @@ void setup()
 
 	EventManager::initialize();
 
-	TapTempoClock* tempoclock = TapTempoClock::create(DUE_IN_D0, 16);
+	TapTempoClock* tempoclock = TapTempoClock::create(DUE_IN_D0, DUE_IN_D1, 16);
 
 	/* Creating a trigger on the quarter note just to test the tap tempo */
 	Trigger* quarter = Trigger::create(DUE_OUT_D00, DIV_QUARTER);
