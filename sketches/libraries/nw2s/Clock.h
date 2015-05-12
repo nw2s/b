@@ -151,7 +151,7 @@ class nw2s::RandomTempoClock : public Clock
 class nw2s::TapTempoClock : public Clock
 {
 	public: 
-		static TapTempoClock* create(PinDigitalIn input, unsigned char beats_per_measure);
+		static TapTempoClock* create(PinDigitalIn input, PinDigitalIn resetInput, unsigned char beats_per_measure);
 		static TapTempoClock* create(aJsonObject* data);
 	
 	private:
@@ -167,8 +167,9 @@ class nw2s::TapTempoClock : public Clock
 		uint32_t lastTapStateT = 0;
 		
 		PinDigitalIn input;
+		PinDigitalIn resetInput;
 		
-		TapTempoClock(PinDigitalIn input, unsigned char beats_per_measure);
+		TapTempoClock(PinDigitalIn input, PinDigitalIn resetInput, unsigned char beats_per_measure);
 		virtual void updateTempo(unsigned long t);
 		virtual void timer(uint32_t t);
 		void reset();

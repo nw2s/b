@@ -188,9 +188,9 @@ RandomTempoClock* RandomTempoClock::create(aJsonObject* data)
 	return new RandomTempoClock(mintempo, maxtempo, beats);
 }
 
-TapTempoClock* TapTempoClock::create(PinDigitalIn input, unsigned char beats_per_measure)
+TapTempoClock* TapTempoClock::create(PinDigitalIn input, PinDigitalIn resetInput, unsigned char beats_per_measure)
 {
-	tapTempoClock = new TapTempoClock(input, beats_per_measure);
+	tapTempoClock = new TapTempoClock(input, resetInput, beats_per_measure);
 	
 	return TapTempoClock::tapTempoClock;
 }
@@ -198,12 +198,14 @@ TapTempoClock* TapTempoClock::create(PinDigitalIn input, unsigned char beats_per
 TapTempoClock* TapTempoClock::create(aJsonObject* data)
 {
 	const char inputNodeName[] = "tapInput";
+	const char resetInputNodeName[] = "resetInput";
 	const char beatsNodeName[] = "beats";
 	
 	PinDigitalIn input = getDigitalInputFromJSON(data, inputNodeName);
+	PinDigitalIn resetInput = getDigitalInputFromJSON(data, resetInputNodeName);
 	int beats = getIntFromJSON(data, beatsNodeName, 16, 1, 16);
 		
-	return new TapTempoClock(input, beats);
+	return new TapTempoClock(input, resetInput, beats);
 }
 
 void Clock::registerDevice(BeatDevice* device)
@@ -396,10 +398,11 @@ void RandomTempoClock::updateTempo(unsigned long t)
 TapTempoClock* TapTempoClock::tapTempoClock;
 volatile bool TapTempoClock::tapping = false;
 
-TapTempoClock::TapTempoClock(PinDigitalIn input, unsigned char beats_per_measure)
+TapTempoClock::TapTempoClock(PinDigitalIn input, PinDigitalIn resetInput, unsigned char beats_per_measure)
 {
 	this->beat = 0;
 	this->input = input;
+	this->resetInput = resetInput;
 	this->beats_per_measure = beats_per_measure;
 			
 	int tempo = 0;
@@ -448,9 +451,10 @@ void TapTempoClock::tap(uint32_t t)
 
 		this->updateTempo(t);
 		
+		/* Now that we've updated the tempo, recalculate the next time for devices */
 		for (int i = 0; i < this->devices.size(); i++)
 		{
-			if ((this->devices[i]->getclockdivision() != DIV_NEVER) && (this->devices[i]->getNextTime() <= t))
+			if (this->devices[i]->getclockdivision() != DIV_NEVER)
 			{
 				this->devices[i]->setNextTime((((unsigned long)(this->devices[i]->getclockdivision()) * (unsigned long)(this->period)) / 1000UL) + t);
 
@@ -458,6 +462,7 @@ void TapTempoClock::tap(uint32_t t)
 			}
 		}
 		
+		/* Call reset on any devices that need it */
 		for (int i = 0; i < this->devices.size(); i++)
 		{
 			if (this->devices[i]->getNextTime() <= t)
@@ -467,10 +472,7 @@ void TapTempoClock::tap(uint32_t t)
 					this->devices[i]->reset();
 				}
 			}
-		}	
-				
-		/* And since you just tapped, make sure a beat happens NOW */
-		this->next_clock_t = t - 1;
+		}					
 	}
 
 	this->lastT = t;	
