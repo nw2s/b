@@ -394,6 +394,7 @@ void RandomTempoClock::updateTempo(unsigned long t)
 }
 
 TapTempoClock* TapTempoClock::tapTempoClock;
+volatile bool TapTempoClock::tapping = false;
 
 TapTempoClock::TapTempoClock(PinDigitalIn input, unsigned char beats_per_measure)
 {
@@ -409,6 +410,17 @@ TapTempoClock::TapTempoClock(PinDigitalIn input, unsigned char beats_per_measure
 	attachInterrupt(input, onTempoTap, RISING);
 }
 
+void TapTempoClock::timer(uint32_t t)
+{
+	Clock::timer(t);
+
+	/* Keep track of the last time we saw the input high */
+	if (digitalRead(this->input))
+	{
+		this->lastTapStateT = t;
+	}	
+}
+
 void TapTempoClock::updateTempo(unsigned long t)
 {
 	this->next_clock_t = (t + this->period);
@@ -416,20 +428,49 @@ void TapTempoClock::updateTempo(unsigned long t)
 }
 
 void TapTempoClock::tap(uint32_t t)
-{
+{	
 	/* If the following conditions are met, update the tempo: */ 
 	/* - the clock hasn't wrapped around */
 	/* - it's not the first tap,         */
 	/* - it's been at least 20mS since the last tap */
 	/* - it hasn't been more than 4 seconds since the last tap */
 	
-	if ((t > (this->lastT + 20)) && (this->lastT > 0) && (t - this->lastT < 4000))
+	if ((t > (this->lastT + 20)) && (this->lastT > 0) && (t < (this->lastT + 4000)) && (t > (this->lastTapStateT + 20)))
 	{
+		Serial.print("tap ");
+		Serial.println(t);
+
 		/* Update the period to be the difference in your taps */
 		this->period = t - lastT;	
+
+		IOUtils::displayBeat(this->beat, this);				
+		this->beat = (this->beat + 1) % this->beats_per_measure;		
+
+		this->updateTempo(t);
 		
+		for (int i = 0; i < this->devices.size(); i++)
+		{
+			if ((this->devices[i]->getclockdivision() != DIV_NEVER) && (this->devices[i]->getNextTime() <= t))
+			{
+				this->devices[i]->setNextTime((((unsigned long)(this->devices[i]->getclockdivision()) * (unsigned long)(this->period)) / 1000UL) + t);
+
+				this->devices[i]->calculate();
+			}
+		}
+		
+		for (int i = 0; i < this->devices.size(); i++)
+		{
+			if (this->devices[i]->getNextTime() <= t)
+			{
+				if (!this->devices[i]->isStopped())
+				{
+					this->devices[i]->reset();
+				}
+			}
+		}	
+				
 		/* And since you just tapped, make sure a beat happens NOW */
-		this->next_clock_t = t;
+		this->next_clock_t = t - 1;
 	}
 
 	this->lastT = t;	
@@ -437,6 +478,12 @@ void TapTempoClock::tap(uint32_t t)
 
 void TapTempoClock::onTempoTap()
 {
-	/* Interrupt handler is static, so we have to keep a static reference to the clock */
-	TapTempoClock::tapTempoClock->tap(millis());
+	if (!tapping)
+	{
+		tapping = true;
+		/* Interrupt handler is static, so we have to keep a static reference to the clock */
+		TapTempoClock::tapTempoClock->tap(millis());
+		
+		tapping = false;
+	}
 }

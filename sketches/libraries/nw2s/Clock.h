@@ -161,11 +161,16 @@ class nw2s::TapTempoClock : public Clock
 		
 		uint32_t lastT = 0;
 		uint32_t tempo = 0;
+		volatile static bool tapping;
+		
+		/* These remember the last time we saw the input high to avoid "falling" taps */
+		uint32_t lastTapStateT = 0;
 		
 		PinDigitalIn input;
 		
 		TapTempoClock(PinDigitalIn input, unsigned char beats_per_measure);
 		virtual void updateTempo(unsigned long t);
+		virtual void timer(uint32_t t);
 		void reset();
 		void tap(uint32_t t);
 		static void onTempoTap();
