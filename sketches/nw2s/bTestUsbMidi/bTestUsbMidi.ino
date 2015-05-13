@@ -29,13 +29,14 @@
 #include <Wire.h>
 #include <aJSON.h>
 #include <Usb.h>
-#include <usbh_midi.h>
+#include <UsbMidi.h>
 
-USBHost Usb = EventManager::usbHost;;
-USBH_MIDI  Midi(&Usb);
+using namespace nw2s;
 
-void MIDI_poll();
-void doDelay(unsigned long t1, unsigned long t2, unsigned long delayTime);
+USBMidiDevice* usbmidi;
+
+// void MIDI_poll();
+// void doDelay(unsigned long t1, unsigned long t2, unsigned long delayTime);
 
 void setup()
 {
@@ -43,60 +44,62 @@ void setup()
 	
 	Serial.println("Starting...");
 	
-	// if (Usb.Init() == -1)
-	// {
-	// 	while(1);
-	// }
-	
-	delay( 200 );
+	usbmidi = new USBMidiDevice();
+		
+	delay(200);
 }
 
 void loop()
 {
 	unsigned long t1;
 
-	Usb.Task();
-	t1 = micros();
-	if( Usb.getUsbTaskState() == USB_STATE_RUNNING )
-	{
-		MIDI_poll();
-	}
-
-	doDelay(t1, micros(), 1000);
+	//usbmidi->task();
+	// t1 = micros();
+	// if( Usb.getUsbTaskState() == USB_STATE_RUNNING )
+	// {
+	// 	MIDI_poll();
+	// }
+	//
+	// doDelay(t1, micros(), 1000);
+	
+	EventManager::loop();
+	
+	delay(1);
+	
 }
 
 // Poll USB MIDI Controler and send to serial MIDI
-void MIDI_poll()
-{
-	byte outBuf[3];
-	uint8_t size;
-
-	do 
-	{
-		if ((size = Midi.RecvData(outBuf)) > 0 )
-		{
-			if (size > 0) Serial.print(outBuf[0], HEX);
-			if (size > 1) Serial.print(outBuf[1], HEX);
-			if (size > 2) Serial.print(outBuf[2], HEX);
-
-			Serial.println();
-		}
-	}
-	while(size > 0);
-}
+// void MIDI_poll()
+// {
+// 	byte outBuf[3];
+// 	uint8_t size;
+//
+// 	do
+// 	{
+// 		if ((size = Midi.RecvData(outBuf)) > 0 )
+// 		{
+// 			if (size > 0) Serial.print(outBuf[0], HEX);
+// 			if (size > 1) Serial.print(outBuf[1], HEX);
+// 			if (size > 2) Serial.print(outBuf[2], HEX);
+//
+// 			Serial.println();
+// 		}
+// 	}
+// 	while(size > 0);
+// }
 
 // Delay time (max 16383 us)
-void doDelay(unsigned long t1, unsigned long t2, unsigned long delayTime)
-{
-    unsigned long t3;
-
-    if( t1 > t2 ){
-      t3 = (4294967295 - t1 + t2);
-    }else{
-      t3 = t2 - t1;
-    }
-
-    if( t3 < delayTime ){
-      delayMicroseconds(delayTime - t3);
-    }
-}
+// void doDelay(unsigned long t1, unsigned long t2, unsigned long delayTime)
+// {
+//     unsigned long t3;
+//
+//     if( t1 > t2 ){
+//       t3 = (4294967295 - t1 + t2);
+//     }else{
+//       t3 = t2 - t1;
+//     }
+//
+//     if( t3 < delayTime ){
+//       delayMicroseconds(delayTime - t3);
+//     }
+// }
