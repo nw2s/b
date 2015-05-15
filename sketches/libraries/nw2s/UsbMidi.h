@@ -70,7 +70,12 @@ class nw2s::USBMidiDevice : public USBDeviceConfig, public UsbBasedDevice // pub
 		/* Endpoint data structure describing the device EP */
 		EpInfo		epInfo[MIDI_MAX_ENDPOINTS];
 		
+	    /* MIDI Event packet buffer */
+	    uint8_t recvBuf[MIDI_EVENT_PACKET_SIZE];
+	    uint8_t readPtr;
+
 	    void parseConfigDescr(uint32_t addr, uint32_t conf);
+	    uint32_t lookupMsgSize(uint8_t midiMsg);
 
 	public:
 		
@@ -80,9 +85,8 @@ class nw2s::USBMidiDevice : public USBDeviceConfig, public UsbBasedDevice // pub
 		uint32_t read(uint32_t *nreadbytes, uint32_t datalen, uint8_t *dataptr);
 		uint32_t write(uint32_t datalen, uint8_t *dataptr);
 
-		/* Line control setup */
-        // uint8_t setLineCoding(const LineCoding *dataptr);
-        // uint8_t setControlLineState(uint8_t state);
+	    uint32_t RecvData(uint32_t *bytes_rcvd, uint8_t *dataptr);
+	    uint32_t RecvData(uint8_t *outBuf);
 
 		/* USBDeviceConfig implementation */
 		virtual uint32_t Init(uint32_t parent, uint32_t port, uint32_t lowspeed);

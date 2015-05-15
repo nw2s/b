@@ -39,5 +39,29 @@ void loop()
 {
 	EventManager::loop();
 
+    if (usbDevice->isReady())
+    {
+		MIDI_poll();
+    }
+
 	delay(1);
+}
+
+void MIDI_poll()
+{
+    byte outBuf[3];
+	uint32_t size = 0;
+	
+    do 
+	{
+		if ((size = usbDevice->RecvData(outBuf)) > 0)
+		{
+			Serial.print(outBuf[0], HEX);
+			Serial.print(" ");
+			Serial.print(outBuf[1], HEX);
+			Serial.print(" ");
+			Serial.println(outBuf[2], HEX);
+		}
+    }
+	while(size > 0);
 }

@@ -321,53 +321,6 @@ void USBMidiDevice::parseConfigDescr(uint32_t addr, uint32_t conf)
   	}
 }
 
-
-
-// void USBMidiDevice::EndpointXtract(uint32_t conf, uint32_t iface, uint32_t alt, uint32_t proto, const USB_ENDPOINT_DESCRIPTOR *pep)
-// {
-// 	if (pep->bmAttributes != 2) return;
-//
-// 	if (bNumEP == MAX_ENDPOINTS)
-// 	{
-// 		return;
-// 	}
-//
-// 	bConfNum = conf;
-//
-// 	uint32_t index = 0;
-// 	uint32_t pipe = 0;
-//
-// 	if ((pep->bmAttributes & 0x02) == 2)
-// 	{
-// 		index = ((pep->bEndpointAddress & 0x80) == 0x80) ? epDataInIndex : epDataOutIndex;
-// 	}
-//
-// 	/* Fill in the endpoint info structure */
-// 	epInfo[index].deviceEpNum = pep->bEndpointAddress & 0x0F;
-// 	epInfo[index].maxPktSize = pep->wMaxPacketSize;
-//
-// 	if (index == epDataInIndex)
-// 	{
-// 		pipe = UHD_Pipe_Alloc(bAddress, epInfo[index].deviceEpNum, UOTGHS_HSTPIPCFG_PTYPE_BLK, UOTGHS_HSTPIPCFG_PTOKEN_IN, epInfo[index].maxPktSize, 0, UOTGHS_HSTPIPCFG_PBK_1_BANK);
-// 	}
-// 	else if (index == epDataOutIndex)
-// 	{
-// 		pipe = UHD_Pipe_Alloc(bAddress, epInfo[index].deviceEpNum, UOTGHS_HSTPIPCFG_PTYPE_BLK, UOTGHS_HSTPIPCFG_PTOKEN_OUT, epInfo[index].maxPktSize, 0, UOTGHS_HSTPIPCFG_PBK_1_BANK);
-// 	}
-//
-// 	/* Ensure pipe allocation is okay */
-// 	if (pipe == 0)
-// 	{
-// 		Serial.println("Pipe allocation failure");
-// 		return;
-// 	}
-//
-// 	epInfo[index].hostPipeNum = pipe;
-//
-// 	bNumEP++;
-// }
-
-
 uint32_t USBMidiDevice::Release()
 {
 	UHD_Pipe_Free(epInfo[epDataInIndex].hostPipeNum);
@@ -398,16 +351,120 @@ uint32_t USBMidiDevice::write(uint32_t datalen, uint8_t *dataptr)
 	return pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].deviceEpNum, datalen, dataptr);
 }
 
-// uint8_t USBMidiDevice::setControlLineState(uint8_t state)
-// {
-// 	return ( pUsb->ctrlReq(bAddress, 0, USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE, CDC_SET_CONTROL_LINE_STATE, state, 0, bControlIface, 0, 0, NULL, NULL));
-// }
-//
-// uint8_t USBMidiDevice::setLineCoding(const LineCoding *dataptr)
-// {
-// 	return ( pUsb->ctrlReq(bAddress, 0, USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE, CDC_SET_LINE_CODING, 0x00, 0x00, bControlIface, sizeof (LineCoding), sizeof (LineCoding), (uint8_t*)dataptr, NULL));
-// }
+uint32_t USBMidiDevice::lookupMsgSize(uint8_t midiMsg)
+{
+	uint8_t msgSize = 0;
 
+	if (midiMsg < 0xf0)
+	{
+		midiMsg &= 0xf0;	
+	} 
+
+	switch(midiMsg) 
+	{
+		//3 bytes messages
+		case 0xf2 : //system common message(SPP)
+		case 0x80 : //Note off
+		case 0x90 : //Note on
+		case 0xa0 : //Poly KeyPress
+		case 0xb0 : //Control Change
+		case 0xe0 : //PitchBend Change
+		  	msgSize = 3;
+		  	break;
+
+	    //2 bytes messages
+	    case 0xf1 : //system common message(MTC)
+	    case 0xf3 : //system common message(SongSelect)
+	    case 0xc0 : //Program Change
+	    case 0xd0 : //Channel Pressure
+	    	msgSize = 2;
+      		break;
+
+	    //1 bytes messages
+	    case 0xf8 : //system realtime message
+	    case 0xf9 : //system realtime message
+	    case 0xfa : //system realtime message
+	    case 0xfb : //system realtime message
+	    case 0xfc : //system realtime message
+	    case 0xfe : //system realtime message
+	    case 0xff : //system realtime message
+	      	msgSize = 1;
+	      	break;
+
+	    //undefine messages
+		default :
+	      	break;
+	  }
+	  
+	  return msgSize;
+}
+
+/* Receive data from MIDI device */
+uint32_t USBMidiDevice::RecvData(uint32_t *bytes_rcvd, uint8_t *dataptr)
+{
+	bytes_rcvd[0] = (uint32_t)epInfo[epDataInIndex].maxPktSize;
+	
+	return pUsb->inTransfer(bAddress, epInfo[epDataInIndex].deviceEpNum, bytes_rcvd, dataptr);
+}
+
+/* Receive data from MIDI device */
+uint32_t USBMidiDevice::RecvData(uint8_t *outBuf)
+{
+	uint32_t rcode = 0;     
+	uint32_t rcvd;
+
+	if (this->ready == false)
+	{
+		return false;
+	}
+		
+	/* Checking unprocessed message in buffer. */
+	if (readPtr != 0 && readPtr < MIDI_EVENT_PACKET_SIZE)
+	{
+    	if (recvBuf[readPtr] == 0 && recvBuf[readPtr + 1] == 0) 
+		{
+			/* no unprocessed message left in the buffer. */
+		}
+		else
+		{
+		    readPtr++;
+		    outBuf[0] = recvBuf[readPtr];
+		    readPtr++;
+		    outBuf[1] = recvBuf[readPtr];
+		    readPtr++;
+		    outBuf[2] = recvBuf[readPtr];
+		    readPtr++;
+			
+		    return lookupMsgSize(outBuf[0]);
+    	}
+	}
+
+	readPtr = 0;
+	rcode = RecvData( &rcvd, recvBuf);
+
+	if (rcode != 0) 
+	{
+		Serial.println("Error reading data.");
+		return 0;
+	}
+  
+	/* if all data is zero, no valid data received. */
+	if (recvBuf[0] == 0 && recvBuf[1] == 0 && recvBuf[2] == 0 && recvBuf[3] == 0) 
+	{
+		Serial.println("Empty data packet received.");
+    	return 0;
+  	}
+
+	readPtr++;
+	outBuf[0] = recvBuf[readPtr];
+	readPtr++;
+	outBuf[1] = recvBuf[readPtr];
+	readPtr++;
+	outBuf[2] = recvBuf[readPtr];
+	readPtr++;
+
+	return lookupMsgSize(outBuf[0]);
+}
 
 
 
