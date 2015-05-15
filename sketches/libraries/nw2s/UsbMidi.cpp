@@ -16,15 +16,19 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-	Based on code originally from
-	USB-MIDI class driver for USB Host Shield 2.0 Library
-	which is opyright 2012-2014 Yuuichi Akagawa
-
-	Which in turn was based on an idea from 
-	LPK25 USB-MIDI to Serial MIDI converter
-	by Collin Cunningham - makezine.com, narbotic.com
 */
 
+/* 
+
+	Note: This code is based on and would not be possible without the USB Host code
+	which was partially ported to Arduino. I've taken their further development and 
+	adapted it to enable Arduino Due to USB CDC class devices such as the Ardiono
+	Leonardo. https://github.com/felis/USB_Host_Shield_2.0
+
+	The other half of this code is based on and would not be possible without
+	the development of the monome. http://monome.org/
+
+*/
 
 #include "UsbMidi.h"
 #include "JSONUtil.h"
@@ -32,43 +36,37 @@
 
 using namespace nw2s;
 
-const uint32_t	USBMidiDevice::epDataInIndex  = 1;
-const uint32_t	USBMidiDevice::epDataOutIndex = 2;
-const uint32_t	USBMidiDevice::epDataInIndexVSP  = 3;
-const uint32_t	USBMidiDevice::epDataOutIndexVSP = 4;
+const uint32_t USBMidiDevice::epDataInIndex  = 1;
+const uint32_t USBMidiDevice::epDataOutIndex = 2;
+const uint32_t USBMidiDevice::epDataInIndexVSP  = 3;
+const uint32_t USBMidiDevice::epDataOutIndexVSP = 4;
 
-USBMidiDevice::USBMidiDevice()
+
+USBMidiDevice::USBMidiDevice() : bAddress(0), bNumEP(1), ready(false)
 {
 	this->pUsb = &EventManager::usbHost;
-
-    this->bAddress = 0;
-    this->bNumEP = 1;
-    this->bPollEnable  = false;
-    this->isMidiFound = false;
-    this->readPtr = 0;
+	// this->deviceType = deviceType;
 	
 	/* Setup an empty set of endpoints */
 	for (uint32_t i = 0; i < MIDI_MAX_ENDPOINTS; ++i)
 	{
 		epInfo[i].deviceEpNum	= 0;
+		epInfo[i].hostPipeNum	= 0;
 		epInfo[i].maxPktSize	= (i) ? 0 : 8;
 		epInfo[i].epAttribs		= 0;
-		epInfo[i].bmNakPower  	= (i) ? USB_NAK_NOWAIT : 4;
+		epInfo[i].bmNakPower  	= (i) ? USB_NAK_NOWAIT : USB_NAK_MAX_POWER;
 	}
 
 	/* Register ourselves in USB subsystem */
 	if (pUsb)
 	{
-		Serial.println("Registering with USB");
 		pUsb->RegisterDeviceClass(this);
 	}
 }
 
 uint32_t USBMidiDevice::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 {
-	Serial.println("Initializing midi device");
-	
-	uint8_t		buf[DESC_BUFF_SIZE];
+	uint8_t		buf[sizeof(USB_DEVICE_DESCRIPTOR)];
 	uint32_t	rcode = 0;
 	UsbDevice	*p = NULL;
 	EpInfo		*oldep_ptr = NULL;
@@ -109,31 +107,20 @@ uint32_t USBMidiDevice::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 	p->lowspeed = lowspeed;
 
 	/* Get device descriptor */
-	Serial.println("getting device descriptor");
-	rcode = pUsb->getDevDescr(0, 0, DESC_BUFF_SIZE, (uint8_t*)buf);
-
-	Serial.println("got device descriptor");
-
-    // vid = (uint16_t)buf[8]  + ((uint16_t)buf[9]  << 8);
-    // pid = (uint16_t)buf[10] + ((uint16_t)buf[11] << 8);
+	rcode = pUsb->getDevDescr(0, 0, sizeof(USB_DEVICE_DESCRIPTOR), (uint8_t*)buf);
 
 	/* Restore p->epinfo */
 	p->epinfo = oldep_ptr;
 
 	if (rcode)
 	{
-		Serial.print("Failed to get device descriptor: ");
+		Serial.print("Failed to get device descriptor : ");
 		Serial.println(rcode);
 		return rcode;
 	}
 
-	Serial.println("Starting to allocate address.");
-
 	/* Allocate new address according to device class */
 	bAddress = addrPool.AllocAddress(parent, false, port);
-
-	Serial.print("Allocating address ");
-	Serial.print(bAddress);
 
 	/* Extract Max Packet Size from device descriptor */
 	epInfo[0].maxPktSize = (uint8_t)((USB_DEVICE_DESCRIPTOR*)buf)->bMaxPacketSize0;
@@ -179,54 +166,162 @@ uint32_t USBMidiDevice::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 	/* Go through configurations, find first bulk-IN, bulk-OUT EP, fill epInfo and quit */
 	num_of_conf = ((USB_DEVICE_DESCRIPTOR*)buf)->bNumConfigurations;
 
-	for (uint32_t i = 0; i < num_of_conf; ++i)
-	{
-	    parseConfigDescr(bAddress, i);
-
-	    if (bNumEP > 1) break;
-	}
-
-	Serial.print("Num EP: ");
-	Serial.println(bNumEP);
-
-    if (bConfNum == 0)
-	{   
-		Serial.println("Device not found");    
-		return 1;
-    }
-
-    // if( !isMidiFound ){ //MIDI Device not found. Try first Bulk transfer device
-    //   epInfo[epDataInIndex].epAddr		= epInfo[epDataInIndexVSP].epAddr;
-    //   epInfo[epDataInIndex].maxPktSize	= epInfo[epDataInIndexVSP].maxPktSize;
-    //   epInfo[epDataOutIndex].epAddr		= epInfo[epDataOutIndexVSP].epAddr;
-    //   epInfo[epDataOutIndex].maxPktSize	= epInfo[epDataOutIndexVSP].maxPktSize;
-    // }
-
-	/* Assign epInfo to epinfo pointer */
-	rcode = pUsb->setEpInfoEntry(bAddress, bNumEP, epInfo);
-	
+	/* Assign epInfo to epinfo pointer - this time all 3 endpoins */
+	rcode = pUsb->setEpInfoEntry(bAddress, 1, epInfo);
 	if (rcode)
 	{
 		Serial.print("Failed setEpInfoEntry: ");
 		Serial.println(rcode);
 	}
 
-	/* Set Configuration Value */
-	rcode = pUsb->setConf(bAddress, 0, bConfNum);
-
-	if (rcode)
+	for (uint32_t i = 0; i < num_of_conf; i++)
 	{
-		Serial.print("setConf failed: ");
-		Serial.println(rcode);
-		return rcode;
+	    parseConfigDescr(bAddress, i);
+	    if (bNumEP > 1)
+		{
+			break;
+		}
 	}
 
-	bPollEnable = true;
-	
-	Serial.println("USB Midi configured.");
+    if (bConfNum == 0)
+	{
+		Serial.println("Device not found");
+		return 1;
+    }
 
-	return 0;
+    if (!isMidiFound)
+	{ 
+		Serial.println("No midi device found");
+		return 1;
+    }
+
+    /* Assign epInfo to epinfo pointer */
+    rcode = pUsb->setEpInfoEntry(bAddress, bNumEP, epInfo);
+
+    Serial.print("Using configuration: ");
+	Serial.println(bConfNum);
+
+    /* Set Configuration Value */
+    rcode = pUsb->setConf(bAddress, 0, bConfNum);
+    
+	if (rcode) 
+	{
+		Serial.println("Unable to set configuration");
+    }
+
+	Serial.println("USB Midi Device configured.");
+
+    this->ready = true;
+    return 0;
 }
+
+
+void USBMidiDevice::parseConfigDescr(uint32_t addr, uint32_t conf)
+{
+	uint8_t buf[DESC_BUFF_SIZE];
+	uint8_t* buf_ptr = buf;
+	uint32_t rcode;
+	uint32_t descr_length;
+	uint32_t descr_type;
+	uint32_t total_length;
+	USB_ENDPOINT_DESCRIPTOR *epDesc;
+	boolean isMidi = false;
+
+	/* get configuration descriptor size */
+	rcode = pUsb->getConfDescr(addr, 0, 4, conf, buf);
+	if (rcode)
+	{
+		Serial.print("Error getting config descriptor size for addr ");
+		Serial.print(addr);
+		Serial.print(", ");
+		Serial.println(conf);
+    	return;
+  	}  
+
+	total_length = buf[2] | ((int)buf[3] << 8);
+
+	/* check if total length is larger than buffer */
+	if (total_length > DESC_BUFF_SIZE) 
+	{    
+		total_length = DESC_BUFF_SIZE;
+	}
+
+	/* get whole configuration descriptor */
+	rcode = pUsb->getConfDescr(addr, 0, total_length, conf, buf); 
+  	if (rcode)
+	{
+		Serial.print("Error getting config descriptor for addr ");
+		Serial.print(addr);
+		Serial.print(", ");
+		Serial.println(conf);
+    	return;
+	}  
+
+	/* parsing descriptors */
+	while (buf_ptr < buf + total_length)
+	{  
+		descr_length = *(buf_ptr);
+		descr_type = *(buf_ptr + 1);
+		
+		switch( descr_type ) 
+		{
+			case USB_DESCRIPTOR_CONFIGURATION :
+			
+				bConfNum = buf_ptr[5];
+				break;
+
+			case  USB_DESCRIPTOR_INTERFACE :
+
+				if (buf_ptr[5] == USB_CLASS_AUDIO && buf_ptr[6] == USB_SUBCLASS_MIDISTREAMING ) 
+				{  
+					/* p[5]; bInterfaceClass = 1(Audio), p[6]; bInterfaceSubClass = 3(MIDI Streaming) */
+					Serial.println("Midi device found.");
+					isMidiFound = true;
+					isMidi = true;
+				}
+				else
+				{
+					isMidi = false;
+				}
+				
+				break;
+
+			case USB_DESCRIPTOR_ENDPOINT :
+
+				epDesc = (USB_ENDPOINT_DESCRIPTOR *)buf_ptr;
+
+				if ((epDesc->bmAttributes & 0x02) == 2) 
+				{
+					/* bulk */
+					uint32_t index;
+
+					if (isMidi)
+					{
+		                index = ((epDesc->bEndpointAddress & 0x80) == 0x80) ? epDataInIndex : epDataOutIndex;
+					}
+					else
+					{
+		                index = ((epDesc->bEndpointAddress & 0x80) == 0x80) ? epDataInIndexVSP : epDataOutIndexVSP;
+					}
+
+					epInfo[index].deviceEpNum = (epDesc->bEndpointAddress & 0x0F);
+					epInfo[index].maxPktSize = (uint8_t)epDesc->wMaxPacketSize;
+					bNumEP++;
+				}
+
+				break;
+
+			default:
+        		
+				break;
+    	}  
+
+		/* advance buffer pointer */
+		buf_ptr += descr_length;    
+  	}
+}
+
+
 
 // void USBMidiDevice::EndpointXtract(uint32_t conf, uint32_t iface, uint32_t alt, uint32_t proto, const USB_ENDPOINT_DESCRIPTOR *pep)
 // {
@@ -273,117 +368,47 @@ uint32_t USBMidiDevice::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 // }
 
 
-void USBMidiDevice::parseConfigDescr(uint32_t addr, uint32_t conf)
-{
-	uint8_t buf[DESC_BUFF_SIZE];
-	uint8_t* buf_ptr = buf;
-	uint32_t rcode;
-	uint32_t descr_length;
-	uint32_t descr_type;
-	uint32_t total_length;
-	USB_ENDPOINT_DESCRIPTOR *epDesc;
-	boolean isMidi = false;
-
- 	/* get configuration descriptor (get descriptor size only) */
-	rcode = pUsb->getConfDescr(addr, 0, 4, conf, buf);
-
-	if (rcode)
-	{
-		Serial.println("Errir getting configuration descriptor size");
-		return;
-	}  
-
-	total_length = buf[2] | ((int)buf[3] << 8);
-
-	/* check if total length is larger than buffer */
-	if (total_length > DESC_BUFF_SIZE) 
-	{
-		total_length = DESC_BUFF_SIZE;
-	}
-
-	/* get configuration descriptor (all) */
-	rcode = pUsb->getConfDescr(addr, 0, total_length, conf, buf ); 
-
-	if (rcode)
-	{
-		Serial.println("Errir getting configuration descriptor");
-    	return;
-	}  
-
-	/* parse descriptors */
-	while (buf_ptr < buf + total_length) 
-	{  
-		descr_length = *buf_ptr;
-		descr_type = *(buf_ptr + 1);
-		
-		switch (descr_type) 
-		{
-			case USB_DESCRIPTOR_CONFIGURATION :
-			
-				bConfNum = buf_ptr[5];
-        		break;
-				
-      		case  USB_DESCRIPTOR_INTERFACE :
-			
-        		if( buf_ptr[5] == USB_CLASS_AUDIO && buf_ptr[6] == USB_SUBCLASS_MIDISTREAMING ) 
-				{  
-					/* p[5]; bInterfaceClass = 1(Audio), p[6]; bInterfaceSubClass = 3(MIDI Streaming) */
-					isMidiFound = true;
-					isMidi = true;
-        		}
-				else
-				{
-					Serial.print("No MIDI Device\n");
-					isMidi = false;
-				}
-				
-				break;
-      
-			case USB_DESCRIPTOR_ENDPOINT :
-
-				epDesc = (USB_ENDPOINT_DESCRIPTOR *)buf_ptr;
-				
-				if ((epDesc->bmAttributes & 0x02) == 2) 
-				{
-          			uint32_t index;
-
-					if (isMidi)
-					{
-		                index = ((epDesc->bEndpointAddress & 0x80) == 0x80) ? epDataInIndex : epDataOutIndex;
-					}
-          		  	else
-					{
-		                index = ((epDesc->bEndpointAddress & 0x80) == 0x80) ? epDataInIndexVSP : epDataOutIndexVSP;
-					}
-
-					epInfo[index].deviceEpNum = (epDesc->bEndpointAddress & 0x0F);
-					epInfo[index].maxPktSize = (uint8_t)epDesc->wMaxPacketSize;
-					
-					bNumEP ++;
-        		}
-				
-				break;
-			
-			default:
-				
-				break;
-    
-		}  
-    
-		buf_ptr += descr_length;
-	}
-}
-
 uint32_t USBMidiDevice::Release()
 {
-    pUsb->GetAddressPool().FreeAddress(bAddress);
-    
-	bNumEP = 1;	
-    bAddress = 0;
-    bPollEnable = false;
-    readPtr = 0;
+	UHD_Pipe_Free(epInfo[epDataInIndex].hostPipeNum);
+	UHD_Pipe_Free(epInfo[epDataOutIndex].hostPipeNum);
+
+	/* Free allocated USB address */
+	pUsb->GetAddressPool().FreeAddress(bAddress);
+
+	/* Must have to be reset to 1 */
+	bNumEP = 1;
+
+	bAddress = 0;
+	ready = false;
+
 	return 0;
 }
+
+uint32_t USBMidiDevice::read(uint32_t *nreadbytes, uint32_t datalen, uint8_t *dataptr)
+{
+	*nreadbytes = datalen;
+	return pUsb->inTransfer(bAddress, epInfo[epDataInIndex].deviceEpNum, nreadbytes, dataptr);
+}
+
+uint32_t USBMidiDevice::write(uint32_t datalen, uint8_t *dataptr)
+{
+	if (datalen > 255) Serial.println("WARNING: Trying to send more than 255 bytes down the USB pipe!");
+
+	return pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].deviceEpNum, datalen, dataptr);
+}
+
+// uint8_t USBMidiDevice::setControlLineState(uint8_t state)
+// {
+// 	return ( pUsb->ctrlReq(bAddress, 0, USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE, CDC_SET_CONTROL_LINE_STATE, state, 0, bControlIface, 0, 0, NULL, NULL));
+// }
+//
+// uint8_t USBMidiDevice::setLineCoding(const LineCoding *dataptr)
+// {
+// 	return ( pUsb->ctrlReq(bAddress, 0, USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE, CDC_SET_LINE_CODING, 0x00, 0x00, bControlIface, sizeof (LineCoding), sizeof (LineCoding), (uint8_t*)dataptr, NULL));
+// }
+
+
 
 
 
