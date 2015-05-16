@@ -45,7 +45,6 @@ const uint32_t USBMidiDevice::epDataOutIndexVSP = 4;
 USBMidiDevice::USBMidiDevice() : bAddress(0), bNumEP(1), ready(false)
 {
 	this->pUsb = &EventManager::usbHost;
-	// this->deviceType = deviceType;
 	
 	/* Setup an empty set of endpoints */
 	for (uint32_t i = 0; i < MIDI_MAX_ENDPOINTS; ++i)
@@ -182,6 +181,9 @@ uint32_t USBMidiDevice::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 			break;
 		}
 	}
+	
+	Serial.print("Number endpoints: ");
+	Serial.println(bNumEP);
 
     if (bConfNum == 0)
 	{
@@ -198,6 +200,12 @@ uint32_t USBMidiDevice::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
     /* Assign epInfo to epinfo pointer */
     rcode = pUsb->setEpInfoEntry(bAddress, bNumEP, epInfo);
 
+	if (rcode)
+	{
+		Serial.print("Failed setEpInfoEntry: ");
+		Serial.println(rcode);
+	}
+
     Serial.print("Using configuration: ");
 	Serial.println(bConfNum);
 
@@ -207,6 +215,7 @@ uint32_t USBMidiDevice::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 	if (rcode) 
 	{
 		Serial.println("Unable to set configuration");
+		return 1;
     }
 
 	Serial.println("USB Midi Device configured.");
@@ -294,6 +303,7 @@ void USBMidiDevice::parseConfigDescr(uint32_t addr, uint32_t conf)
 				{
 					/* bulk */
 					uint32_t index;
+					uint32_t pipe;
 
 					if (isMidi)
 					{
@@ -304,9 +314,44 @@ void USBMidiDevice::parseConfigDescr(uint32_t addr, uint32_t conf)
 		                index = ((epDesc->bEndpointAddress & 0x80) == 0x80) ? epDataInIndexVSP : epDataOutIndexVSP;
 					}
 
+					/* Fill in the endpoint info structure */
 					epInfo[index].deviceEpNum = (epDesc->bEndpointAddress & 0x0F);
 					epInfo[index].maxPktSize = (uint8_t)epDesc->wMaxPacketSize;
+
+					/* Allocate a pipe */
+					if (index == epDataInIndex)
+					{
+						pipe = UHD_Pipe_Alloc(bAddress, epInfo[index].deviceEpNum, UOTGHS_HSTPIPCFG_PTYPE_BLK, UOTGHS_HSTPIPCFG_PTOKEN_IN, epInfo[index].maxPktSize, 0, UOTGHS_HSTPIPCFG_PBK_1_BANK);
+					}
+					else if (index == epDataOutIndex)
+					{
+						pipe = UHD_Pipe_Alloc(bAddress, epInfo[index].deviceEpNum, UOTGHS_HSTPIPCFG_PTYPE_BLK, UOTGHS_HSTPIPCFG_PTOKEN_OUT, epInfo[index].maxPktSize, 0, UOTGHS_HSTPIPCFG_PBK_1_BANK);
+					}
+
+					/* Ensure pipe allocation is okay */
+					if (pipe == 0)
+					{
+						Serial.println("Pipe allocation failure");
+						return;
+					}
+
+					epInfo[index].hostPipeNum = pipe;
+
 					bNumEP++;
+					
+					Serial.println("Endpoint descriptor:");
+					Serial.print("Length:\t\t");
+					Serial.println(epDesc->bLength, HEX);
+					Serial.print("Type:\t\t");
+					Serial.println(epDesc->bDescriptorType, HEX);
+					Serial.print("Address:\t");
+					Serial.println(epDesc->bEndpointAddress, HEX);
+					Serial.print("Attributes:\t");
+					Serial.println(epDesc->bmAttributes, HEX);
+					Serial.print("MaxPktSize:\t");
+					Serial.println(epDesc->wMaxPacketSize, HEX);
+					Serial.print("Poll Intrv:\t");
+					Serial.println(epDesc->bInterval, HEX);
 				}
 
 				break;
@@ -410,18 +455,18 @@ uint32_t USBMidiDevice::RecvData(uint32_t *bytes_rcvd, uint8_t *dataptr)
 /* Receive data from MIDI device */
 uint32_t USBMidiDevice::RecvData(uint8_t *outBuf)
 {
-	uint32_t rcode = 0;     
 	uint32_t rcvd;
+	uint32_t rcode;
 
 	if (this->ready == false)
 	{
-		return false;
+		return 0;
 	}
 		
 	/* Checking unprocessed message in buffer. */
 	if (readPtr != 0 && readPtr < MIDI_EVENT_PACKET_SIZE)
 	{
-    	if (recvBuf[readPtr] == 0 && recvBuf[readPtr + 1] == 0) 
+	    	if (recvBuf[readPtr] == 0 && recvBuf[readPtr + 1] == 0)
 		{
 			/* no unprocessed message left in the buffer. */
 		}
@@ -434,26 +479,39 @@ uint32_t USBMidiDevice::RecvData(uint8_t *outBuf)
 		    readPtr++;
 		    outBuf[2] = recvBuf[readPtr];
 		    readPtr++;
-			
+
 		    return lookupMsgSize(outBuf[0]);
-    	}
+	    }
 	}
 
-	readPtr = 0;
-	rcode = RecvData( &rcvd, recvBuf);
+	// uint32_t nbread = 0;
+	//     uint8_t buf[64];
+	//
+	// /* See if there is any data to read */
+	//     uint32_t rcode = read(&nbread, epInfo[epDataInIndex].maxPktSize, buf);
+	//
+	// if (rcode > 1)
+	// {
+	// 	Serial.print("Read error: ");
+	// 	Serial.println(rcode, HEX);
+	// 	return 0;
+	// }
 
-	if (rcode != 0) 
+
+	readPtr = 0;
+	rcode = RecvData(&rcvd, recvBuf);
+
+	if (rcode != 0)
 	{
-		Serial.println("Error reading data.");
 		return 0;
 	}
   
 	/* if all data is zero, no valid data received. */
-	if (recvBuf[0] == 0 && recvBuf[1] == 0 && recvBuf[2] == 0 && recvBuf[3] == 0) 
+	if (recvBuf[0] == 0 && recvBuf[1] == 0 && recvBuf[2] == 0 && recvBuf[3] == 0)
 	{
 		Serial.println("Empty data packet received.");
-    	return 0;
-  	}
+	    	return 0;
+	  	}
 
 	readPtr++;
 	outBuf[0] = recvBuf[readPtr];
@@ -464,6 +522,8 @@ uint32_t USBMidiDevice::RecvData(uint8_t *outBuf)
 	readPtr++;
 
 	return lookupMsgSize(outBuf[0]);
+
+	return 0;
 }
 
 
