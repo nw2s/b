@@ -19,15 +19,11 @@
 */
 
 /* 
+	Based on code from USB-MIDI class driver for USB Host Shield 2.0 Library
+	which was Copyright 2012-2013 Yuuichi Akagawa
 
-	Note: This code is based on and would not be possible without the USB Host code
-	which was partially ported to Arduino. I've taken their further development and 
-	adapted it to enable Arduino Due to USB CDC class devices such as the Ardiono
-	Leonardo. https://github.com/felis/USB_Host_Shield_2.0
-
-	The other half of this code is based on and would not be possible without
-	the development of the monome. http://monome.org/
-
+	which in turn was based on an idea from LPK25 USB-MIDI to Serial MIDI converter
+	by Collin Cunningham - makezine.com, narbotic.com
 */
 
 #include "UsbMidi.h"
@@ -65,7 +61,7 @@ USBMidiDevice::USBMidiDevice() : bAddress(0), bNumEP(1), ready(false)
 
 uint32_t USBMidiDevice::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 {
-	uint8_t		buf[sizeof(USB_DEVICE_DESCRIPTOR)];
+	uint8_t		buf[DESC_BUFF_SIZE];
 	uint32_t	rcode = 0;
 	UsbDevice	*p = NULL;
 	EpInfo		*oldep_ptr = NULL;
@@ -106,16 +102,25 @@ uint32_t USBMidiDevice::Init(uint32_t parent, uint32_t port, uint32_t lowspeed)
 	p->lowspeed = lowspeed;
 
 	/* Get device descriptor */
-	rcode = pUsb->getDevDescr(0, 0, sizeof(USB_DEVICE_DESCRIPTOR), (uint8_t*)buf);
+	rcode = pUsb->getDevDescr(0, 0, DESC_BUFF_SIZE, (uint8_t*)buf);
 
 	/* Restore p->epinfo */
 	p->epinfo = oldep_ptr;
 
 	if (rcode)
 	{
-		Serial.print("Failed to get device descriptor : ");
+		Serial.print("Failed to get device descriptor. Trying again ");
 		Serial.println(rcode);
-		return rcode;
+
+		rcode = pUsb->getDevDescr(0, 0, sizeof(USB_DEVICE_DESCRIPTOR), (uint8_t*)buf);
+
+		if (rcode)
+		{
+			Serial.print("Failed to get device descriptor for good: ");
+			Serial.println(rcode);
+
+			return rcode;
+		}
 	}
 
 	/* Allocate new address according to device class */
@@ -337,21 +342,7 @@ void USBMidiDevice::parseConfigDescr(uint32_t addr, uint32_t conf)
 
 					epInfo[index].hostPipeNum = pipe;
 
-					bNumEP++;
-					
-					Serial.println("Endpoint descriptor:");
-					Serial.print("Length:\t\t");
-					Serial.println(epDesc->bLength, HEX);
-					Serial.print("Type:\t\t");
-					Serial.println(epDesc->bDescriptorType, HEX);
-					Serial.print("Address:\t");
-					Serial.println(epDesc->bEndpointAddress, HEX);
-					Serial.print("Attributes:\t");
-					Serial.println(epDesc->bmAttributes, HEX);
-					Serial.print("MaxPktSize:\t");
-					Serial.println(epDesc->wMaxPacketSize, HEX);
-					Serial.print("Poll Intrv:\t");
-					Serial.println(epDesc->bInterval, HEX);
+					bNumEP++;					
 				}
 
 				break;
@@ -396,66 +387,68 @@ uint32_t USBMidiDevice::write(uint32_t datalen, uint8_t *dataptr)
 	return pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].deviceEpNum, datalen, dataptr);
 }
 
-uint32_t USBMidiDevice::lookupMsgSize(uint8_t midiMsg)
-{
-	uint8_t msgSize = 0;
-
-	if (midiMsg < 0xf0)
-	{
-		midiMsg &= 0xf0;	
-	} 
-
-	switch(midiMsg) 
-	{
-		//3 bytes messages
-		case 0xf2 : //system common message(SPP)
-		case 0x80 : //Note off
-		case 0x90 : //Note on
-		case 0xa0 : //Poly KeyPress
-		case 0xb0 : //Control Change
-		case 0xe0 : //PitchBend Change
-		  	msgSize = 3;
-		  	break;
-
-	    //2 bytes messages
-	    case 0xf1 : //system common message(MTC)
-	    case 0xf3 : //system common message(SongSelect)
-	    case 0xc0 : //Program Change
-	    case 0xd0 : //Channel Pressure
-	    	msgSize = 2;
-      		break;
-
-	    //1 bytes messages
-	    case 0xf8 : //system realtime message
-	    case 0xf9 : //system realtime message
-	    case 0xfa : //system realtime message
-	    case 0xfb : //system realtime message
-	    case 0xfc : //system realtime message
-	    case 0xfe : //system realtime message
-	    case 0xff : //system realtime message
-	      	msgSize = 1;
-	      	break;
-
-	    //undefine messages
-		default :
-	      	break;
-	  }
-	  
-	  return msgSize;
-}
-
-/* Receive data from MIDI device */
-uint32_t USBMidiDevice::RecvData(uint32_t *bytes_rcvd, uint8_t *dataptr)
-{
-	bytes_rcvd[0] = (uint32_t)epInfo[epDataInIndex].maxPktSize;
-	
-	return pUsb->inTransfer(bAddress, epInfo[epDataInIndex].deviceEpNum, bytes_rcvd, dataptr);
-}
+// uint32_t USBMidiDevice::lookupMsgSize(uint8_t midiMsg)
+// {
+// 	uint8_t msgSize = 0;
+//
+// 	//Serial.println(midiMsg, HEX);
+//
+// 	if (midiMsg < 0xf0)
+// 	{
+// 		midiMsg &= 0xf0;
+// 	}
+//
+// 	switch(midiMsg)
+// 	{
+// 		//3 bytes messages
+// 		case 0xf2 : //system common message(SPP)
+// 		case 0x80 : //Note off
+// 		case 0x90 : //Note on
+// 		case 0xa0 : //Poly KeyPress
+// 		case 0xb0 : //Control Change
+// 		case 0xe0 : //PitchBend Change
+// 		  	msgSize = 3;
+// 		  	break;
+//
+// 	    //2 bytes messages
+// 	    case 0xf1 : //system common message(MTC)
+// 	    case 0xf3 : //system common message(SongSelect)
+// 	    case 0xc0 : //Program Change
+// 	    case 0xd0 : //Channel Pressure
+// 	    	msgSize = 2;
+//       		break;
+//
+// 	    //1 bytes messages
+// 	    case 0xf8 : //system realtime message
+// 	    case 0xf9 : //system realtime message
+// 	    case 0xfa : //system realtime message
+// 	    case 0xfb : //system realtime message
+// 	    case 0xfc : //system realtime message
+// 	    case 0xfe : //system realtime message
+// 	    case 0xff : //system realtime message
+// 	      	msgSize = 1;
+// 	      	break;
+//
+// 	    //undefine messages
+// 		default :
+// 	      	break;
+// 	  }
+//
+// 	  return msgSize;
+// }
 
 /* Receive data from MIDI device */
-uint32_t USBMidiDevice::RecvData(uint8_t *outBuf)
+// uint32_t USBMidiDevice::recvData(uint32_t *bytes_rcvd, uint8_t *dataptr)
+// {
+// 	bytes_rcvd[0] = (uint32_t)epInfo[epDataInIndex].maxPktSize;
+//
+// 	return pUsb->inTransfer(bAddress, epInfo[epDataInIndex].deviceEpNum, bytes_rcvd, dataptr);
+// }
+
+/* Receive data from MIDI device */
+uint32_t USBMidiDevice::recvData(uint8_t *outBuf)
 {
-	uint32_t rcvd;
+	uint32_t bytesReceived = 0;
 	uint32_t rcode;
 
 	if (this->ready == false)
@@ -464,69 +457,241 @@ uint32_t USBMidiDevice::RecvData(uint8_t *outBuf)
 	}
 		
 	/* Checking unprocessed message in buffer. */
-	if (readPtr != 0 && readPtr < MIDI_EVENT_PACKET_SIZE)
-	{
-	    	if (recvBuf[readPtr] == 0 && recvBuf[readPtr + 1] == 0)
-		{
-			/* no unprocessed message left in the buffer. */
-		}
-		else
-		{
-		    readPtr++;
-		    outBuf[0] = recvBuf[readPtr];
-		    readPtr++;
-		    outBuf[1] = recvBuf[readPtr];
-		    readPtr++;
-		    outBuf[2] = recvBuf[readPtr];
-		    readPtr++;
-
-		    return lookupMsgSize(outBuf[0]);
-	    }
-	}
-
-	// uint32_t nbread = 0;
-	//     uint8_t buf[64];
-	//
-	// /* See if there is any data to read */
-	//     uint32_t rcode = read(&nbread, epInfo[epDataInIndex].maxPktSize, buf);
-	//
-	// if (rcode > 1)
+	// if (readPtr != 0 && readPtr < MIDI_EVENT_PACKET_SIZE)
 	// {
-	// 	Serial.print("Read error: ");
-	// 	Serial.println(rcode, HEX);
-	// 	return 0;
+	//     if (recvBuf[readPtr] == 0 && recvBuf[readPtr + 1] == 0)
+	// 	{
+	// 		/* no unprocessed message left in the buffer. */
+	// 		//TODO: You can look past your buffer here
+	// 	}
+	// 	else
+	// 	{
+	// 	    readPtr++;
+	// 	    outBuf[0] = recvBuf[readPtr];
+	// 	    readPtr++;
+	// 	    outBuf[1] = recvBuf[readPtr];
+	// 	    readPtr++;
+	// 	    outBuf[2] = recvBuf[readPtr];
+	// 	    readPtr++;
+	//
+	// 	    return lookupMsgSize(outBuf[0]);
+	//     }
 	// }
 
+	/* Clear out the packet buffer */
+	midiPacket[0] = 0;
+	midiPacket[1] = 0;
+	midiPacket[2] = 0;
+	midiPacket[3] = 0;
 
-	readPtr = 0;
-	rcode = RecvData(&rcvd, recvBuf);
+	/* Read a single packet */
+	rcode = this->read(&bytesReceived, MIDI_EVENT_PACKET_SIZE, midiPacket);
 
 	if (rcode != 0)
 	{
 		return 0;
 	}
+
+	// Serial.print(">>> [");
+	//
+	// Serial.print(bytesReceived);
+	//
+	// Serial.print("] ");
+	//
+	// Serial.print(midiPacket[0], HEX);
+	// Serial.print(" ");
+	// Serial.print(midiPacket[1], HEX);
+	// Serial.print(" ");
+	// Serial.print(midiPacket[2], HEX);
+	// Serial.print(" ");
+	// Serial.println(midiPacket[3], HEX);
   
 	/* if all data is zero, no valid data received. */
-	if (recvBuf[0] == 0 && recvBuf[1] == 0 && recvBuf[2] == 0 && recvBuf[3] == 0)
+	if (midiPacket[0] == 0 && midiPacket[1] == 0 && midiPacket[2] == 0 && midiPacket[3] == 0)
 	{
-		Serial.println("Empty data packet received.");
-	    	return 0;
-	  	}
+		//Serial.println("Empty data packet received.");
+	    return 0;
+	}
 
-	readPtr++;
-	outBuf[0] = recvBuf[readPtr];
-	readPtr++;
-	outBuf[1] = recvBuf[readPtr];
-	readPtr++;
-	outBuf[2] = recvBuf[readPtr];
-	readPtr++;
+	outBuf[0] = midiPacket[1];
+	outBuf[1] = midiPacket[2];
+	outBuf[2] = midiPacket[3];
 
-	return lookupMsgSize(outBuf[0]);
+	//return lookupMsgSize(outBuf[0]);
 
-	return 0;
+	return 3;
 }
 
 
 
+void USBMidiController::task()
+{
+	USBMidiDevice::task();
 
+	/* When USB is ready, start reading midi commands */
+    if (this->isReady())
+    {
+	    uint8_t buffer[3];
+		uint32_t size = 0;
+	
+		/* As long as there are bytes to read, keep reading */
+		// 	    do
+		// {
+			if ((size = this->recvData(buffer)) > 0)
+			{
+				// Serial.print(".");
+				// Serial.print("----- ");
+				// Serial.print(buffer[0], HEX);
+				// Serial.print(" ");
+				// Serial.print(buffer[1], HEX);
+				// Serial.print(" ");
+				// Serial.println(buffer[2], HEX);
+				
+				this->processMessage(size, buffer);
+			}
+		// 	    }
+		// while (size > 0);
+    }
+}	
+
+void USBMidiController::processMessage(uint32_t size, uint8_t* buffer)
+{
+	uint32_t command = GET_MIDI_COMMAND(buffer[0]);
+	uint32_t channel = GET_MIDI_CHANNEL(buffer[0]);
+
+	switch (command)
+	{
+		case MIDI_NOTE_OFF:
+
+			this->onNoteOff(channel, buffer[1], buffer[2]);
+			break;
+
+		case MIDI_NOTE_ON:
+
+			this->onNoteOn(channel, buffer[1], buffer[2]);
+			break;
+
+	// 	case MIDI_PRESSURE:
+	//
+	// 		this->onPressure(channel, buffer[1], buffer[2]);
+	// 		break;
+	//
+	// 	case MIDI_CONTROL:
+	//
+	// 		this->onControlChange(channel, buffer[1], buffer[2]);
+	// 		break;
+	//
+	// 	case MIDI_PROGRAM:
+	//
+	// 		this->onProgramChange(channel, buffer[1]);
+	// 		break;
+	//
+	// 	case MIDI_ATOUCH:
+	//
+	// 		this->onAftertouch(channel, buffer[1]);
+	// 		break;
+	//
+	// 	case MIDI_PITCHBEND:
+	//
+	// 		this->onPitchbend(channel, GET_MIDI_14BIT(buffer[2],buffer[1]));
+	// 		break;
+	//
+	// 	default:
+	//
+	// 		/* Unsupported */
+	// 		break;
+	}
+}
+
+USBMidiController::USBMidiController() : USBMidiDevice()
+{
+	
+}
+
+USBMidiCCController::USBMidiCCController() : USBMidiController()
+{
+	
+}
+
+void USBMidiCCController::onControlChange(uint32_t channel, uint32_t controller, uint32_t value)
+{
+	
+}
+
+USBMonophonicMidiController* USBMonophonicMidiController::create(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressureOut)
+{
+	return new USBMonophonicMidiController(gatePin, triggerOn, triggerOff, pitchPin, velocityPin, pressureOut);
+}
+
+USBMonophonicMidiController::USBMonophonicMidiController(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin) : USBMidiCCController()
+{
+	this->gate = gatePin;
+	this->pitch = AnalogOut::create(pitchPin);
+	this->velocity = AnalogOut::create(velocityPin);
+	this->pressure = AnalogOut::create(pressurePin);
+
+	if (triggerOn != DIGITAL_OUT_NONE)
+	{
+		this->triggerOn = Gate::create(triggerOn, 30);
+	}
+
+	if (triggerOff != DIGITAL_OUT_NONE)
+	{
+		this->triggerOff = Gate::create(triggerOff, 30);
+	}
+}
+
+void USBMonophonicMidiController::timer(uint32_t t)
+{
+	if (this->triggerOn != NULL)
+	{
+		this->triggerOn->timer(t);
+	}
+	
+	if (this->triggerOff != NULL)
+	{
+		this->triggerOff->timer(t);
+	}
+}
+
+void USBMonophonicMidiController::onNoteOn(uint32_t channel, uint32_t note, uint32_t velocity)
+{
+	digitalWrite(this->gate, HIGH);
+	// Serial.print("on  ");
+	// Serial.print(note, HEX);
+	// Serial.print(" ");
+	// Serial.println(velocity, HEX);
+}
+
+void USBMonophonicMidiController::onNoteOff(uint32_t channel, uint32_t note, uint32_t velocity)
+{
+	digitalWrite(this->gate, LOW);
+	// Serial.print("off ");
+	// Serial.print(note, HEX);
+	// Serial.print(" ");
+	// Serial.println(velocity, HEX);
+}
+
+void USBMonophonicMidiController::onPressure(uint32_t channel, uint32_t note, uint32_t pressure)
+{
+	// Serial.print("prs ");
+	// Serial.print(note, HEX);
+	// Serial.print(" ");
+	// Serial.println(pressure, HEX);
+}
+
+void USBMonophonicMidiController::onAftertouch(uint32_t channel, uint32_t value)
+{
+	
+}
+
+void USBMonophonicMidiController::onPitchbend(uint32_t channel, uint32_t value)
+{
+	Serial.print("ptc ");
+	Serial.println(value, HEX);
+}	
+	
+	
+	
+	
 

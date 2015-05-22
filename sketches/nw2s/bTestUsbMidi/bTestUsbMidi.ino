@@ -17,18 +17,19 @@
 
 using namespace nw2s;
 
-USBMidiDevice* usbDevice;
+USBMonophonicMidiController* usbDevice;
 
 
 void setup()
 {
-	Serial.begin(9600);
+	Serial.begin(19200);
 
 	EventManager::initialize();
 	
-	usbDevice = new USBMidiDevice();
+	usbDevice = USBMonophonicMidiController::create(DUE_OUT_D01, DIGITAL_OUT_NONE, DIGITAL_OUT_NONE, ANALOG_OUT_NONE, ANALOG_OUT_NONE, ANALOG_OUT_NONE);
 
 	EventManager::registerUsbDevice(usbDevice);
+	EventManager::registerDevice(usbDevice);
 
 	Serial.println("testing...");
 
@@ -38,30 +39,8 @@ void setup()
 void loop()
 {
 	EventManager::loop();
-
-    if (usbDevice->isReady())
-    {
-		MIDI_poll();
-    }
-
-	delay(1);
-}
-
-void MIDI_poll()
-{
-    byte outBuf[3];
-	uint32_t size = 0;
 	
-    do 
-	{
-		if ((size = usbDevice->RecvData(outBuf)) > 0)
-		{
-			Serial.print(outBuf[0], HEX);
-			Serial.print(" ");
-			Serial.print(outBuf[1], HEX);
-			Serial.print(" ");
-			Serial.println(outBuf[2], HEX);
-		}
-    }
-	while(size > 0);
+	delay(1);
+	
+	if (millis() % 1000 == 0) Serial.print("x");
 }
