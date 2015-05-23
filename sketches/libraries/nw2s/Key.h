@@ -23,6 +23,7 @@
 
 #include <iterator>
 #include <vector>
+#include <stdint.h>
 
 namespace nw2s
 {	
@@ -33,6 +34,7 @@ namespace nw2s
 	};
 	
 	Scale scaleFromName(char* name);
+	int millivoltFromMidiNote(uint32_t note);
 
 	enum NoteName
 	{

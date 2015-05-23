@@ -140,6 +140,23 @@ NoteName nw2s::noteFromName(char* name)
 	return C; 
 }
 
+int nw2s::millivoltFromMidiNote(uint32_t note)
+{
+	/* C0 (#0)    = -5V */
+	/* C1 (#12)   = -4V */
+	/* C2 (#24)   = -3V */
+	/* C3 (#36)   = -2V */
+	/* C4 (#48)   = -1V */
+	/* C5 (#60)   =  0V */
+	/* C6 (#72)   = +1V */
+	/* C7 (#84)   = +2V */
+	/* C8 (#96)   = +3V */
+	/* C9 (#108)  = +4V */
+	/* C10 (#120) = +5V */
+
+	return -5000 + (1000 * (note / 12)) + ((1000 * (note % 12)) / 12);	
+}
+
 Key::Key(Scale scale, NoteName rootnote)
 {
 	this->scale = scale;

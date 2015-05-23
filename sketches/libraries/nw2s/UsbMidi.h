@@ -163,7 +163,7 @@ class nw2s::USBMonophonicMidiController : public nw2s::USBMidiCCController, publ
 	
 	public: 
 	
-		static USBMonophonicMidiController* create(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin);
+		static USBMonophonicMidiController* create(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut);
 
 		void timer(uint32_t t);
 			
@@ -180,14 +180,20 @@ class nw2s::USBMonophonicMidiController : public nw2s::USBMidiCCController, publ
 		
 	private:
 		
+		//TODO: Configurable pitchbend steps
+		
 		PinDigitalOut gate;
 		Gate* triggerOn = NULL;
 		Gate* triggerOff = NULL;
+		uint32_t pitchValue = 0;
+		uint32_t pitchbendValue = 0;
+		uint32_t pitchSteps = 1;
 		AnalogOut* pitch;
 		AnalogOut* velocity;
 		AnalogOut* pressure;
+		AnalogOut* afterTouch;
 		
-		USBMonophonicMidiController(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressureOut);
+		USBMonophonicMidiController(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressureOut, PinAnalogOut afterTouchOut);
 };
 
 #endif

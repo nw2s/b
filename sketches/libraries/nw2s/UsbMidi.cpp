@@ -29,6 +29,7 @@
 #include "UsbMidi.h"
 #include "JSONUtil.h"
 #include "EventManager.h"
+#include "Key.h"
 
 using namespace nw2s;
 
@@ -571,35 +572,35 @@ void USBMidiController::processMessage(uint32_t size, uint8_t* buffer)
 			this->onNoteOn(channel, buffer[1], buffer[2]);
 			break;
 
-	// 	case MIDI_PRESSURE:
-	//
-	// 		this->onPressure(channel, buffer[1], buffer[2]);
-	// 		break;
-	//
-	// 	case MIDI_CONTROL:
-	//
-	// 		this->onControlChange(channel, buffer[1], buffer[2]);
-	// 		break;
-	//
-	// 	case MIDI_PROGRAM:
-	//
-	// 		this->onProgramChange(channel, buffer[1]);
-	// 		break;
-	//
-	// 	case MIDI_ATOUCH:
-	//
-	// 		this->onAftertouch(channel, buffer[1]);
-	// 		break;
-	//
-	// 	case MIDI_PITCHBEND:
-	//
-	// 		this->onPitchbend(channel, GET_MIDI_14BIT(buffer[2],buffer[1]));
-	// 		break;
-	//
-	// 	default:
-	//
-	// 		/* Unsupported */
-	// 		break;
+		case MIDI_PRESSURE:
+
+			this->onPressure(channel, buffer[1], buffer[2]);
+			break;
+
+		case MIDI_CONTROL:
+
+			this->onControlChange(channel, buffer[1], buffer[2]);
+			break;
+
+		case MIDI_PROGRAM:
+
+			this->onProgramChange(channel, buffer[1]);
+			break;
+
+		case MIDI_ATOUCH:
+
+			this->onAftertouch(channel, buffer[1]);
+			break;
+
+		case MIDI_PITCHBEND:
+
+			this->onPitchbend(channel, GET_MIDI_14BIT(buffer[2],buffer[1]));
+			break;
+
+		default:
+
+			/* Unsupported */
+			break;
 	}
 }
 
@@ -618,12 +619,12 @@ void USBMidiCCController::onControlChange(uint32_t channel, uint32_t controller,
 	
 }
 
-USBMonophonicMidiController* USBMonophonicMidiController::create(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressureOut)
+USBMonophonicMidiController* USBMonophonicMidiController::create(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressureOut, PinAnalogOut afterTouchOut)
 {
-	return new USBMonophonicMidiController(gatePin, triggerOn, triggerOff, pitchPin, velocityPin, pressureOut);
+	return new USBMonophonicMidiController(gatePin, triggerOn, triggerOff, pitchPin, velocityPin, pressureOut, afterTouchOut);
 }
 
-USBMonophonicMidiController::USBMonophonicMidiController(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin) : USBMidiCCController()
+USBMonophonicMidiController::USBMonophonicMidiController(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut) : USBMidiCCController()
 {
 	this->gate = gatePin;
 	this->pitch = AnalogOut::create(pitchPin);
@@ -656,39 +657,38 @@ void USBMonophonicMidiController::timer(uint32_t t)
 
 void USBMonophonicMidiController::onNoteOn(uint32_t channel, uint32_t note, uint32_t velocity)
 {
-	digitalWrite(this->gate, HIGH);
-	// Serial.print("on  ");
-	// Serial.print(note, HEX);
-	// Serial.print(" ");
-	// Serial.println(velocity, HEX);
+	/* Set the pitch and be sure to include any pitchbend */
+	this->pitchValue = millivoltFromMidiNote(note);
+	this->pitch->outputCV(this->pitchValue + this->pitchbendValue);
+	
+	//TODO: velocity seems off
+	this->velocity->outputRaw(4095 - (velocity << 3));
+	this->triggerOn->reset();
+	digitalWrite(this->gate, HIGH);	
 }
 
 void USBMonophonicMidiController::onNoteOff(uint32_t channel, uint32_t note, uint32_t velocity)
 {
 	digitalWrite(this->gate, LOW);
-	// Serial.print("off ");
-	// Serial.print(note, HEX);
-	// Serial.print(" ");
-	// Serial.println(velocity, HEX);
+	this->triggerOff->reset();
+	this->velocity->outputRaw(2048);
 }
 
 void USBMonophonicMidiController::onPressure(uint32_t channel, uint32_t note, uint32_t pressure)
 {
-	// Serial.print("prs ");
-	// Serial.print(note, HEX);
-	// Serial.print(" ");
-	// Serial.println(pressure, HEX);
+	this->pressure->outputRaw(4095 - (pressure << 3));
 }
 
 void USBMonophonicMidiController::onAftertouch(uint32_t channel, uint32_t value)
 {
-	
+	this->pressure->outputRaw(4095 - (value << 3));
 }
 
 void USBMonophonicMidiController::onPitchbend(uint32_t channel, uint32_t value)
 {
-	Serial.print("ptc ");
-	Serial.println(value, HEX);
+	/* Keep track of how much pitch bend we have and add/subtract to the current pitch */
+	this->pitchbendValue = ((value - 0x2000) * 12) / 1000;
+	this->pitch->outputCV(this->pitchValue + this->pitchbendValue);
 }	
 	
 	
