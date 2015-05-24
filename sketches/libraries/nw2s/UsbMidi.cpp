@@ -388,64 +388,6 @@ uint32_t USBMidiDevice::write(uint32_t datalen, uint8_t *dataptr)
 	return pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].deviceEpNum, datalen, dataptr);
 }
 
-// uint32_t USBMidiDevice::lookupMsgSize(uint8_t midiMsg)
-// {
-// 	uint8_t msgSize = 0;
-//
-// 	//Serial.println(midiMsg, HEX);
-//
-// 	if (midiMsg < 0xf0)
-// 	{
-// 		midiMsg &= 0xf0;
-// 	}
-//
-// 	switch(midiMsg)
-// 	{
-// 		//3 bytes messages
-// 		case 0xf2 : //system common message(SPP)
-// 		case 0x80 : //Note off
-// 		case 0x90 : //Note on
-// 		case 0xa0 : //Poly KeyPress
-// 		case 0xb0 : //Control Change
-// 		case 0xe0 : //PitchBend Change
-// 		  	msgSize = 3;
-// 		  	break;
-//
-// 	    //2 bytes messages
-// 	    case 0xf1 : //system common message(MTC)
-// 	    case 0xf3 : //system common message(SongSelect)
-// 	    case 0xc0 : //Program Change
-// 	    case 0xd0 : //Channel Pressure
-// 	    	msgSize = 2;
-//       		break;
-//
-// 	    //1 bytes messages
-// 	    case 0xf8 : //system realtime message
-// 	    case 0xf9 : //system realtime message
-// 	    case 0xfa : //system realtime message
-// 	    case 0xfb : //system realtime message
-// 	    case 0xfc : //system realtime message
-// 	    case 0xfe : //system realtime message
-// 	    case 0xff : //system realtime message
-// 	      	msgSize = 1;
-// 	      	break;
-//
-// 	    //undefine messages
-// 		default :
-// 	      	break;
-// 	  }
-//
-// 	  return msgSize;
-// }
-
-/* Receive data from MIDI device */
-// uint32_t USBMidiDevice::recvData(uint32_t *bytes_rcvd, uint8_t *dataptr)
-// {
-// 	bytes_rcvd[0] = (uint32_t)epInfo[epDataInIndex].maxPktSize;
-//
-// 	return pUsb->inTransfer(bAddress, epInfo[epDataInIndex].deviceEpNum, bytes_rcvd, dataptr);
-// }
-
 /* Receive data from MIDI device */
 uint32_t USBMidiDevice::recvData(uint8_t *outBuf)
 {
@@ -456,28 +398,6 @@ uint32_t USBMidiDevice::recvData(uint8_t *outBuf)
 	{
 		return 0;
 	}
-		
-	/* Checking unprocessed message in buffer. */
-	// if (readPtr != 0 && readPtr < MIDI_EVENT_PACKET_SIZE)
-	// {
-	//     if (recvBuf[readPtr] == 0 && recvBuf[readPtr + 1] == 0)
-	// 	{
-	// 		/* no unprocessed message left in the buffer. */
-	// 		//TODO: You can look past your buffer here
-	// 	}
-	// 	else
-	// 	{
-	// 	    readPtr++;
-	// 	    outBuf[0] = recvBuf[readPtr];
-	// 	    readPtr++;
-	// 	    outBuf[1] = recvBuf[readPtr];
-	// 	    readPtr++;
-	// 	    outBuf[2] = recvBuf[readPtr];
-	// 	    readPtr++;
-	//
-	// 	    return lookupMsgSize(outBuf[0]);
-	//     }
-	// }
 
 	/* Clear out the packet buffer */
 	midiPacket[0] = 0;
@@ -492,20 +412,6 @@ uint32_t USBMidiDevice::recvData(uint8_t *outBuf)
 	{
 		return 0;
 	}
-
-	// Serial.print(">>> [");
-	//
-	// Serial.print(bytesReceived);
-	//
-	// Serial.print("] ");
-	//
-	// Serial.print(midiPacket[0], HEX);
-	// Serial.print(" ");
-	// Serial.print(midiPacket[1], HEX);
-	// Serial.print(" ");
-	// Serial.print(midiPacket[2], HEX);
-	// Serial.print(" ");
-	// Serial.println(midiPacket[3], HEX);
   
 	/* if all data is zero, no valid data received. */
 	if (midiPacket[0] == 0 && midiPacket[1] == 0 && midiPacket[2] == 0 && midiPacket[3] == 0)
@@ -518,12 +424,8 @@ uint32_t USBMidiDevice::recvData(uint8_t *outBuf)
 	outBuf[1] = midiPacket[2];
 	outBuf[2] = midiPacket[3];
 
-	//return lookupMsgSize(outBuf[0]);
-
 	return 3;
 }
-
-
 
 void USBMidiController::task()
 {
@@ -590,7 +492,7 @@ void USBMidiController::processMessage(uint32_t size, uint8_t* buffer)
 			break;
 
 		default:
-
+		
 			/* Unsupported */
 			break;
 	}
@@ -619,48 +521,33 @@ USBMonophonicMidiController* USBMonophonicMidiController::create(PinDigitalOut g
 USBMonophonicMidiController::USBMonophonicMidiController(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut) : USBMidiCCController()
 {
 	this->gate = gatePin;
-	this->pitch = AnalogOut::create(pitchPin);
-	this->velocity = AnalogOut::create(velocityPin);
-	this->pressure = AnalogOut::create(pressurePin);
-
-	if (triggerOn != DIGITAL_OUT_NONE)
-	{
-		this->triggerOn = Gate::create(triggerOn, 30);
-	}
-
-	if (triggerOff != DIGITAL_OUT_NONE)
-	{
-		this->triggerOff = Gate::create(triggerOff, 30);
-	}
+	this->pitch = (pitchPin != ANALOG_OUT_NONE) ? AnalogOut::create(pitchPin) : NULL;
+	this->velocity = (velocityPin != ANALOG_OUT_NONE) ? AnalogOut::create(velocityPin) : NULL;
+	this->pressure = (pressurePin != ANALOG_OUT_NONE) ? AnalogOut::create(pressurePin) : NULL;
+	this->triggerOn = (triggerOn != DIGITAL_OUT_NONE) ? Gate::create(triggerOn, 30) : NULL;
+	this->triggerOff = (triggerOff != DIGITAL_OUT_NONE) ? Gate::create(triggerOff, 30) : NULL;
 }
 
 void USBMonophonicMidiController::timer(uint32_t t)
 {
-	if (this->triggerOn != NULL)
-	{
-		this->triggerOn->timer(t);
-	}
-	
-	if (this->triggerOff != NULL)
-	{
-		this->triggerOff->timer(t);
-	}
+	if (this->triggerOn != NULL) this->triggerOn->timer(t);	
+	if (this->triggerOff != NULL) this->triggerOff->timer(t);
 }
 
 void USBMonophonicMidiController::onNoteOn(uint32_t channel, uint32_t note, uint32_t velocity)
 {
 	/* Set the pitch and be sure to include any pitchbend */
 	this->pitchValue = millivoltFromMidiNote(note);
-	this->pitch->outputCV(this->pitchValue + this->pitchbendValue);
+	if (this->pitch != NULL) this->pitch->outputCV(this->pitchValue + this->pitchbendValue);
 	
 	/* Update the velocity output */
-	this->velocity->outputRaw(4095 - (velocity << 4));
+	if (this->velocity != NULL) this->velocity->outputRaw(4095 - (velocity << 4));
 
 	/* Trigger note-on */
-	this->triggerOn->reset();
+	if (this->triggerOn != NULL) this->triggerOn->reset();
 
 	/* Open the gate */
-	digitalWrite(this->gate, HIGH);	
+	if (this->gate != DIGITAL_OUT_NONE) digitalWrite(this->gate, HIGH);	
 	
 	/* Keep track of it in the note stack */
 	this->noteStack.noteOn(note, velocity);
@@ -677,18 +564,18 @@ void USBMonophonicMidiController::onNoteOff(uint32_t channel, uint32_t note, uin
 	if (playingNow.note == note)
 	{
 		/* Signal note-off trigger */
-		this->triggerOff->reset();
+		if (this->triggerOff != NULL) this->triggerOff->reset();
 	
 		/* See if any more notes are pressed */
 		if (this->noteStack.getSize() == 0)
 		{
 			/* Close the gate */
-			digitalWrite(this->gate, LOW);
+			if (this->gate != DIGITAL_OUT_NONE) digitalWrite(this->gate, LOW);
 
 			/* Reset velocity, pressure, and aftertouch */
-			this->velocity->outputRaw(2048);
-			// this->pressure->outputRaw(2048);
-			// this->afterTouch->outputRaw(2048);
+			// if (this->velocity != NULL) this->velocity->outputRaw(2048);
+			// if (this->pressure != NULL) this->pressure->outputRaw(2048);
+			// if (this->afterTouch != NULL) this->afterTouch->outputRaw(2048);
 		}
 		else
 		{
@@ -697,33 +584,29 @@ void USBMonophonicMidiController::onNoteOff(uint32_t channel, uint32_t note, uin
 
 			/* Set the pitch and be sure to include any pitchbend */
 			this->pitchValue = millivoltFromMidiNote(mostRecent.note);
-			this->pitch->outputCV(this->pitchValue + this->pitchbendValue);
+			if (this->pitch != NULL) this->pitch->outputCV(this->pitchValue + this->pitchbendValue);
 
 			/* Update the velocity output */
-			// this->velocity->outputRaw(4095 - (mostRecent.velocity << 4));		
+			// if (this->velocity != NULL) this->velocity->outputRaw(4095 - (mostRecent.velocity << 4));
 		}
 	}
-	// else
-	// {
-	// 	Serial.print("z");
-	// }
 }
 
 void USBMonophonicMidiController::onPressure(uint32_t channel, uint32_t note, uint32_t pressure)
 {
-	this->pressure->outputRaw(4095 - (pressure << 4));
+	// if (this->pressure != NULL) this->pressure->outputRaw(4095 - (pressure << 4));
 }
 
 void USBMonophonicMidiController::onAftertouch(uint32_t channel, uint32_t value)
 {
-	this->pressure->outputRaw(4095 - (value << 4));
+	// if (this->afterTouch != NULL) this->afterTouch->outputRaw(4095 - (value << 4));
 }
 
 void USBMonophonicMidiController::onPitchbend(uint32_t channel, uint32_t value)
 {
 	/* Keep track of how much pitch bend we have and add/subtract the current pitch */
 	this->pitchbendValue = ((value - 0x2000) * 12) / 1000;
-	this->pitch->outputCV(this->pitchValue + this->pitchbendValue);
+	if (this->pitch != NULL) this->pitch->outputCV(this->pitchValue + this->pitchbendValue);
 }	
 	
 	

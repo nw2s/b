@@ -179,6 +179,8 @@ class nw2s::USBMonophonicMidiController : public nw2s::USBMidiCCController, publ
 	private:
 		
 		//TODO: Configurable pitchbend steps
+		//TODO: Configurable middle C?
+		//TODO: Controllers aren't working
 		
 		NoteStack noteStack;
 		PinDigitalOut gate;
