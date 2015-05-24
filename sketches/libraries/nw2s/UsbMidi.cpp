@@ -536,22 +536,14 @@ void USBMidiController::task()
 		uint32_t size = 0;
 	
 		/* As long as there are bytes to read, keep reading */
-		// 	    do
-		// {
+	    do
+		{
 			if ((size = this->recvData(buffer)) > 0)
 			{
-				// Serial.print(".");
-				// Serial.print("----- ");
-				// Serial.print(buffer[0], HEX);
-				// Serial.print(" ");
-				// Serial.print(buffer[1], HEX);
-				// Serial.print(" ");
-				// Serial.println(buffer[2], HEX);
-				
 				this->processMessage(size, buffer);
 			}
-		// 	    }
-		// while (size > 0);
+	    }
+		while (size > 0);
     }
 }	
 
@@ -661,32 +653,75 @@ void USBMonophonicMidiController::onNoteOn(uint32_t channel, uint32_t note, uint
 	this->pitchValue = millivoltFromMidiNote(note);
 	this->pitch->outputCV(this->pitchValue + this->pitchbendValue);
 	
-	//TODO: velocity seems off
-	this->velocity->outputRaw(4095 - (velocity << 3));
+	/* Update the velocity output */
+	this->velocity->outputRaw(4095 - (velocity << 4));
+
+	/* Trigger note-on */
 	this->triggerOn->reset();
+
+	/* Open the gate */
 	digitalWrite(this->gate, HIGH);	
+	
+	/* Keep track of it in the note stack */
+	this->noteStack.noteOn(note, velocity);
 }
 
 void USBMonophonicMidiController::onNoteOff(uint32_t channel, uint32_t note, uint32_t velocity)
 {
-	digitalWrite(this->gate, LOW);
-	this->triggerOff->reset();
-	this->velocity->outputRaw(2048);
+	NoteListEntry playingNow = this->noteStack.mostRecentNote();
+	
+	/* Remove from the note stack */
+	this->noteStack.noteOff(note);
+
+	/* See if ihe note that turned off was the currently playing one */
+	if (playingNow.note == note)
+	{
+		/* Signal note-off trigger */
+		this->triggerOff->reset();
+	
+		/* See if any more notes are pressed */
+		if (this->noteStack.getSize() == 0)
+		{
+			/* Close the gate */
+			digitalWrite(this->gate, LOW);
+
+			/* Reset velocity, pressure, and aftertouch */
+			this->velocity->outputRaw(2048);
+			// this->pressure->outputRaw(2048);
+			// this->afterTouch->outputRaw(2048);
+		}
+		else
+		{
+			/* The one that was let go was currently playing and still at least one note pressed... */
+			NoteListEntry mostRecent = this->noteStack.mostRecentNote();
+
+			/* Set the pitch and be sure to include any pitchbend */
+			this->pitchValue = millivoltFromMidiNote(mostRecent.note);
+			this->pitch->outputCV(this->pitchValue + this->pitchbendValue);
+
+			/* Update the velocity output */
+			// this->velocity->outputRaw(4095 - (mostRecent.velocity << 4));		
+		}
+	}
+	// else
+	// {
+	// 	Serial.print("z");
+	// }
 }
 
 void USBMonophonicMidiController::onPressure(uint32_t channel, uint32_t note, uint32_t pressure)
 {
-	this->pressure->outputRaw(4095 - (pressure << 3));
+	this->pressure->outputRaw(4095 - (pressure << 4));
 }
 
 void USBMonophonicMidiController::onAftertouch(uint32_t channel, uint32_t value)
 {
-	this->pressure->outputRaw(4095 - (value << 3));
+	this->pressure->outputRaw(4095 - (value << 4));
 }
 
 void USBMonophonicMidiController::onPitchbend(uint32_t channel, uint32_t value)
 {
-	/* Keep track of how much pitch bend we have and add/subtract to the current pitch */
+	/* Keep track of how much pitch bend we have and add/subtract the current pitch */
 	this->pitchbendValue = ((value - 0x2000) * 12) / 1000;
 	this->pitch->outputCV(this->pitchValue + this->pitchbendValue);
 }	

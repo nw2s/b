@@ -35,6 +35,7 @@
 #include "../aJson/aJson.h"
 #include "IO.h"
 #include "Gate.h"
+#include <NoteStack.h>
 
 /* endpoint 0, bulk_IN(MIDI), bulk_OUT(MIDI), bulk_IN(VSP), bulk_OUT(VSP) */
 #define MIDI_MAX_ENDPOINTS 5 
@@ -92,10 +93,8 @@ class nw2s::USBMidiDevice : public USBDeviceConfig, public UsbBasedDevice
 		
 	    /* MIDI Event packet buffer */
 	    uint8_t midiPacket[MIDI_EVENT_PACKET_SIZE];
-	    //uint8_t readPtr;
 
 	    void parseConfigDescr(uint32_t addr, uint32_t conf);
-	    //uint32_t lookupMsgSize(uint8_t midiMsg);
 
 	public:
 		
@@ -167,7 +166,6 @@ class nw2s::USBMonophonicMidiController : public nw2s::USBMidiCCController, publ
 
 		void timer(uint32_t t);
 			
-		//TODO: monophonic note stack
 		//TODO: limit to key
 		
 	protected:
@@ -176,12 +174,13 @@ class nw2s::USBMonophonicMidiController : public nw2s::USBMidiCCController, publ
 		virtual void onNoteOff(uint32_t channel, uint32_t note, uint32_t velocity);
 		virtual void onPressure(uint32_t channel, uint32_t note, uint32_t pressure);
 		virtual void onAftertouch(uint32_t channel, uint32_t value);
-		virtual void onPitchbend(uint32_t channel, uint32_t value);		
+		virtual void onPitchbend(uint32_t channel, uint32_t value);
 		
 	private:
 		
 		//TODO: Configurable pitchbend steps
 		
+		NoteStack noteStack;
 		PinDigitalOut gate;
 		Gate* triggerOn = NULL;
 		Gate* triggerOff = NULL;
