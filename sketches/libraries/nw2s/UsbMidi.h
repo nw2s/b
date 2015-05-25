@@ -46,6 +46,7 @@
 #define GET_MIDI_COMMAND(X)		X >> 4
 #define GET_MIDI_CHANNEL(X) 	X & 0x0F
 #define GET_MIDI_14BIT(X, Y)	(X << 7) | Y
+#define GET_12BITCV(X)			2048 - (X << 4)
 
 #define MIDI_NOTE_OFF 	0b00001000
 #define MIDI_NOTE_ON	0b00001001
@@ -64,11 +65,23 @@ namespace nw2s
 		AnalogOut* output;
 	};
 	
+	typedef struct Voice
+	{
+		bool allocated = false;
+		PinDigitalOut gate = DIGITAL_OUT_NONE;
+		Gate* triggerOn = NULL;
+		Gate* triggerOff = NULL;
+		uint32_t pitchValue = 0;
+		AnalogOut* pitch = NULL;
+		AnalogOut* velocity = NULL;
+		AnalogOut* pressure = NULL;		
+	};
 	
 	class USBMidiDevice;
 	class USBMidiController;
 	class USBMidiCCController;
 	class USBMonophonicMidiController;
+	class USBPolyphonicMidiController;
 }
 
 class nw2s::USBMidiDevice : public USBDeviceConfig, public UsbBasedDevice 
@@ -196,6 +209,34 @@ class nw2s::USBMonophonicMidiController : public nw2s::USBMidiCCController, publ
 		
 		USBMonophonicMidiController(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressureOut, PinAnalogOut afterTouchOut);
 };
+
+class nw2s::USBPolyphonicMidiController : public nw2s::USBMidiCCController, public nw2s::TimeBasedDevice
+{
+	public:
+	
+		static USBPolyphonicMidiController* create(PinAnalogOut afterTouchOut);
+
+		void timer(uint32_t);		
+		void addVoice(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressureOut);
+		
+	protected:
+		
+		virtual void onNoteOn(uint32_t channel, uint32_t note, uint32_t velocity);
+		virtual void onNoteOff(uint32_t channel, uint32_t note, uint32_t velocity);
+		virtual void onPressure(uint32_t channel, uint32_t note, uint32_t pressure);
+		virtual void onAftertouch(uint32_t channel, uint32_t value);
+		virtual void onPitchbend(uint32_t channel, uint32_t value);
+		
+	private:
+		
+		uint32_t currentVoice = 0;
+		uint32_t pitchbendValue = 0;
+		std::vector<Voice> voices;
+		AnalogOut* afterTouch;
+
+		
+		USBPolyphonicMidiController(PinAnalogOut afterTouchOut);
+}; 
 
 #endif
 

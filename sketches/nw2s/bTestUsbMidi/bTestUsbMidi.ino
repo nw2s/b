@@ -26,7 +26,7 @@ void setup()
 
 	EventManager::initialize();
 	
-	usbDevice = USBMonophonicMidiController::create(DUE_OUT_D00, DUE_OUT_D01, DUE_OUT_D02, DUE_SPI_4822_00, ANALOG_OUT_NONE, ANALOG_OUT_NONE, ANALOG_OUT_NONE);
+	usbDevice = USBMonophonicMidiController::create(DUE_OUT_D00, DUE_OUT_D01, DUE_OUT_D02, DUE_SPI_4822_00, DUE_SPI_4822_02, ANALOG_OUT_NONE, ANALOG_OUT_NONE);
 
 	EventManager::registerUsbDevice(usbDevice);
 	EventManager::registerDevice(usbDevice);

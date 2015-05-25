@@ -518,12 +518,13 @@ USBMonophonicMidiController* USBMonophonicMidiController::create(PinDigitalOut g
 	return new USBMonophonicMidiController(gatePin, triggerOn, triggerOff, pitchPin, velocityPin, pressureOut, afterTouchOut);
 }
 
-USBMonophonicMidiController::USBMonophonicMidiController(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut) : USBMidiCCController()
+USBMonophonicMidiController::USBMonophonicMidiController(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchPin) : USBMidiCCController()
 {
 	this->gate = gatePin;
 	this->pitch = (pitchPin != ANALOG_OUT_NONE) ? AnalogOut::create(pitchPin) : NULL;
 	this->velocity = (velocityPin != ANALOG_OUT_NONE) ? AnalogOut::create(velocityPin) : NULL;
 	this->pressure = (pressurePin != ANALOG_OUT_NONE) ? AnalogOut::create(pressurePin) : NULL;
+	this->afterTouch = (afterTouchPin != ANALOG_OUT_NONE) ? AnalogOut::create(afterTouchPin) : NULL;
 	this->triggerOn = (triggerOn != DIGITAL_OUT_NONE) ? Gate::create(triggerOn, 30) : NULL;
 	this->triggerOff = (triggerOff != DIGITAL_OUT_NONE) ? Gate::create(triggerOff, 30) : NULL;
 }
@@ -541,7 +542,9 @@ void USBMonophonicMidiController::onNoteOn(uint32_t channel, uint32_t note, uint
 	if (this->pitch != NULL) this->pitch->outputCV(this->pitchValue + this->pitchbendValue);
 	
 	/* Update the velocity output */
-	if (this->velocity != NULL) this->velocity->outputRaw(4095 - (velocity << 4));
+	if (this->velocity != NULL) this->velocity->outputRaw(GET_12BITCV(velocity));
+	// Serial.println(2048 - (velocity << 4));
+	// Serial.println(velocity);
 
 	/* Trigger note-on */
 	if (this->triggerOn != NULL) this->triggerOn->reset();
@@ -573,7 +576,7 @@ void USBMonophonicMidiController::onNoteOff(uint32_t channel, uint32_t note, uin
 			if (this->gate != DIGITAL_OUT_NONE) digitalWrite(this->gate, LOW);
 
 			/* Reset velocity, pressure, and aftertouch */
-			// if (this->velocity != NULL) this->velocity->outputRaw(2048);
+			if (this->velocity != NULL) this->velocity->outputRaw(2048);
 			// if (this->pressure != NULL) this->pressure->outputRaw(2048);
 			// if (this->afterTouch != NULL) this->afterTouch->outputRaw(2048);
 		}
@@ -587,7 +590,7 @@ void USBMonophonicMidiController::onNoteOff(uint32_t channel, uint32_t note, uin
 			if (this->pitch != NULL) this->pitch->outputCV(this->pitchValue + this->pitchbendValue);
 
 			/* Update the velocity output */
-			// if (this->velocity != NULL) this->velocity->outputRaw(4095 - (mostRecent.velocity << 4));
+			if (this->velocity != NULL) this->velocity->outputRaw(GET_12BITCV(mostRecent.velocity));
 		}
 	}
 }
@@ -609,7 +612,52 @@ void USBMonophonicMidiController::onPitchbend(uint32_t channel, uint32_t value)
 	if (this->pitch != NULL) this->pitch->outputCV(this->pitchValue + this->pitchbendValue);
 }	
 	
+
+USBPolyphonicMidiController* USBPolyphonicMidiController::create(PinAnalogOut afterTouchOut)
+{
+	return new USBPolyphonicMidiController(afterTouchOut);
+}
+
+USBPolyphonicMidiController::USBPolyphonicMidiController(PinAnalogOut afterTouchPin) : USBMidiCCController()
+{
+	this->afterTouch = (afterTouchPin != ANALOG_OUT_NONE) ? AnalogOut::create(afterTouchPin) : NULL;
+}
+
+void USBPolyphonicMidiController::addVoice(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin)
+{
+	Voice voice;
 	
+	voice.gate = gatePin;
+	voice.pitch = (pitchPin != ANALOG_OUT_NONE) ? AnalogOut::create(pitchPin) : NULL;
+	voice.velocity = (velocityPin != ANALOG_OUT_NONE) ? AnalogOut::create(velocityPin) : NULL;
+	voice.pressure = (pressurePin != ANALOG_OUT_NONE) ? AnalogOut::create(pressurePin) : NULL;
+	voice.triggerOn = (triggerOn != DIGITAL_OUT_NONE) ? Gate::create(triggerOn, 30) : NULL;
+	voice.triggerOff = (triggerOff != DIGITAL_OUT_NONE) ? Gate::create(triggerOff, 30) : NULL;
 	
+	this->voices.push_back(voice);
+}
+
+void USBPolyphonicMidiController::onNoteOn(uint32_t channel, uint32_t note, uint32_t velocity)
+{
+	// if (this->voices.size() > 0)
+	// {
+	// 	/* If the current voice is already in use, don't steal it. Ignore the note on */
+	// 	if (!this->voices[this->currentVoice].allocated)
+	// 	{
+	// 		/* Set the pitch and be sure to include any pitchbend */
+	// 		this->pitchValue = millivoltFromMidiNote(note);
+	// 		if (this->pitch != NULL) this->pitch->outputCV(this->pitchValue + this->pitchbendValue);
+	//
+	// 		/* Update the velocity output */
+	// 		if (this->velocity != NULL) this->velocity->outputRaw(4095 - (velocity << 4));
+	//
+	// 		/* Trigger note-on */
+	// 		if (this->triggerOn != NULL) this->triggerOn->reset();
+	//
+	// 		/* Open the gate */
+	// 		if (this->gate != DIGITAL_OUT_NONE) digitalWrite(this->gate, HIGH);
+	// 	}
+	// }
+}
 	
 
