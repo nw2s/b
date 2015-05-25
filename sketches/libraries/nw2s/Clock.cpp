@@ -440,9 +440,6 @@ void TapTempoClock::tap(uint32_t t)
 	
 	if ((t > (this->lastT + 20)) && (this->lastT > 0) && (t < (this->lastT + 4000)) && (t > (this->lastTapStateT + 20)))
 	{
-		Serial.print("tap ");
-		Serial.println(t);
-
 		/* Update the period to be the difference in your taps */
 		this->period = t - lastT;	
 

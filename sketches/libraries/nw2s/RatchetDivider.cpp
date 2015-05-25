@@ -22,6 +22,7 @@
 #include "IO.h"
 #include "aJson.h"
 #include "JSONUtil.h"
+#include "Entropy.h"
 
 using namespace nw2s;
 
@@ -85,13 +86,32 @@ RatchetLimit RatchetDivider::getLimitFromString(char* value)
 
 RatchetDivider::RatchetDivider(RatchetLimit limit, PinAnalogIn divisorInput, PinAnalogIn densityInput, PinDigitalOut output)
 {	
-	this->output = Gate::create(output, 35);		
+	this->divisorInput = divisorInput;
+	this->densityInput = densityInput;
+	this->mode = limit;
+	this->output = Gate::create(output, 35);	
 	this->clock_division = this->calculateClockDivision();
 }
 
 void RatchetDivider::reset()
 {
-	this->output->reset();	
+	/* Check the density */
+	if (densityInput != ANALOG_IN_NONE)
+	{
+		int density = (this->densityVal - 2048);
+
+		/* Limit it to the positive range */
+		density = (density < 0) ? 0 : (density > 2047) ? 2047 : density;
+		
+		if (density < Entropy::getValue(2047))
+		{
+			this->output->reset();
+		}
+	}
+	else
+	{
+		this->output->reset();	
+	}
 }
 
 void RatchetDivider::timer(unsigned long t)
@@ -108,36 +128,49 @@ void RatchetDivider::timer(unsigned long t)
 	if (this->millisTimer % 252 == 0)
 	{	
 		this->clock_division = this->calculateClockDivision();
+		
+		//Serial.println(this->clock_division);
 	}
 }
 
 uint32_t RatchetDivider::calculateClockDivision()
 {
-	int divisorVal = analogRead(this->divisorInput);
-	uint8_t divisor = 1;
+	int divisorVal = (analogRead(this->divisorInput) - 2048);
+	
+	/* Limit it to the positive range */
+	divisorVal = (divisorVal < 0) ? 0 : (divisorVal > 2047) ? 2047 : divisorVal;
+	
+	uint32_t divisor = 1;
 	
 	if (mode == RATCHET_LIMIT_OFF)
 	{
-		divisor = (divisorVal >> 5) + 1;
+		/* Range 1 - 32 */
+		divisor = (divisorVal >> 6) + 1;
+
 	}
 	else if (mode == RATCHET_LIMIT_ODD)
 	{
-		divisor = ((divisorVal >> 6) << 1) + 1;
+		/* Range 1 - 33, odd only */
+		divisor = ((divisorVal >> 7) << 1) + 1;
 	}
 	else if (mode == RATCHET_LIMIT_EVEN)
 	{
-		divisor = ((divisorVal >> 6) << 1) + 2;
+		/* Range 2 - 34 even only */
+		divisor = ((divisorVal >> 7) << 1) + 2;
 	}
 	else if (mode == RATCHET_LIMIT_PRIMES)
 	{
+		/* Limiting to the first 16 primes to make it more usable */
 		divisor = primes[divisorVal >> 7];
 	}
 	else if (mode == RATCHET_LIMIT_TRIP)
 	{
+		/* Limiting to the first 8 */
 		divisor = trip[divisorVal >> 8];
 	}
 	else if (mode == RATCHET_LIMIT_FIBONACCI)
 	{
+		/* Limiting to the first 8 */
 		divisor = fib[divisorVal >> 8];
 	}
 	else if (mode == RATCHET_LIMIT_POWEROF2)

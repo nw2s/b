@@ -29,6 +29,7 @@
 #include <SD.h>
 #include <Wire.h>
 #include <aJSON.h>
+#include <Usb.h>
 
 /*
 
@@ -56,7 +57,7 @@ void setup()
 	EventManager::initialize();
 
 	/* Fixed clock running at 75BPM */
-	Clock* democlock = FixedClock::create(75, 16);
+	//Clock* democlock = FixedClock::create(75, 16);
 	
 	/* Variable clock running between 75 and 125BPM based on A0 input value */
 	//Clock* democlock = VariableClock::create(25, 125, DUE_IN_A0, 16);
@@ -65,7 +66,7 @@ void setup()
 	//Clock* democlock = RandomTempoClock::create(75, 80, 16);
 
 	/* Clock slaving to the Ardcore clock input */
-	//Clock* democlock = SlaveClock::create(DUE_IN_D0, 16);
+	Clock* democlock = TapTempoClock::create(DUE_IN_D0, DUE_IN_D1, 16);
 
 	/* Register the clock with the EventManager */
 	EventManager::registerDevice(democlock);
