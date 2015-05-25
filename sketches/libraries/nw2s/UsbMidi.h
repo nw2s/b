@@ -74,7 +74,7 @@ namespace nw2s
 		uint32_t pitchValue = 0;
 		AnalogOut* pitch = NULL;
 		AnalogOut* velocity = NULL;
-		AnalogOut* pressure = NULL;		
+		AnalogOut* pressure = NULL;
 	};
 	
 	class USBMidiDevice;
@@ -204,8 +204,8 @@ class nw2s::USBMonophonicMidiController : public nw2s::USBMidiCCController, publ
 		uint32_t pitchSteps = 1;
 		AnalogOut* pitch;
 		AnalogOut* velocity;
-		AnalogOut* pressure;
-		AnalogOut* afterTouch;
+		AnalogOut* pressure;				// Pressure = note pressure
+		AnalogOut* afterTouch;				// Aftertouch = channel pressure
 		
 		USBMonophonicMidiController(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressureOut, PinAnalogOut afterTouchOut);
 };

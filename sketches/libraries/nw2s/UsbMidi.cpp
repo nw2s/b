@@ -543,8 +543,6 @@ void USBMonophonicMidiController::onNoteOn(uint32_t channel, uint32_t note, uint
 	
 	/* Update the velocity output */
 	if (this->velocity != NULL) this->velocity->outputRaw(GET_12BITCV(velocity));
-	// Serial.println(2048 - (velocity << 4));
-	// Serial.println(velocity);
 
 	/* Trigger note-on */
 	if (this->triggerOn != NULL) this->triggerOn->reset();
@@ -577,8 +575,6 @@ void USBMonophonicMidiController::onNoteOff(uint32_t channel, uint32_t note, uin
 
 			/* Reset velocity, pressure, and aftertouch */
 			if (this->velocity != NULL) this->velocity->outputRaw(2048);
-			// if (this->pressure != NULL) this->pressure->outputRaw(2048);
-			// if (this->afterTouch != NULL) this->afterTouch->outputRaw(2048);
 		}
 		else
 		{
@@ -597,12 +593,16 @@ void USBMonophonicMidiController::onNoteOff(uint32_t channel, uint32_t note, uin
 
 void USBMonophonicMidiController::onPressure(uint32_t channel, uint32_t note, uint32_t pressure)
 {
-	// if (this->pressure != NULL) this->pressure->outputRaw(4095 - (pressure << 4));
+	/* Only respond if this is the current note playing */
+	if (this->pressure != NULL && note == this->noteStack.mostRecentNote().note) 
+	{
+		this->pressure->outputRaw(GET_12BITCV(pressure));
+	}
 }
 
 void USBMonophonicMidiController::onAftertouch(uint32_t channel, uint32_t value)
 {
-	// if (this->afterTouch != NULL) this->afterTouch->outputRaw(4095 - (value << 4));
+	if (this->afterTouch != NULL) this->afterTouch->outputRaw(GET_12BITCV(value));
 }
 
 void USBMonophonicMidiController::onPitchbend(uint32_t channel, uint32_t value)
