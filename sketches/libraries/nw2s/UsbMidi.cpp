@@ -763,6 +763,39 @@ void USBSplitMonoMidiController::onNoteOff(uint32_t channel, uint32_t note, uint
 	}
 }
 
+void USBSplitMonoMidiController::onPressure(uint32_t channel, uint32_t note, uint32_t pressure)
+{
+	if (note < this->splitNote)
+	{
+		/* Only respond if this is the current note playing */
+		if (this->pressure1 != NULL && note == this->noteStack1.mostRecentNote().note) 
+		{
+			this->pressure1->outputRaw(GET_12BITCV(pressure));
+		}
+	}
+	else
+	{
+		/* Only respond if this is the current note playing */
+		if (this->pressure2 != NULL && note == this->noteStack2.mostRecentNote().note) 
+		{
+			this->pressure2->outputRaw(GET_12BITCV(pressure));
+		}
+	}
+}
+
+void USBSplitMonoMidiController::onAftertouch(uint32_t channel, uint32_t value)
+{
+	if (this->afterTouch != NULL) this->afterTouch->outputRaw(GET_12BITCV(value));
+}
+
+void USBSplitMonoMidiController::onPitchbend(uint32_t channel, uint32_t value)
+{
+	/* Keep track of how much pitch bend we have and add/subtract the current pitch */
+	this->pitchbendValue = ((value - 0x2000) * 12) / 1000;
+
+	if (this->pitch1 != NULL) this->pitch1->outputCV(this->pitchValue1 + this->pitchbendValue);
+	if (this->pitch2 != NULL) this->pitch2->outputCV(this->pitchValue2 + this->pitchbendValue);
+}	
 
 
 
