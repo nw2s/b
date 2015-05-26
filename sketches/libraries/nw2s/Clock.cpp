@@ -208,6 +208,24 @@ TapTempoClock* TapTempoClock::create(aJsonObject* data)
 	return new TapTempoClock(input, resetInput, beats);
 }
 
+PassthruClock* PassthruClock::create(PinDigitalIn input, unsigned char beats_per_measure)
+{
+	passthruClock = new PassthruClock(input, beats_per_measure);
+	
+	return PassthruClock::passthruClock;
+}
+
+PassthruClock* PassthruClock::create(aJsonObject* data)
+{
+	const char inputNodeName[] = "tapInput";
+	const char beatsNodeName[] = "beats";
+	
+	PinDigitalIn input = getDigitalInputFromJSON(data, inputNodeName);
+	int beats = getIntFromJSON(data, beatsNodeName, 16, 1, 16);
+		
+	return new PassthruClock(input, beats);
+}
+
 void Clock::registerDevice(BeatDevice* device)
 {
 	this->devices.push_back(device);	
@@ -486,3 +504,69 @@ void TapTempoClock::onTempoTap()
 		tapping = false;
 	}
 }
+
+PassthruClock* PassthruClock::passthruClock;
+volatile bool PassthruClock::tapping = false;
+
+PassthruClock::PassthruClock(PinDigitalIn input, unsigned char beats_per_measure)
+{
+	this->beat = 0;
+	this->input = input;
+	this->beats_per_measure = beats_per_measure;			
+ 	this->period = 400;		
+	this->last_clock_t = 0;
+	
+	attachInterrupt(input, onTap, RISING);
+}
+
+void PassthruClock::timer(uint32_t t)
+{
+	Clock::timer(t);
+
+	/* Keep track of the last time we saw the input high */
+	if (digitalRead(this->input))
+	{
+		this->lastTapStateT = t;
+	}	
+}
+
+void PassthruClock::updateTempo(unsigned long t)
+{
+	this->next_clock_t = (t + this->period);
+	this->last_clock_t = t;	
+}
+
+void PassthruClock::tap(uint32_t t)
+{	
+	if ((t > (this->lastT + 20)) && (t > (this->lastTapStateT + 20)))
+	{
+		/* Update the period to be the difference in your taps */
+		this->period = t - lastT;	
+
+		IOUtils::displayBeat(this->beat, this);				
+		this->beat = (this->beat + 1) % this->beats_per_measure;		
+
+		for (int i = 0; i < this->devices.size(); i++)
+		{
+			if (!this->devices[i]->isStopped())
+			{
+				this->devices[i]->reset();
+			}
+		}	
+	}
+}
+
+void PassthruClock::onTap()
+{
+	if (!tapping)
+	{
+		tapping = true;
+
+		/* Interrupt handler is static, so we have to keep a static reference to the clock */
+		PassthruClock::passthruClock->tap(millis());
+		
+		tapping = false;
+	}
+}
+
+

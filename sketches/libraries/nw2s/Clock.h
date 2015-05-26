@@ -56,6 +56,7 @@ namespace nw2s
 	class VariableClock;
 	class RandomTempoClock;
 	class TapTempoClock;
+	class PassthruClock;
 	
 	int clockDivisionFromName(char* name);
 }
@@ -175,6 +176,34 @@ class nw2s::TapTempoClock : public Clock
 		void reset();
 		void tap(uint32_t t);
 		static void onTempoTap();
+};
+
+class nw2s::PassthruClock : public Clock
+{
+	public: 
+		static PassthruClock* create(PinDigitalIn input, unsigned char beats_per_measure);
+		static PassthruClock* create(aJsonObject* data);
+	
+	private:
+		
+		/* Note - since this is interrupt-driven, only one can catch the taps at a time */
+		static PassthruClock* passthruClock;
+		
+		uint32_t lastT = 0;
+		uint32_t tempo = 0;
+		volatile static bool tapping;
+		
+		/* These remember the last time we saw the input high to avoid "falling" taps */
+		uint32_t lastTapStateT = 0;
+		
+		PinDigitalIn input;
+		
+		PassthruClock(PinDigitalIn input, unsigned char beats_per_measure);
+		virtual void updateTempo(unsigned long t);
+		virtual void timer(uint32_t t);
+		void reset();
+		void tap(uint32_t t);
+		static void onTap();
 };
 
 #endif

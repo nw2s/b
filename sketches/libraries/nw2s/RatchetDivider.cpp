@@ -103,7 +103,7 @@ void RatchetDivider::reset()
 		/* Limit it to the positive range */
 		density = (density < 0) ? 0 : (density > 2047) ? 2047 : density;
 		
-		if (density < Entropy::getValue(2047))
+		if (density > Entropy::getValue(2047))
 		{
 			this->output->reset();
 		}
@@ -127,9 +127,7 @@ void RatchetDivider::timer(unsigned long t)
 	
 	if (this->millisTimer % 252 == 0)
 	{	
-		this->clock_division = this->calculateClockDivision();
-		
-		//Serial.println(this->clock_division);
+		this->clock_division = this->calculateClockDivision();		
 	}
 }
 
