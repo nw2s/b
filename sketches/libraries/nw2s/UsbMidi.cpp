@@ -513,6 +513,7 @@ void USBMidiCCController::onControlChange(uint32_t channel, uint32_t controller,
 	
 }
 
+//TODO: Too much duplicate code between these!
 USBMonophonicMidiController* USBMonophonicMidiController::create(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressureOut, PinAnalogOut afterTouchOut)
 {
 	return new USBMonophonicMidiController(gatePin, triggerOn, triggerOff, pitchPin, velocityPin, pressureOut, afterTouchOut);
@@ -683,7 +684,7 @@ void USBSplitMonoMidiController::onNoteOn(uint32_t channel, uint32_t note, uint3
 		if (this->gate2 != DIGITAL_OUT_NONE) digitalWrite(this->gate2, HIGH);	
 	
 		/* Keep track of it in the note stack */
-		this->noteStack1.noteOn(note, velocity);
+		this->noteStack2.noteOn(note, velocity);
 	}
 }
 
