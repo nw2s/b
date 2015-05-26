@@ -638,6 +638,134 @@ USBSplitMonoMidiController::USBSplitMonoMidiController(PinDigitalOut gatePin1, P
 	this->splitNote = splitNote;
 }
 
+void USBSplitMonoMidiController::timer(uint32_t t)
+{
+	if (this->triggerOn1 != NULL) this->triggerOn1->timer(t);	
+	if (this->triggerOff1 != NULL) this->triggerOff1->timer(t);
+
+	if (this->triggerOn2 != NULL) this->triggerOn2->timer(t);	
+	if (this->triggerOff2 != NULL) this->triggerOff2->timer(t);
+}
+
+void USBSplitMonoMidiController::onNoteOn(uint32_t channel, uint32_t note, uint32_t velocity)
+{
+	if (note < this->splitNote)
+	{
+		/* Set the pitch and be sure to include any pitchbend */
+		this->pitchValue1 = millivoltFromMidiNote(note);
+		if (this->pitch1 != NULL) this->pitch1->outputCV(this->pitchValue1 + this->pitchbendValue);
+	
+		/* Update the velocity output */
+		if (this->velocity1 != NULL) this->velocity1->outputRaw(GET_12BITCV(velocity));
+
+		/* Trigger note-on */
+		if (this->triggerOn1 != NULL) this->triggerOn1->reset();
+
+		/* Open the gate */
+		if (this->gate1 != DIGITAL_OUT_NONE) digitalWrite(this->gate1, HIGH);	
+	
+		/* Keep track of it in the note stack */
+		this->noteStack1.noteOn(note, velocity);
+	}
+	else
+	{
+		/* Set the pitch and be sure to include any pitchbend */
+		this->pitchValue2 = millivoltFromMidiNote(note);
+		if (this->pitch2 != NULL) this->pitch2->outputCV(this->pitchValue2 + this->pitchbendValue);
+	
+		/* Update the velocity output */
+		if (this->velocity2 != NULL) this->velocity2->outputRaw(GET_12BITCV(velocity));
+
+		/* Trigger note-on */
+		if (this->triggerOn2 != NULL) this->triggerOn2->reset();
+
+		/* Open the gate */
+		if (this->gate2 != DIGITAL_OUT_NONE) digitalWrite(this->gate2, HIGH);	
+	
+		/* Keep track of it in the note stack */
+		this->noteStack1.noteOn(note, velocity);
+	}
+}
+
+void USBSplitMonoMidiController::onNoteOff(uint32_t channel, uint32_t note, uint32_t velocity)
+{
+	if (note < this->splitNote)
+	{
+		NoteListEntry playingNow = this->noteStack1.mostRecentNote();
+	
+		/* Remove from the note stack */
+		this->noteStack1.noteOff(note);
+
+		/* See if ihe note that turned off was the currently playing one */
+		if (playingNow.note == note)
+		{
+			/* Signal note-off trigger */
+			if (this->triggerOff1 != NULL) this->triggerOff1->reset();
+	
+			/* See if any more notes are pressed */
+			if (this->noteStack1.getSize() == 0)
+			{
+				/* Close the gate */
+				if (this->gate1 != DIGITAL_OUT_NONE) digitalWrite(this->gate1, LOW);
+
+				/* Reset velocity, pressure, and aftertouch */
+				if (this->velocity1 != NULL) this->velocity1->outputRaw(2048);
+			}
+			else
+			{
+				/* The one that was let go was currently playing and still at least one note pressed... */
+				NoteListEntry mostRecent = this->noteStack1.mostRecentNote();
+
+				/* Set the pitch and be sure to include any pitchbend */
+				this->pitchValue1 = millivoltFromMidiNote(mostRecent.note);
+				if (this->pitch1 != NULL) this->pitch1->outputCV(this->pitchValue1 + this->pitchbendValue);
+
+				/* Update the velocity output */
+				if (this->velocity1 != NULL) this->velocity1->outputRaw(GET_12BITCV(mostRecent.velocity));
+			}
+		}
+	}
+	else
+	{
+		NoteListEntry playingNow = this->noteStack2.mostRecentNote();
+	
+		/* Remove from the note stack */
+		this->noteStack2.noteOff(note);
+
+		/* See if ihe note that turned off was the currently playing one */
+		if (playingNow.note == note)
+		{
+			/* Signal note-off trigger */
+			if (this->triggerOff2 != NULL) this->triggerOff2->reset();
+	
+			/* See if any more notes are pressed */
+			if (this->noteStack2.getSize() == 0)
+			{
+				/* Close the gate */
+				if (this->gate2 != DIGITAL_OUT_NONE) digitalWrite(this->gate2, LOW);
+
+				/* Reset velocity, pressure, and aftertouch */
+				if (this->velocity2 != NULL) this->velocity2->outputRaw(2048);
+			}
+			else
+			{
+				/* The one that was let go was currently playing and still at least one note pressed... */
+				NoteListEntry mostRecent = this->noteStack2.mostRecentNote();
+
+				/* Set the pitch and be sure to include any pitchbend */
+				this->pitchValue2 = millivoltFromMidiNote(mostRecent.note);
+				if (this->pitch2 != NULL) this->pitch2->outputCV(this->pitchValue2 + this->pitchbendValue);
+
+				/* Update the velocity output */
+				if (this->velocity2 != NULL) this->velocity2->outputRaw(GET_12BITCV(mostRecent.velocity));
+			}
+		}
+	}
+}
+
+
+
+
 USBPolyphonicMidiController* USBPolyphonicMidiController::create(PinAnalogOut afterTouchOut)
 {
 	return new USBPolyphonicMidiController(afterTouchOut);
