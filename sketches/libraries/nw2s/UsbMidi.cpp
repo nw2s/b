@@ -19,7 +19,7 @@
 */
 
 /* 
-	Based on code from USB-MIDI class driver for USB Host Shield 2.0 Library
+	Base driver based on code from USB-MIDI class driver for USB Host Shield 2.0 Library
 	which was Copyright 2012-2013 Yuuichi Akagawa
 
 	which in turn was based on an idea from LPK25 USB-MIDI to Serial MIDI converter

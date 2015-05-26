@@ -19,7 +19,7 @@
 */
 
 /* 
-	Based on code from USB-MIDI class driver for USB Host Shield 2.0 Library
+	Base driver based on code from USB-MIDI class driver for USB Host Shield 2.0 Library
 	which was Copyright 2012-2013 Yuuichi Akagawa
 
 	which in turn was based on an idea from LPK25 USB-MIDI to Serial MIDI converter
@@ -81,6 +81,8 @@ namespace nw2s
 	class USBMidiController;
 	class USBMidiCCController;
 	class USBMonophonicMidiController;
+	class USBSplitMonoMidiController;
+	class USBMidiApeggiator;
 	class USBPolyphonicMidiController;
 }
 
@@ -192,8 +194,6 @@ class nw2s::USBMonophonicMidiController : public nw2s::USBMidiCCController, publ
 	private:
 		
 		//TODO: Configurable pitchbend steps
-		//TODO: Configurable middle C?
-		//TODO: Controllers aren't working
 		
 		NoteStack noteStack;
 		PinDigitalOut gate;
@@ -208,6 +208,50 @@ class nw2s::USBMonophonicMidiController : public nw2s::USBMidiCCController, publ
 		AnalogOut* afterTouch;				// Aftertouch = channel pressure
 		
 		USBMonophonicMidiController(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressureOut, PinAnalogOut afterTouchOut);
+};
+
+class nw2s::USBSplitMonoMidiController : public nw2s::USBMidiCCController, public nw2s::TimeBasedDevice
+{
+	public: 
+	
+		static USBSplitMonoMidiController* create(PinDigitalOut gatePin1, PinDigitalOut triggerOn1, PinDigitalOut triggerOff1, PinAnalogOut pitchPin1, PinAnalogOut velocityPin1, PinAnalogOut pressurePin1, PinDigitalOut gatePin2, PinDigitalOut triggerOn2, PinDigitalOut triggerOff2, PinAnalogOut pitchPin2, PinAnalogOut velocityPin2, PinAnalogOut pressurePin2, PinAnalogOut afterTouchOut, uint32_t splitNote);
+
+		void timer(uint32_t t);
+			
+	protected:
+		
+		virtual void onNoteOn(uint32_t channel, uint32_t note, uint32_t velocity);
+		virtual void onNoteOff(uint32_t channel, uint32_t note, uint32_t velocity);
+		virtual void onPressure(uint32_t channel, uint32_t note, uint32_t pressure);
+		virtual void onAftertouch(uint32_t channel, uint32_t value);
+		virtual void onPitchbend(uint32_t channel, uint32_t value);
+		
+	private:
+		
+		//TODO: Configurable pitchbend steps
+
+		uint32_t splitNote = 0;
+		NoteStack noteStack1;
+		NoteStack noteStack2;
+		PinDigitalOut gate1;
+		PinDigitalOut gate2;
+		Gate* triggerOn1 = NULL;
+		Gate* triggerOn2 = NULL;
+		Gate* triggerOff1 = NULL;
+		Gate* triggerOff2 = NULL;
+		uint32_t pitchValue1 = 0;
+		uint32_t pitchValue2 = 0;
+		uint32_t pitchbendValue = 0;
+		uint32_t pitchSteps = 1;
+		AnalogOut* pitch1;
+		AnalogOut* velocity1;
+		AnalogOut* pressure1;				// Pressure = note pressure
+		AnalogOut* pitch2;
+		AnalogOut* velocity2;
+		AnalogOut* pressure2;				// Pressure = note pressure
+		AnalogOut* afterTouch;				// Aftertouch = channel pressure
+		
+		USBSplitMonoMidiController(PinDigitalOut gatePin1, PinDigitalOut triggerOn1, PinDigitalOut triggerOff1, PinAnalogOut pitchPin1, PinAnalogOut velocityPin1, PinAnalogOut pressureOut1, PinDigitalOut gatePin2, PinDigitalOut triggerOn2, PinDigitalOut triggerOff2, PinAnalogOut pitchPin2, PinAnalogOut velocityPin2, PinAnalogOut pressureOut2, PinAnalogOut afterTouchOut);
 };
 
 class nw2s::USBPolyphonicMidiController : public nw2s::USBMidiCCController, public nw2s::TimeBasedDevice
