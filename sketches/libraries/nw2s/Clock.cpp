@@ -513,7 +513,7 @@ PassthruClock::PassthruClock(PinDigitalIn input, unsigned char beats_per_measure
 	this->beat = 0;
 	this->input = input;
 	this->beats_per_measure = beats_per_measure;			
- 	this->period = 400;		
+ 	this->period = 0;		
 	this->last_clock_t = 0;
 	
 	attachInterrupt(input, onTap, RISING);
@@ -532,17 +532,13 @@ void PassthruClock::timer(uint32_t t)
 
 void PassthruClock::updateTempo(unsigned long t)
 {
-	this->next_clock_t = (t + this->period);
-	this->last_clock_t = t;	
+	this->last_clock_t = t;
 }
 
 void PassthruClock::tap(uint32_t t)
 {	
 	if ((t > (this->lastT + 20)) && (t > (this->lastTapStateT + 20)))
 	{
-		/* Update the period to be the difference in your taps */
-		this->period = t - lastT;	
-
 		IOUtils::displayBeat(this->beat, this);				
 		this->beat = (this->beat + 1) % this->beats_per_measure;		
 
@@ -554,6 +550,8 @@ void PassthruClock::tap(uint32_t t)
 			}
 		}	
 	}
+	
+	this->lastT = t;	
 }
 
 void PassthruClock::onTap()

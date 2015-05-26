@@ -251,7 +251,7 @@ class nw2s::USBSplitMonoMidiController : public nw2s::USBMidiCCController, publi
 		AnalogOut* pressure2;				// Pressure = note pressure
 		AnalogOut* afterTouch;				// Aftertouch = channel pressure
 		
-		USBSplitMonoMidiController(PinDigitalOut gatePin1, PinDigitalOut triggerOn1, PinDigitalOut triggerOff1, PinAnalogOut pitchPin1, PinAnalogOut velocityPin1, PinAnalogOut pressureOut1, PinDigitalOut gatePin2, PinDigitalOut triggerOn2, PinDigitalOut triggerOff2, PinAnalogOut pitchPin2, PinAnalogOut velocityPin2, PinAnalogOut pressureOut2, PinAnalogOut afterTouchOut);
+		USBSplitMonoMidiController(PinDigitalOut gatePin1, PinDigitalOut triggerOn1, PinDigitalOut triggerOff1, PinAnalogOut pitchPin1, PinAnalogOut velocityPin1, PinAnalogOut pressureOut1, PinDigitalOut gatePin2, PinDigitalOut triggerOn2, PinDigitalOut triggerOff2, PinAnalogOut pitchPin2, PinAnalogOut velocityPin2, PinAnalogOut pressureOut2, PinAnalogOut afterTouchOut, uint32_t splitNote);
 };
 
 class nw2s::USBPolyphonicMidiController : public nw2s::USBMidiCCController, public nw2s::TimeBasedDevice

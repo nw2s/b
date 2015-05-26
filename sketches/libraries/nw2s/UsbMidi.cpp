@@ -613,6 +613,31 @@ void USBMonophonicMidiController::onPitchbend(uint32_t channel, uint32_t value)
 }	
 	
 
+USBSplitMonoMidiController* USBSplitMonoMidiController::create(PinDigitalOut gatePin1, PinDigitalOut triggerOn1, PinDigitalOut triggerOff1, PinAnalogOut pitchPin1, PinAnalogOut velocityPin1, PinAnalogOut pressureOut1, PinDigitalOut gatePin2, PinDigitalOut triggerOn2, PinDigitalOut triggerOff2, PinAnalogOut pitchPin2, PinAnalogOut velocityPin2, PinAnalogOut pressureOut2, PinAnalogOut afterTouchOut, uint32_t splitNote)
+{
+	return new USBSplitMonoMidiController(gatePin1, triggerOn1, triggerOff1, pitchPin1, velocityPin1, pressureOut1, gatePin2, triggerOn2, triggerOff2, pitchPin2, velocityPin2, pressureOut2, afterTouchOut, splitNote);
+}
+
+USBSplitMonoMidiController::USBSplitMonoMidiController(PinDigitalOut gatePin1, PinDigitalOut triggerOn1, PinDigitalOut triggerOff1, PinAnalogOut pitchPin1, PinAnalogOut velocityPin1, PinAnalogOut pressurePin1, PinDigitalOut gatePin2, PinDigitalOut triggerOn2, PinDigitalOut triggerOff2, PinAnalogOut pitchPin2, PinAnalogOut velocityPin2, PinAnalogOut pressurePin2, PinAnalogOut afterTouchOut, uint32_t splitNote) : USBMidiCCController()
+{
+	this->gate1 = gatePin1;
+	this->pitch1 = (pitchPin1 != ANALOG_OUT_NONE) ? AnalogOut::create(pitchPin1) : NULL;
+	this->velocity1 = (velocityPin1 != ANALOG_OUT_NONE) ? AnalogOut::create(velocityPin1) : NULL;
+	this->pressure1 = (pressurePin1 != ANALOG_OUT_NONE) ? AnalogOut::create(pressurePin1) : NULL;
+	this->triggerOn1 = (triggerOn1 != DIGITAL_OUT_NONE) ? Gate::create(triggerOn1, 30) : NULL;
+	this->triggerOff1 = (triggerOff1 != DIGITAL_OUT_NONE) ? Gate::create(triggerOff1, 30) : NULL;	
+
+	this->gate2 = gatePin2;
+	this->pitch2 = (pitchPin2 != ANALOG_OUT_NONE) ? AnalogOut::create(pitchPin2) : NULL;
+	this->velocity2 = (velocityPin2 != ANALOG_OUT_NONE) ? AnalogOut::create(velocityPin2) : NULL;
+	this->pressure2 = (pressurePin2 != ANALOG_OUT_NONE) ? AnalogOut::create(pressurePin2) : NULL;
+	this->triggerOn2 = (triggerOn2 != DIGITAL_OUT_NONE) ? Gate::create(triggerOn2, 30) : NULL;
+	this->triggerOff2 = (triggerOff2 != DIGITAL_OUT_NONE) ? Gate::create(triggerOff2, 30) : NULL;
+
+	this->afterTouch = (afterTouchOut != ANALOG_OUT_NONE) ? AnalogOut::create(afterTouchOut) : NULL;
+	this->splitNote = splitNote;
+}
+
 USBPolyphonicMidiController* USBPolyphonicMidiController::create(PinAnalogOut afterTouchOut)
 {
 	return new USBPolyphonicMidiController(afterTouchOut);
