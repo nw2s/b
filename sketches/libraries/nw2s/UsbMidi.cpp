@@ -646,6 +646,37 @@ USBSplitMonoMidiController* USBSplitMonoMidiController::create(PinDigitalOut gat
 
 USBSplitMonoMidiController* USBSplitMonoMidiController::create(aJsonObject* data)
 {
+	const char gateNodeName1[] = "gate1";
+	const char pitchNodeName1[] = "pitch1";
+	const char velocityNodeName1[] = "velocity1";
+	const char pressureNodeName1[] = "pressure1";
+	const char triggerOnNodeName1[] = "triggerOn1";
+	const char triggerOffNodeName1[] = "triggerOff1";
+	const char gateNodeName2[] = "gate2";
+	const char pitchNodeName2[] = "pitch2";
+	const char velocityNodeName2[] = "velocity2";
+	const char pressureNodeName2[] = "pressure2";
+	const char triggerOnNodeName2[] = "triggerOn2";
+	const char triggerOffNodeName2[] = "triggerOff2";
+	const char aftertouchNodeName[] = "aftertouch";
+	const char noteNodeName[] = "splitNote";
+	
+	PinDigitalOut gate1 = getDigitalOutputFromJSON(data, gateNodeName1);
+	PinDigitalOut triggerOn1 = getDigitalOutputFromJSON(data, triggerOnNodeName1);
+	PinDigitalOut triggerOff1 = getDigitalOutputFromJSON(data, triggerOnNodeName1);
+	PinAnalogOut pitch1 = getAnalogOutputFromJSON(data, pitchNodeName1);
+	PinAnalogOut velocity1 = getAnalogOutputFromJSON(data, velocityNodeName1);
+	PinAnalogOut pressure1 = getAnalogOutputFromJSON(data, pressureNodeName1);
+	PinDigitalOut gate2 = getDigitalOutputFromJSON(data, gateNodeName2);
+	PinDigitalOut triggerOn2 = getDigitalOutputFromJSON(data, triggerOnNodeName2);
+	PinDigitalOut triggerOff2 = getDigitalOutputFromJSON(data, triggerOnNodeName2);
+	PinAnalogOut pitch2 = getAnalogOutputFromJSON(data, pitchNodeName2);
+	PinAnalogOut velocity2 = getAnalogOutputFromJSON(data, velocityNodeName2);
+	PinAnalogOut pressure2 = getAnalogOutputFromJSON(data, pressureNodeName2);
+	PinAnalogOut aftertouch = getAnalogOutputFromJSON(data, aftertouchNodeName);
+	int splitNote = getIntFromJSON(data, noteNodeName, 50, 0, 127);
+		
+	return new USBSplitMonoMidiController(gate1, triggerOn1, triggerOff1, pitch1, velocity1, pressure1, gate2, triggerOn2, triggerOff2, pitch2, velocity2, pressure2, aftertouch, splitNote);	
 }
 
 USBSplitMonoMidiController::USBSplitMonoMidiController(PinDigitalOut gatePin1, PinDigitalOut triggerOn1, PinDigitalOut triggerOff1, PinAnalogOut pitchPin1, PinAnalogOut velocityPin1, PinAnalogOut pressurePin1, PinDigitalOut gatePin2, PinDigitalOut triggerOn2, PinDigitalOut triggerOff2, PinAnalogOut pitchPin2, PinAnalogOut velocityPin2, PinAnalogOut pressurePin2, PinAnalogOut afterTouchOut, uint32_t splitNote) : USBMidiCCController()

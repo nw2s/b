@@ -417,10 +417,17 @@ void nw2s::loadProgram(aJsonObject* program)
 
 			EventManager::registerUsbDevice(controller);
 			EventManager::registerDevice(controller);
+			
+			delay(200);
 		}
 		else if (strcmp(typeNode->valuestring, "USBSplitMonoMidiController") == 0)
 		{
-			EventManager::registerDevice(USBSplitMonoMidiController::create(deviceNode));
+			USBSplitMonoMidiController* controller = USBSplitMonoMidiController::create(deviceNode);
+
+			EventManager::registerUsbDevice(controller);
+			EventManager::registerDevice(controller);
+			
+			delay(200);
 		}
 		else if (strcmp(typeNode->valuestring, "USBMidiApeggiator") == 0)
 		{
