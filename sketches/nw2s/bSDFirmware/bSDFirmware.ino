@@ -49,4 +49,6 @@ void setup()
 void loop() 
 {
 	EventManager::loop();
+	
+	delay(1);
 }

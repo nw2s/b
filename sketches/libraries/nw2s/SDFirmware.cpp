@@ -413,7 +413,10 @@ void nw2s::loadProgram(aJsonObject* program)
 		}
 		else if (strcmp(typeNode->valuestring, "USBMonophonicMidiController") == 0)
 		{
-			EventManager::registerDevice(USBMonophonicMidiController::create(deviceNode));
+			USBMonophonicMidiController* controller = USBMonophonicMidiController::create(deviceNode);
+
+			EventManager::registerUsbDevice(controller);
+			EventManager::registerDevice(controller);
 		}
 		else if (strcmp(typeNode->valuestring, "USBSplitMonoMidiController") == 0)
 		{
@@ -430,6 +433,8 @@ void nw2s::loadProgram(aJsonObject* program)
 				static const char nodeError[] = "USBMidiApeggiator defined with no clock, skipping.";
 				Serial.println(String(nodeError));
 			}
+			
+			delay(200);
 		}
 		else if (strcmp(typeNode->valuestring, "USBPolyphonicMidiController") == 0)
 		{
