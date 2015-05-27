@@ -519,19 +519,23 @@ void USBMidiCCController::onControlChange(uint32_t channel, uint32_t controller,
 
 USBMonophonicMidiController* USBMonophonicMidiController::create(aJsonObject* data)
 {
-	const char gateNodeName[] = "gateOut";
-	const char pitchNodeName[] = "pitchOut";
-	const char velocityNodeName[] = "velocityOut";
-	const char pressureNodeName[] = "pressureOut";
-	const char aftertouchNodeName[] = "aftertouchOut";
-	const char triggerOnNodeName[] = "triggerOnOut";
-	const char triggerOffNodeName[] = "triggerOffOut";
+	const char gateNodeName[] = "gate";
+	const char pitchNodeName[] = "pitch";
+	const char velocityNodeName[] = "velocity";
+	const char pressureNodeName[] = "pressure";
+	const char aftertouchNodeName[] = "aftertouch";
+	const char triggerOnNodeName[] = "triggerOn";
+	const char triggerOffNodeName[] = "triggerOff";
 	
-	int mintempo = getDigitalOutFromJSON(data, gateNodeName);
-	int maxtempo = getAnalogOutFromJSON(data, pitchNodeName);
-	int beats = getIntFromJSON(data, beatsNodeName, 16, 1, 16);
+	PinDigitalOut gate = getDigitalOutputFromJSON(data, gateNodeName);
+	PinDigitalOut triggerOn = getDigitalOutputFromJSON(data, triggerOnNodeName);
+	PinDigitalOut triggerOff = getDigitalOutputFromJSON(data, triggerOnNodeName);
+	PinAnalogOut pitch = getAnalogOutputFromJSON(data, pitchNodeName);
+	PinAnalogOut velocity = getAnalogOutputFromJSON(data, velocityNodeName);
+	PinAnalogOut pressure = getAnalogOutputFromJSON(data, pressureNodeName);
+	PinAnalogOut aftertouch = getAnalogOutputFromJSON(data, aftertouchNodeName);
 		
-	return new RandomTempoClock(mintempo, maxtempo, beats);	
+	return new USBMonophonicMidiController(gate, triggerOn, triggerOff, pitch, velocity, pressure, aftertouch);	
 }
 
 //TODO: Too much duplicate code between these!
