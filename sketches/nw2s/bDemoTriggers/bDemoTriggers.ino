@@ -66,10 +66,10 @@ void setup()
 	//Clock* democlock = RandomTempoClock::create(75, 80, 16);
 
 	/* Clock slaving to the Ardcore clock input */
-	//Clock* democlock = TapTempoClock::create(DUE_IN_D0, DUE_IN_D1, 16);
+	Clock* democlock = TapTempoClock::create(DUE_IN_D0, DUE_IN_D1, 16);
 
 	/* Clock that just passes through resets() */
-	Clock* democlock = PassthruClock::create(DUE_IN_D0, 16);
+	//Clock* democlock = PassthruClock::create(DUE_IN_D0, 16);
 
 	/* Register the clock with the EventManager */
 	EventManager::registerDevice(democlock);
