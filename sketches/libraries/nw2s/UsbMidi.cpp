@@ -503,6 +503,10 @@ USBMidiController::USBMidiController() : USBMidiDevice()
 	
 }
 
+USBMidiCCController* USBMidiCCController::create(aJsonObject* data)
+{
+}
+
 USBMidiCCController::USBMidiCCController() : USBMidiController()
 {
 	
@@ -511,6 +515,23 @@ USBMidiCCController::USBMidiCCController() : USBMidiController()
 void USBMidiCCController::onControlChange(uint32_t channel, uint32_t controller, uint32_t value)
 {
 	
+}
+
+USBMonophonicMidiController* USBMonophonicMidiController::create(aJsonObject* data)
+{
+	const char gateNodeName[] = "gateOut";
+	const char pitchNodeName[] = "pitchOut";
+	const char velocityNodeName[] = "velocityOut";
+	const char pressureNodeName[] = "pressureOut";
+	const char aftertouchNodeName[] = "aftertouchOut";
+	const char triggerOnNodeName[] = "triggerOnOut";
+	const char triggerOffNodeName[] = "triggerOffOut";
+	
+	int mintempo = getDigitalOutFromJSON(data, gateNodeName);
+	int maxtempo = getAnalogOutFromJSON(data, pitchNodeName);
+	int beats = getIntFromJSON(data, beatsNodeName, 16, 1, 16);
+		
+	return new RandomTempoClock(mintempo, maxtempo, beats);	
 }
 
 //TODO: Too much duplicate code between these!
@@ -617,6 +638,10 @@ void USBMonophonicMidiController::onPitchbend(uint32_t channel, uint32_t value)
 USBSplitMonoMidiController* USBSplitMonoMidiController::create(PinDigitalOut gatePin1, PinDigitalOut triggerOn1, PinDigitalOut triggerOff1, PinAnalogOut pitchPin1, PinAnalogOut velocityPin1, PinAnalogOut pressureOut1, PinDigitalOut gatePin2, PinDigitalOut triggerOn2, PinDigitalOut triggerOff2, PinAnalogOut pitchPin2, PinAnalogOut velocityPin2, PinAnalogOut pressureOut2, PinAnalogOut afterTouchOut, uint32_t splitNote)
 {
 	return new USBSplitMonoMidiController(gatePin1, triggerOn1, triggerOff1, pitchPin1, velocityPin1, pressureOut1, gatePin2, triggerOn2, triggerOff2, pitchPin2, velocityPin2, pressureOut2, afterTouchOut, splitNote);
+}
+
+USBSplitMonoMidiController* USBSplitMonoMidiController::create(aJsonObject* data)
+{
 }
 
 USBSplitMonoMidiController::USBSplitMonoMidiController(PinDigitalOut gatePin1, PinDigitalOut triggerOn1, PinDigitalOut triggerOff1, PinAnalogOut pitchPin1, PinAnalogOut velocityPin1, PinAnalogOut pressurePin1, PinDigitalOut gatePin2, PinDigitalOut triggerOn2, PinDigitalOut triggerOff2, PinAnalogOut pitchPin2, PinAnalogOut velocityPin2, PinAnalogOut pressurePin2, PinAnalogOut afterTouchOut, uint32_t splitNote) : USBMidiCCController()
@@ -805,6 +830,10 @@ USBPolyphonicMidiController* USBPolyphonicMidiController::create(PinAnalogOut af
 	return new USBPolyphonicMidiController(afterTouchOut);
 }
 
+USBPolyphonicMidiController* USBPolyphonicMidiController::create(aJsonObject* data)
+{
+}
+
 USBPolyphonicMidiController::USBPolyphonicMidiController(PinAnalogOut afterTouchPin) : USBMidiCCController()
 {
 	this->afterTouch = (afterTouchPin != ANALOG_OUT_NONE) ? AnalogOut::create(afterTouchPin) : NULL;
@@ -847,4 +876,12 @@ void USBPolyphonicMidiController::onNoteOn(uint32_t channel, uint32_t note, uint
 	// }
 }
 	
+USBMidiTriggers* USBMidiTriggers::create(aJsonObject* data)
+{
+}
+
+
+USBMidiApeggiator* USBMidiApeggiator::create(aJsonObject* data)
+{
+}
 

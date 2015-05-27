@@ -40,6 +40,7 @@
 #include "GridOto.h"
 #include "GridTrigger.h"
 #include "GridNoteSequencer.h"
+#include "UsbMidi.h"
 
 using namespace nw2s;
 
@@ -173,6 +174,16 @@ void nw2s::loadProgram(aJsonObject* program)
 			clockDevice = RandomTempoClock::create(clockNode);
 			EventManager::registerDevice(clockDevice);
 		}		
+		else if (strcmp(clockTypeNode->valuestring, "TapTempoClock") == 0)
+		{
+			clockDevice = TapTempoClock::create(clockNode);
+			EventManager::registerDevice(clockDevice);
+		}
+		else if (strcmp(clockTypeNode->valuestring, "PassthruClock") == 0)
+		{
+			clockDevice = PassthruClock::create(clockNode);
+			EventManager::registerDevice(clockDevice);
+		}
 	}
 	
 
@@ -395,6 +406,38 @@ void nw2s::loadProgram(aJsonObject* program)
 				static const char nodeError[] = "Trigger defined with no clock, skipping.";
 				Serial.println(String(nodeError));
 			}
+		}
+		else if (strcmp(typeNode->valuestring, "USBMidiCCController") == 0)
+		{
+			EventManager::registerDevice(USBMidiCCController::create(deviceNode));
+		}
+		else if (strcmp(typeNode->valuestring, "USBMonophonicMidiController") == 0)
+		{
+			EventManager::registerDevice(USBMonophonicMidiController::create(deviceNode));
+		}
+		else if (strcmp(typeNode->valuestring, "USBSplitMonoMidiController") == 0)
+		{
+			EventManager::registerDevice(USBSplitMonoMidiController::create(deviceNode));
+		}
+		else if (strcmp(typeNode->valuestring, "USBMidiApeggiator") == 0)
+		{
+			if (clockDevice != NULL)
+			{
+				clockDevice->registerDevice(USBMidiApeggiator::create(deviceNode));
+			}
+			else
+			{
+				static const char nodeError[] = "USBMidiApeggiator defined with no clock, skipping.";
+				Serial.println(String(nodeError));
+			}
+		}
+		else if (strcmp(typeNode->valuestring, "USBPolyphonicMidiController") == 0)
+		{
+			EventManager::registerDevice(USBPolyphonicMidiController::create(deviceNode));
+		}
+		else if (strcmp(typeNode->valuestring, "USBMidiTriggers") == 0)
+		{
+			EventManager::registerDevice(USBMidiTriggers::create(deviceNode));
 		}
 		else if (strcmp(typeNode->valuestring, "VCSamplingFrequencyOscillator") == 0)
 		{

@@ -35,6 +35,7 @@
 #include "../aJson/aJson.h"
 #include "IO.h"
 #include "Gate.h"
+#include "Clock.h"
 #include <NoteStack.h>
 
 /* endpoint 0, bulk_IN(MIDI), bulk_OUT(MIDI), bulk_IN(VSP), bulk_OUT(VSP) */
@@ -65,6 +66,13 @@ namespace nw2s
 		AnalogOut* output;
 	};
 	
+	typedef struct TriggerOutput
+	{
+		uint32_t note;
+		AnalogOut* velocity;
+		PinDigitalOut output;
+	};
+	
 	typedef struct Voice
 	{
 		bool allocated = false;
@@ -84,6 +92,7 @@ namespace nw2s
 	class USBSplitMonoMidiController;
 	class USBMidiApeggiator;
 	class USBPolyphonicMidiController;
+	class USBMidiTriggers;
 }
 
 class nw2s::USBMidiDevice : public USBDeviceConfig, public UsbBasedDevice 
@@ -155,11 +164,12 @@ class nw2s::USBMidiController : public USBMidiDevice
 		
 };
 
-class nw2s::USBMidiCCController : public nw2s::USBMidiController
+class nw2s::USBMidiCCController : public nw2s::USBMidiController, public nw2s::TimeBasedDevice
 {
 	public:
 
-		static void create();
+		static USBMidiCCController* create();
+		static USBMidiCCController* create(aJsonObject* data);
 		void addControlPin(uint32_t controller, PinAnalogOut output);
 
 	protected:
@@ -172,12 +182,13 @@ class nw2s::USBMidiCCController : public nw2s::USBMidiController
 		std::vector<ControlOutput> outputs;
 };
 
-class nw2s::USBMonophonicMidiController : public nw2s::USBMidiCCController, public nw2s::TimeBasedDevice
+class nw2s::USBMonophonicMidiController : public nw2s::USBMidiCCController
 {
 	
 	public: 
 	
 		static USBMonophonicMidiController* create(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut);
+		static USBMonophonicMidiController* create(aJsonObject* data);
 
 		void timer(uint32_t t);
 			
@@ -210,11 +221,12 @@ class nw2s::USBMonophonicMidiController : public nw2s::USBMidiCCController, publ
 		USBMonophonicMidiController(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressureOut, PinAnalogOut afterTouchOut);
 };
 
-class nw2s::USBSplitMonoMidiController : public nw2s::USBMidiCCController, public nw2s::TimeBasedDevice
+class nw2s::USBSplitMonoMidiController : public nw2s::USBMidiCCController
 {
 	public: 
 	
 		static USBSplitMonoMidiController* create(PinDigitalOut gatePin1, PinDigitalOut triggerOn1, PinDigitalOut triggerOff1, PinAnalogOut pitchPin1, PinAnalogOut velocityPin1, PinAnalogOut pressurePin1, PinDigitalOut gatePin2, PinDigitalOut triggerOn2, PinDigitalOut triggerOff2, PinAnalogOut pitchPin2, PinAnalogOut velocityPin2, PinAnalogOut pressurePin2, PinAnalogOut afterTouchOut, uint32_t splitNote);
+		static USBSplitMonoMidiController* create(aJsonObject* data);
 
 		void timer(uint32_t t);
 			
@@ -254,11 +266,12 @@ class nw2s::USBSplitMonoMidiController : public nw2s::USBMidiCCController, publi
 		USBSplitMonoMidiController(PinDigitalOut gatePin1, PinDigitalOut triggerOn1, PinDigitalOut triggerOff1, PinAnalogOut pitchPin1, PinAnalogOut velocityPin1, PinAnalogOut pressureOut1, PinDigitalOut gatePin2, PinDigitalOut triggerOn2, PinDigitalOut triggerOff2, PinAnalogOut pitchPin2, PinAnalogOut velocityPin2, PinAnalogOut pressureOut2, PinAnalogOut afterTouchOut, uint32_t splitNote);
 };
 
-class nw2s::USBPolyphonicMidiController : public nw2s::USBMidiCCController, public nw2s::TimeBasedDevice
+class nw2s::USBPolyphonicMidiController : public nw2s::USBMidiCCController
 {
 	public:
 	
 		static USBPolyphonicMidiController* create(PinAnalogOut afterTouchOut);
+		static USBPolyphonicMidiController* create(aJsonObject* data);
 
 		void timer(uint32_t);		
 		void addVoice(PinDigitalOut gatePin, PinDigitalOut triggerOn, PinDigitalOut triggerOff, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressureOut);
@@ -281,6 +294,44 @@ class nw2s::USBPolyphonicMidiController : public nw2s::USBMidiCCController, publ
 		
 		USBPolyphonicMidiController(PinAnalogOut afterTouchOut);
 }; 
+
+class nw2s::USBMidiTriggers : public nw2s::USBMidiCCController
+{
+	public:
+
+		static USBMidiTriggers* create();
+		static USBMidiTriggers* create(aJsonObject* data);
+
+		void addTriggerPin(uint32_t note, PinDigitalOut output);
+
+	protected:
+		
+		USBMidiTriggers();
+
+	private:
+
+		std::vector<TriggerOutput> outputs;
+};
+
+class nw2s::USBMidiApeggiator : public nw2s::USBMidiCCController, public nw2s::BeatDevice
+{
+	public:
+
+		static USBMidiApeggiator* create();
+		static USBMidiApeggiator* create(aJsonObject* data);
+
+		void addTriggerPin(uint32_t note, PinDigitalOut output);
+		void timer(uint32_t t);
+		void reset();
+
+	protected:
+		
+		USBMidiApeggiator();
+
+	private:
+
+};
+
 
 #endif
 
