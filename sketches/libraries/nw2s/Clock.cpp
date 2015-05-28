@@ -223,7 +223,7 @@ PassthruClock* PassthruClock::create(aJsonObject* data)
 	PinDigitalIn input = getDigitalInputFromJSON(data, inputNodeName);
 	int beats = getIntFromJSON(data, beatsNodeName, 16, 1, 16);
 		
-	return new PassthruClock(input, beats);
+	return PassthruClock::create(input, beats);
 }
 
 void Clock::registerDevice(BeatDevice* device)
