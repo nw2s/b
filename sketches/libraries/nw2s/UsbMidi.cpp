@@ -500,22 +500,52 @@ void USBMidiController::processMessage(uint32_t size, uint8_t* buffer)
 
 USBMidiController::USBMidiController() : USBMidiDevice()
 {
-	
+}
+
+USBMidiCCController* USBMidiCCController::create()
+{
+	return new USBMidiCCController();
 }
 
 USBMidiCCController* USBMidiCCController::create(aJsonObject* data)
 {
+	USBMidiCCController* controller = new USBMidiCCController();
+	
+	//controller->
 }
 
 USBMidiCCController::USBMidiCCController() : USBMidiController()
+{
+}
+
+void USBMidiCCController::addControlPin(uint32_t controller, PinAnalogOut output, CCRange range)
+{
+	ControlOutput outconfig;
+	
+	outconfig.controller = controller;
+	outconfig.output = AnalogOut::create(output);
+	outconfig.range = range;
+	
+	outputs.push_back(outconfig);
+}
+
+void USBMidiCCController::timer(uint32_t t)
 {
 	
 }
 
 void USBMidiCCController::onControlChange(uint32_t channel, uint32_t controller, uint32_t value)
 {
-	
+	for (uint32_t i = 0; i < outputs.size(); i++)
+	{
+		if (controller == outputs[i].controller)
+		{
+			//TODO: Support bipolar
+			outputs[i].output->outputRaw(GET_12BITCV(value));
+		}
+	}
 }
+
 
 USBMonophonicMidiController* USBMonophonicMidiController::create(aJsonObject* data)
 {
