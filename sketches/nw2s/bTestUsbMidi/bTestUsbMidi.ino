@@ -28,6 +28,9 @@ void setup()
 	
 	usbDevice = USBMonophonicMidiController::create(DUE_OUT_D00, DUE_OUT_D01, DUE_OUT_D02, DUE_SPI_4822_00, DUE_SPI_4822_02, DUE_SPI_4822_03, DUE_SPI_4822_04);
 
+	/* Mod Wheel */
+	usbDevice->addControlPin(1, DUE_SPI_4822_10, CC_RANGE_UNIPOLAR);
+
 	EventManager::registerUsbDevice(usbDevice);
 	EventManager::registerDevice(usbDevice);
 
