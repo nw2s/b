@@ -47,7 +47,8 @@
 #define GET_MIDI_COMMAND(X)		X >> 4
 #define GET_MIDI_CHANNEL(X) 	X & 0x0F
 #define GET_MIDI_14BIT(X, Y)	(X << 7) | Y
-#define GET_12BITCV(X)			2048 - (X << 4)
+#define GET_12BITCV(X)			2047 - (X << 4)
+#define GET_BIPOLAR_12BITCV(X)	4095 - (X << 5)
 
 #define MIDI_NOTE_OFF 	0b00001000
 #define MIDI_NOTE_ON	0b00001001

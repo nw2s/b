@@ -565,8 +565,14 @@ void USBMidiCCController::onControlChange(uint32_t channel, uint32_t controller,
 	{
 		if (controller == outputs[i].controller)
 		{
-			//TODO: Support bipolar
-			outputs[i].output->outputRaw(GET_12BITCV(value));
+			if (outputs[i].range == CC_RANGE_BIPOLAR)
+			{
+				outputs[i].output->outputRaw(GET_BIPOLAR_12BITCV(value));
+			}
+			else
+			{
+				outputs[i].output->outputRaw(GET_12BITCV(value));
+			}
 		}
 	}
 }
