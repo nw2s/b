@@ -858,8 +858,6 @@ void USBSplitMonoMidiController::onPitchbend(uint32_t channel, uint32_t value)
 	if (this->pitch2 != NULL) this->pitch2->outputCV(this->pitchValue2 + this->pitchbendValue);
 }	
 
-
-
 USBPolyphonicMidiController* USBPolyphonicMidiController::create(PinAnalogOut afterTouchOut)
 {
 	return new USBPolyphonicMidiController(afterTouchOut);

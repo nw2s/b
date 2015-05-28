@@ -205,7 +205,7 @@ TapTempoClock* TapTempoClock::create(aJsonObject* data)
 	PinDigitalIn resetInput = getDigitalInputFromJSON(data, resetInputNodeName);
 	int beats = getIntFromJSON(data, beatsNodeName, 16, 1, 16);
 		
-	return new TapTempoClock(input, resetInput, beats);
+	return TapTempoClock::create(input, resetInput, beats);
 }
 
 PassthruClock* PassthruClock::create(PinDigitalIn input, unsigned char beats_per_measure)
