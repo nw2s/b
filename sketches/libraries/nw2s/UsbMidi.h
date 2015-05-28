@@ -192,6 +192,7 @@ class nw2s::USBMidiCCController : public nw2s::USBMidiController, public nw2s::T
 		
 		USBMidiCCController();
 		virtual void onControlChange(uint32_t channel, uint32_t controller, uint32_t value);
+		void addControlPins(aJsonObject* data);
 
 	private:
 

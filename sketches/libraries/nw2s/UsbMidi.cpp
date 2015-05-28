@@ -510,8 +510,15 @@ USBMidiCCController* USBMidiCCController::create()
 USBMidiCCController* USBMidiCCController::create(aJsonObject* data)
 {
 	USBMidiCCController* controller = new USBMidiCCController();
+
+	controller->addControlPins(data);
 	
-	//controller->
+	return controller;
+}
+
+void USBMidiCCController::addControlPins(aJsonObject* data)
+{
+	
 }
 
 USBMidiCCController::USBMidiCCController() : USBMidiController()
@@ -564,8 +571,12 @@ USBMonophonicMidiController* USBMonophonicMidiController::create(aJsonObject* da
 	PinAnalogOut velocity = getAnalogOutputFromJSON(data, velocityNodeName);
 	PinAnalogOut pressure = getAnalogOutputFromJSON(data, pressureNodeName);
 	PinAnalogOut aftertouch = getAnalogOutputFromJSON(data, aftertouchNodeName);
-		
-	return new USBMonophonicMidiController(gate, triggerOn, triggerOff, pitch, velocity, pressure, aftertouch);	
+				
+	USBMonophonicMidiController* controller = new USBMonophonicMidiController(gate, triggerOn, triggerOff, pitch, velocity, pressure, aftertouch);	
+	
+	controller->addControlPins(data);
+
+	return controller;
 }
 
 //TODO: Too much duplicate code between these!
@@ -705,8 +716,12 @@ USBSplitMonoMidiController* USBSplitMonoMidiController::create(aJsonObject* data
 	PinAnalogOut pressure2 = getAnalogOutputFromJSON(data, pressureNodeName2);
 	PinAnalogOut aftertouch = getAnalogOutputFromJSON(data, aftertouchNodeName);
 	int splitNote = getIntFromJSON(data, noteNodeName, 50, 0, 127);
-		
-	return new USBSplitMonoMidiController(gate1, triggerOn1, triggerOff1, pitch1, velocity1, pressure1, gate2, triggerOn2, triggerOff2, pitch2, velocity2, pressure2, aftertouch, splitNote);	
+				
+	USBSplitMonoMidiController* controller = new USBSplitMonoMidiController(gate1, triggerOn1, triggerOff1, pitch1, velocity1, pressure1, gate2, triggerOn2, triggerOff2, pitch2, velocity2, pressure2, aftertouch, splitNote);	
+
+	controller->addControlPins(data);	
+	
+	return controller;
 }
 
 USBSplitMonoMidiController::USBSplitMonoMidiController(PinDigitalOut gatePin1, PinDigitalOut triggerOn1, PinDigitalOut triggerOff1, PinAnalogOut pitchPin1, PinAnalogOut velocityPin1, PinAnalogOut pressurePin1, PinDigitalOut gatePin2, PinDigitalOut triggerOn2, PinDigitalOut triggerOff2, PinAnalogOut pitchPin2, PinAnalogOut velocityPin2, PinAnalogOut pressurePin2, PinAnalogOut afterTouchOut, uint32_t splitNote) : USBMidiCCController()
