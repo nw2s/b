@@ -518,7 +518,25 @@ USBMidiCCController* USBMidiCCController::create(aJsonObject* data)
 
 void USBMidiCCController::addControlPins(aJsonObject* data)
 {
+	const char pinsNodeName[] = "controllerMap";
+	const char controllerNodeName[] = "controlNumber";
+	const char outputNodeName[] = "output";
+	const char pressureNodeName[] = "bipolar";
+
+	aJsonObject* controllerMap = aJson.getObjectItem(data, pinsNodeName);
+
+	if (controllerMap == NULL) return;
 	
+	for (int i = 0; i < aJson.getArraySize(controllerMap); i++)
+	{
+		aJsonObject* controllerNode = aJson.getArrayItem(controllerMap, i);
+
+		int controller = getIntFromJSON(controllerNode, controllerNodeName, 1, 0, 127);
+		PinAnalogOut output = getAnalogOutputFromJSON(controllerNode, outputNodeName);
+		bool bipolar = getBoolFromJSON(controllerNode, pressureNodeName, false);
+		
+		this->addControlPin(controller, output, bipolar ? CC_RANGE_BIPOLAR : CC_RANGE_UNIPOLAR);
+	}		
 }
 
 USBMidiCCController::USBMidiCCController() : USBMidiController()
