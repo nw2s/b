@@ -981,8 +981,42 @@ void USBPolyphonicMidiController::onNoteOn(uint32_t channel, uint32_t note, uint
 	
 USBMidiTriggers* USBMidiTriggers::create(aJsonObject* data)
 {
+	
 }
 
+USBMidiTriggers::USBMidiTriggers() : USBMidiCCController()
+{
+	
+}
+
+void USBMidiTriggers::addTrigger(uint32_t note, PinAnalogOut velocity, PinDigitalOut output)
+{
+	AnalogOut* velocityOut = AnalogOut::create(velocity);
+	
+	this->outputs.push_back({ note, velocityOut, output });
+}
+
+void USBMidiTriggers::onNoteOn(uint32_t channel, uint32_t note, uint32_t velocity)
+{
+	for (uint32_t i = 0; i < this->outputs.size(); i++)
+	{
+		if (this->outputs[i].note == note)
+		{
+			digitalWrite(this->outputs[i].output, HIGH);
+		}
+	}
+}
+
+void USBMidiTriggers::onNoteOff(uint32_t channel, uint32_t note, uint32_t velocity)
+{
+	for (uint32_t i = 0; i < this->outputs.size(); i++)
+	{
+		if (this->outputs[i].note == note)
+		{
+			digitalWrite(this->outputs[i].output, LOW);
+		}
+	}
+}
 
 USBMidiApeggiator* USBMidiApeggiator::create(aJsonObject* data)
 {

@@ -321,7 +321,10 @@ class nw2s::USBMidiTriggers : public nw2s::USBMidiCCController
 		static USBMidiTriggers* create();
 		static USBMidiTriggers* create(aJsonObject* data);
 
-		void addTriggerPin(uint32_t note, PinDigitalOut output);
+		void addTrigger(uint32_t note, PinAnalogOut velocity, PinDigitalOut output);
+
+		virtual void onNoteOn(uint32_t channel, uint32_t note, uint32_t velocity);
+		virtual void onNoteOff(uint32_t channel, uint32_t note, uint32_t velocity);
 
 	protected:
 		
