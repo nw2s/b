@@ -409,7 +409,10 @@ void nw2s::loadProgram(aJsonObject* program)
 		}
 		else if (strcmp(typeNode->valuestring, "USBMidiCCController") == 0)
 		{
-			EventManager::registerDevice(USBMidiCCController::create(deviceNode));
+			USBMidiCCController* controller = USBMidiCCController::create(deviceNode);
+			
+			EventManager::registerUsbDevice(controller);
+			EventManager::registerDevice(controller);
 		}
 		else if (strcmp(typeNode->valuestring, "USBMonophonicMidiController") == 0)
 		{

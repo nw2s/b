@@ -960,6 +960,7 @@ void USBPolyphonicMidiController::onNoteOn(uint32_t channel, uint32_t note, uint
 	// if (this->voices.size() > 0)
 	// {
 	// 	/* If the current voice is already in use, don't steal it. Ignore the note on */
+	//  //TODO: configurable voice allocation strategies
 	// 	if (!this->voices[this->currentVoice].allocated)
 	// 	{
 	// 		/* Set the pitch and be sure to include any pitchbend */
