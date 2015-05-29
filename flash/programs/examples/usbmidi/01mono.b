@@ -2,7 +2,7 @@
 	"program" : 	
 
 	{
-		"name" : 			"Novation SL CC",
+		"name" : 			"Monophonic Midi",
 			
 		"clock" :
 
@@ -15,91 +15,79 @@
 		"devices" : [
 			
 			{
-				"type" : "USBMidiCCController",
-
+				"type" : "USBMonophoncMidiController",
+				"gate" : 1,
+				"pitch" : 1,
+				"velocity" : 2,
+				"pressure" : 3,
+				"aftertouch" : 4,
+				"triggerOn" : 2,
+				"triggerOff" : 3,
+				
 				"controllerMap" : [
 					
 					{
-						"controlNumber" : 14,
-						"output" : 1,
-						"bipolar" : false
-					},
-					{
-						"controlNumber" : 15,
-						"output" : 2,
-						"bipolar" : false
-					},
-					{
-						"controlNumber" : 16,
-						"output" : 3,
-						"bipolar" : false
-					},
-					{
-						"controlNumber" : 17,
-						"output" : 4,
-						"bipolar" : false
-					},
-					{
-						"controlNumber" : 18,
+						"controlNumber" : 1,
 						"output" : 5,
 						"bipolar" : false
 					},
 					{
-						"controlNumber" : 19,
+						"controlNumber" : 103,
 						"output" : 6,
 						"bipolar" : false
 					},
 					{
-						"controlNumber" : 20,
+						"controlNumber" : 102,
 						"output" : 7,
 						"bipolar" : false
 					},
 					{
-						"controlNumber" : 21,
+						"controlNumber" : 14,
 						"output" : 8,
 						"bipolar" : false
 					},
 					{
-						"controlNumber" : 22,
+						"controlNumber" : 15,
 						"output" : 9,
 						"bipolar" : false
 					},
 					{
-						"controlNumber" : 23,
+						"controlNumber" : 16,
 						"output" : 10,
 						"bipolar" : false
 					},
 					{
-						"controlNumber" : 24,
+						"controlNumber" : 17,
 						"output" : 11,
 						"bipolar" : false
 					},
 					{
-						"controlNumber" : 25,
+						"controlNumber" : 18,
 						"output" : 12,
 						"bipolar" : false
 					},
 					{
-						"controlNumber" : 26,
+						"controlNumber" : 19,
 						"output" : 13,
 						"bipolar" : false
 					},
 					{
-						"controlNumber" : 27,
+						"controlNumber" : 20,
 						"output" : 14,
 						"bipolar" : false
 					},
 					{
-						"controlNumber" : 28,
+						"controlNumber" : 21,
 						"output" : 15,
 						"bipolar" : false
 					},
 					{
-						"controlNumber" : 29,
+						"controlNumber" : 22,
 						"output" : 16,
 						"bipolar" : false
 					}
 				]
+				
 			}
 		]
 	}
