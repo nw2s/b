@@ -991,7 +991,7 @@ USBMidiTriggers::USBMidiTriggers() : USBMidiCCController()
 
 void USBMidiTriggers::addTrigger(uint32_t note, PinAnalogOut velocity, PinDigitalOut output)
 {
-	AnalogOut* velocityOut = AnalogOut::create(velocity);
+	AnalogOut* velocityOut = (velocity != ANALOG_OUT_NONE) ? AnalogOut::create(velocity) : NULL;
 	
 	this->outputs.push_back({ note, velocityOut, output });
 }
@@ -1002,6 +1002,10 @@ void USBMidiTriggers::onNoteOn(uint32_t channel, uint32_t note, uint32_t velocit
 	{
 		if (this->outputs[i].note == note)
 		{
+			/* Update the velocity output */
+			if (this->outputs[i].velocity != NULL) this->outputs[i].velocity->outputRaw(GET_12BITCV(velocity));
+
+			/* Open the gate */
 			digitalWrite(this->outputs[i].output, HIGH);
 		}
 	}
@@ -1013,6 +1017,10 @@ void USBMidiTriggers::onNoteOff(uint32_t channel, uint32_t note, uint32_t veloci
 	{
 		if (this->outputs[i].note == note)
 		{
+			/* Update the velocity output */
+			if (this->outputs[i].velocity != NULL) this->outputs[i].velocity->outputRaw(GET_12BITCV(velocity));
+
+			/* Close the gate */
 			digitalWrite(this->outputs[i].output, LOW);
 		}
 	}
