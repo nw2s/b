@@ -436,7 +436,10 @@ void nw2s::loadProgram(aJsonObject* program)
 		{
 			if (clockDevice != NULL)
 			{
-				clockDevice->registerDevice(USBMidiApeggiator::create(deviceNode));
+				USBMidiApeggiator* controller = USBMidiApeggiator::create(deviceNode);
+
+				EventManager::registerUsbDevice(controller);
+				clockDevice->registerDevice(controller);
 			}
 			else
 			{
@@ -452,7 +455,10 @@ void nw2s::loadProgram(aJsonObject* program)
 		}
 		else if (strcmp(typeNode->valuestring, "USBMidiTriggers") == 0)
 		{
-			EventManager::registerDevice(USBMidiTriggers::create(deviceNode));
+			USBMidiTriggers* controller = USBMidiTriggers::create(deviceNode);
+
+			EventManager::registerUsbDevice(controller);
+			EventManager::registerDevice(controller);
 		}
 		else if (strcmp(typeNode->valuestring, "VCSamplingFrequencyOscillator") == 0)
 		{

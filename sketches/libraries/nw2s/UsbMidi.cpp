@@ -981,7 +981,30 @@ void USBPolyphonicMidiController::onNoteOn(uint32_t channel, uint32_t note, uint
 	
 USBMidiTriggers* USBMidiTriggers::create(aJsonObject* data)
 {
+	const char mapNodeName[] = "drumMap";
+	const char noteNodeName[] = "note";
+	const char outputNodeName[] = "output";
+	const char velocityNodeName[] = "velocity";
 	
+	
+	USBMidiTriggers* triggerController = new USBMidiTriggers();
+	
+	aJsonObject* drumMap = aJson.getObjectItem(data, mapNodeName);
+
+	if (drumMap == NULL) return NULL;
+	
+	for (int i = 0; i < aJson.getArraySize(drumMap); i++)
+	{
+		aJsonObject* triggerNode = aJson.getArrayItem(drumMap, i);
+
+		int note = getIntFromJSON(triggerNode, noteNodeName, 1, 0, 127);
+		PinDigitalOut output = getDigitalOutputFromJSON(triggerNode, outputNodeName);
+		PinAnalogOut velocity = getAnalogOutputFromJSON(triggerNode, velocityNodeName);
+		
+		triggerController->addTrigger(note, velocity, output);
+	}		
+	
+	return triggerController;
 }
 
 USBMidiTriggers::USBMidiTriggers() : USBMidiCCController()
@@ -1002,11 +1025,12 @@ void USBMidiTriggers::onNoteOn(uint32_t channel, uint32_t note, uint32_t velocit
 	{
 		if (this->outputs[i].note == note)
 		{
-			/* Update the velocity output */
-			if (this->outputs[i].velocity != NULL) this->outputs[i].velocity->outputRaw(GET_12BITCV(velocity));
-
-			/* Open the gate */
-			digitalWrite(this->outputs[i].output, HIGH);
+			Serial.println(note);
+			// /* Update the velocity output */
+			// if (this->outputs[i].velocity != NULL) this->outputs[i].velocity->outputRaw(GET_12BITCV(velocity));
+			//
+			// /* Open the gate */
+			// digitalWrite(this->outputs[i].output, HIGH);
 		}
 	}
 }
@@ -1017,16 +1041,40 @@ void USBMidiTriggers::onNoteOff(uint32_t channel, uint32_t note, uint32_t veloci
 	{
 		if (this->outputs[i].note == note)
 		{
-			/* Update the velocity output */
-			if (this->outputs[i].velocity != NULL) this->outputs[i].velocity->outputRaw(GET_12BITCV(velocity));
-
-			/* Close the gate */
-			digitalWrite(this->outputs[i].output, LOW);
+			// /* Update the velocity output */
+			// if (this->outputs[i].velocity != NULL) this->outputs[i].velocity->outputRaw(GET_12BITCV(velocity));
+			//
+			// /* Close the gate */
+			// digitalWrite(this->outputs[i].output, LOW);
 		}
 	}
 }
 
+USBMidiApeggiator* USBMidiApeggiator::create(PinDigitalOut gatePin1, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut, PinAnalogIn density, std::vector<uint32_t> pattern, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch)
+{
+	
+}
+
+
 USBMidiApeggiator* USBMidiApeggiator::create(aJsonObject* data)
 {
 }
+
+
+USBMidiApeggiator::USBMidiApeggiator(PinDigitalOut gatePin, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut, PinAnalogIn density, std::vector<uint32_t> pattern, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch)
+{
+	// this->gate = gatePin;
+	// this->pitch = (pitchPin != ANALOG_OUT_NONE) ? AnalogOut::create(pitchPin) : NULL;
+	// this->velocity = (velocityPin != ANALOG_OUT_NONE) ? AnalogOut::create(velocityPin) : NULL;
+	// this->pressure = (pressurePin != ANALOG_OUT_NONE) ? AnalogOut::create(pressurePin) : NULL;
+	// this->afterTouch = (afterTouchPin != ANALOG_OUT_NONE) ? AnalogOut::create(afterTouchPin) : NULL;
+	//
+	// this->density = density;
+	// this->pattern
+}
+
+
+
+
+
 

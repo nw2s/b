@@ -339,7 +339,7 @@ class nw2s::USBMidiApeggiator : public nw2s::USBMidiCCController, public nw2s::B
 {
 	public:
 
-		static USBMidiApeggiator* create(PinDigitalOut gatePin1, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut, PinAnalogIn density, std::vector<uint32_t> pattern, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch);
+		static USBMidiApeggiator* create(PinDigitalOut gatePin, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut, PinAnalogIn density, std::vector<uint32_t> pattern, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch);
 		static USBMidiApeggiator* create(aJsonObject* data);
 
 		void addTriggerPin(uint32_t note, PinDigitalOut output);
@@ -357,21 +357,26 @@ class nw2s::USBMidiApeggiator : public nw2s::USBMidiCCController, public nw2s::B
 
 	private:
 
-		std::vector<uint32_t> pattern;
-		PinAnalogIn octaves;
-		PinDigitalIn latch;
-		NoteStackSortOrder sortOrder;
-		NoteStack noteStack;
-		PinDigitalOut gate;
 		uint32_t pitchValue = 0;
 		uint32_t pitchbendValue = 0;
 		uint32_t pitchSteps = 1;
+		uint32_t octaves = 1;
+		uint32_t noteIndex = 0;
+
+		std::vector<uint32_t> pattern;
+		NoteStackSortOrder sortOrder;
+		NoteStack noteStack;
+		
+		PinAnalogIn octaveInput;
+		PinAnalogIn density;
+		PinDigitalOut gate;
+		PinDigitalIn latch;
 		AnalogOut* pitch;
 		AnalogOut* velocity;
 		AnalogOut* pressure;				// Pressure = note pressure
 		AnalogOut* afterTouch;				// Aftertouch = channel pressure
 
-		USBMidiApeggiator(PinDigitalOut gatePin1, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut, PinAnalogIn density, std::vector<uint32_t> pattern, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch);
+		USBMidiApeggiator(PinDigitalOut gatePin, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut, PinAnalogIn density, std::vector<uint32_t> pattern, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch);
 
 };
 
