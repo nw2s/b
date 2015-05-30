@@ -1026,11 +1026,11 @@ void USBMidiTriggers::onNoteOn(uint32_t channel, uint32_t note, uint32_t velocit
 		if (this->outputs[i].note == note)
 		{
 			Serial.println(note);
-			// /* Update the velocity output */
-			// if (this->outputs[i].velocity != NULL) this->outputs[i].velocity->outputRaw(GET_12BITCV(velocity));
-			//
-			// /* Open the gate */
-			// digitalWrite(this->outputs[i].output, HIGH);
+			/* Update the velocity output */
+			if (this->outputs[i].velocity != NULL) this->outputs[i].velocity->outputRaw(GET_12BITCV(velocity));
+
+			/* Open the gate */
+			digitalWrite(this->outputs[i].output, HIGH);
 		}
 	}
 }
@@ -1041,11 +1041,11 @@ void USBMidiTriggers::onNoteOff(uint32_t channel, uint32_t note, uint32_t veloci
 	{
 		if (this->outputs[i].note == note)
 		{
-			// /* Update the velocity output */
-			// if (this->outputs[i].velocity != NULL) this->outputs[i].velocity->outputRaw(GET_12BITCV(velocity));
-			//
-			// /* Close the gate */
-			// digitalWrite(this->outputs[i].output, LOW);
+			/* Update the velocity output */
+			if (this->outputs[i].velocity != NULL) this->outputs[i].velocity->outputRaw(GET_12BITCV(velocity));
+
+			/* Close the gate */
+			digitalWrite(this->outputs[i].output, LOW);
 		}
 	}
 }
