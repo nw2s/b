@@ -839,7 +839,7 @@ void USBSplitMonoMidiController::onNoteOff(uint32_t channel, uint32_t note, uint
 				if (this->gate1 != DIGITAL_OUT_NONE) digitalWrite(this->gate1, LOW);
 
 				/* Reset velocity, pressure, and aftertouch */
-				if (this->velocity1 != NULL) this->velocity1->outputRaw(2048);
+				if (this->velocity1 != NULL) this->velocity1->outputRaw(velocity);
 			}
 			else
 			{
