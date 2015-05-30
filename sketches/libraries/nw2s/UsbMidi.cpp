@@ -1009,7 +1009,7 @@ USBMidiTriggers* USBMidiTriggers::create(aJsonObject* data)
 
 USBMidiTriggers::USBMidiTriggers() : USBMidiCCController()
 {
-	
+	//TODO: Trigger mode when we won't be getting note-offs?
 }
 
 void USBMidiTriggers::addTrigger(uint32_t note, PinAnalogOut velocity, PinDigitalOut output)
