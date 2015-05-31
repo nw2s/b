@@ -344,6 +344,8 @@ class nw2s::USBMidiApeggiator : public nw2s::USBMidiCCController, public nw2s::B
 		static USBMidiApeggiator* create(aJsonObject* data);
 
 		void addTriggerPin(uint32_t note, PinDigitalOut output);
+		//void setClockDivision();
+		//void 
 		virtual void timer(uint32_t t);
 		virtual void reset();
 
@@ -358,7 +360,8 @@ class nw2s::USBMidiApeggiator : public nw2s::USBMidiCCController, public nw2s::B
 
 		uint32_t pitchbendValue = 0;
 		uint32_t pitchSteps = 1;
-		uint32_t octaves = 1;
+		uint32_t currentOctave = 0;
+		uint32_t octaves = 0;
 		uint32_t noteIndex = 0;
 		uint32_t patternIndex = 0;
 

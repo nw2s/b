@@ -1074,7 +1074,7 @@ USBMidiApeggiator::USBMidiApeggiator(PinDigitalOut gatePin, PinDigitalOut trigge
 	this->density = density;
 	this->pattern = pattern;
 	this->sortOrder = sortOrder;
-	this->octaves = octaves;
+	this->octaveInput = octaves;
 	this->latch = latch;
 }
 
@@ -1093,26 +1093,34 @@ void USBMidiApeggiator::onNoteOff(uint32_t channel, uint32_t note, uint32_t velo
 void USBMidiApeggiator::timer(uint32_t t)
 {
 	if (this->trigger != NULL) this->trigger->timer(t);
+	
+	/* Close the gate */
+	if (this->noteStack.getSize() == 0)
+	{
+		if (this->gate != DIGITAL_OUT_NONE) digitalWrite(this->gate, LOW);
+	}	
 }
 
 void USBMidiApeggiator::reset()
 {
 	//TODO: Order the sequence based on the setting
 	//TODO: Octaves and all that
+	//TODO: trigger input
 	
 	if (this->noteStack.getSize() > 0)
 	{
+		this->currentOctave = (this->currentOctave + 1) % (this->octaves + 1);
+		
 		this->noteIndex = (this->noteIndex + 1) % this->noteStack.getSize();
 
 		NoteListEntry note = this->noteStack.getNote(this->noteIndex);
 
-		Serial.println(note.note);
-
-
 		/* Set the pitch and be sure to include any pitchbend */
-		uint32_t pitchValue = millivoltFromMidiNote(note.note);
+		uint32_t pitchValue = (this->currentOctave * 1000) + millivoltFromMidiNote(note.note);
 		if (this->pitch != NULL) this->pitch->outputCV(pitchValue + this->pitchbendValue);
-	
+
+		Serial.println(this->currentOctave);
+
 		/* Update the velocity output */
 		if (this->velocity != NULL) this->velocity->outputRaw(GET_12BITCV(note.velocity));
 
@@ -1122,10 +1130,17 @@ void USBMidiApeggiator::reset()
 		/* Open the gate */
 		if (this->gate != DIGITAL_OUT_NONE) digitalWrite(this->gate, HIGH);
 	}
-	else
+	
+	/* Read the octave input */
+	if (this->octaveInput != ANALOG_IN_NONE)
 	{
-		/* Open the gate */
-		if (this->gate != DIGITAL_OUT_NONE) digitalWrite(this->gate, LOW);
+		int rawVal = (analogRead(this->octaveInput) - 2048);
+		
+		/* Limit it to the positive range */
+		rawVal = (rawVal < 0) ? 0 : (rawVal > 2047) ? 2047 : rawVal;
+
+		/* Scale 0 to 4 (up to 5 octaves) */
+		this->octaves = rawVal / 410;
 	}
 }
 
