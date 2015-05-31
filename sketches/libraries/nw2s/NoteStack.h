@@ -72,15 +72,14 @@ class nw2s::NoteStack
 {
 	public:
 
-		//TODO: Add ordering
-
 		NoteStack() { }
 		void init() { clear(); }
 
 		void noteOn(uint32_t note, uint32_t velocity);
 		void noteOff(uint32_t note);
 		void clear();
-
+		void sort();
+		
 		uint32_t getSize() { return this->pool.size(); }
 		NoteListEntry mostRecentNote() { return this->pool.back(); }
 		NoteListEntry leastRecentNote() { return this->pool.front(); }
@@ -90,6 +89,5 @@ class nw2s::NoteStack
 
 		NoteList pool;
 };
-
 
 #endif

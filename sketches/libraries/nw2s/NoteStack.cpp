@@ -31,6 +31,16 @@
 
 using namespace nw2s;
 
+bool compare_note(const nw2s::NoteListEntry& first, const nw2s::NoteListEntry& second)
+{
+	return first.note < second.note;
+}
+
+void NoteStack::sort()
+{
+	pool.sort(compare_note);
+}
+
 void NoteStack::noteOn(uint32_t note, uint32_t velocity)
 {
 	/* See if this note is already in the list */
@@ -85,9 +95,13 @@ NoteListEntry NoteStack::getNote(uint32_t n)
 		
 	return *iterator;
 }
-	
 
 void NoteStack::clear()
 {
 	this->pool.clear();
 }
+
+
+
+
+

@@ -1082,6 +1082,12 @@ void USBMidiApeggiator::onNoteOn(uint32_t channel, uint32_t note, uint32_t veloc
 {	
 	/* Keep track of it in the note stack */
 	this->noteStack.noteOn(note, velocity);
+	
+	/* If needs to be ordered, then sort */
+	if ((this->sortOrder == NOTE_SORT_UPDOWN) || (this->sortOrder == NOTE_SORT_HIGHTOLOW) || (this->sortOrder == NOTE_SORT_LOWTOHIGH))
+	{
+		this->noteStack.sort();
+	}
 }
 
 void USBMidiApeggiator::onNoteOff(uint32_t channel, uint32_t note, uint32_t velocity)
@@ -1104,7 +1110,6 @@ void USBMidiApeggiator::timer(uint32_t t)
 void USBMidiApeggiator::reset()
 {
 	//TODO: Order the sequence based on the setting
-	//TODO: Octaves and all that
 	//TODO: trigger input
 	
 	if (this->noteStack.getSize() > 0)
