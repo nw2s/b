@@ -72,6 +72,8 @@ class nw2s::NoteStack
 {
 	public:
 
+		//TODO: Add ordering
+
 		NoteStack() { }
 		void init() { clear(); }
 

@@ -1050,30 +1050,84 @@ void USBMidiTriggers::onNoteOff(uint32_t channel, uint32_t note, uint32_t veloci
 	}
 }
 
-USBMidiApeggiator* USBMidiApeggiator::create(PinDigitalOut gatePin1, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut, PinAnalogIn density, std::vector<uint32_t> pattern, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch)
+USBMidiApeggiator* USBMidiApeggiator::create(PinDigitalOut gatePin, PinDigitalOut triggerPin, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut, PinAnalogIn density, std::vector<uint32_t> pattern, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch)
 {
-	
+	return new USBMidiApeggiator(gatePin, triggerPin, pitchPin, velocityPin, pressurePin, afterTouchOut, density, pattern, sortOrder, octaves, latch);
 }
 
 
 USBMidiApeggiator* USBMidiApeggiator::create(aJsonObject* data)
 {
+
 }
 
 
-USBMidiApeggiator::USBMidiApeggiator(PinDigitalOut gatePin, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut, PinAnalogIn density, std::vector<uint32_t> pattern, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch)
+USBMidiApeggiator::USBMidiApeggiator(PinDigitalOut gatePin, PinDigitalOut triggerPin, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchPin, PinAnalogIn density, std::vector<uint32_t> pattern, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch)
 {
-	// this->gate = gatePin;
-	// this->pitch = (pitchPin != ANALOG_OUT_NONE) ? AnalogOut::create(pitchPin) : NULL;
-	// this->velocity = (velocityPin != ANALOG_OUT_NONE) ? AnalogOut::create(velocityPin) : NULL;
-	// this->pressure = (pressurePin != ANALOG_OUT_NONE) ? AnalogOut::create(pressurePin) : NULL;
-	// this->afterTouch = (afterTouchPin != ANALOG_OUT_NONE) ? AnalogOut::create(afterTouchPin) : NULL;
-	//
-	// this->density = density;
-	// this->pattern
+	this->gate = gatePin;
+	this->trigger = (triggerPin != DIGITAL_OUT_NONE) ? Gate::create(triggerPin, 30) : NULL;
+	this->pitch = (pitchPin != ANALOG_OUT_NONE) ? AnalogOut::create(pitchPin) : NULL;
+	this->velocity = (velocityPin != ANALOG_OUT_NONE) ? AnalogOut::create(velocityPin) : NULL;
+	this->pressure = (pressurePin != ANALOG_OUT_NONE) ? AnalogOut::create(pressurePin) : NULL;
+	this->afterTouch = (afterTouchPin != ANALOG_OUT_NONE) ? AnalogOut::create(afterTouchPin) : NULL;
+
+	this->density = density;
+	this->pattern = pattern;
+	this->sortOrder = sortOrder;
+	this->octaves = octaves;
+	this->latch = latch;
 }
 
+void USBMidiApeggiator::onNoteOn(uint32_t channel, uint32_t note, uint32_t velocity)
+{	
+	/* Keep track of it in the note stack */
+	this->noteStack.noteOn(note, velocity);
+}
 
+void USBMidiApeggiator::onNoteOff(uint32_t channel, uint32_t note, uint32_t velocity)
+{	
+	/* Remove from the note stack */
+	this->noteStack.noteOff(note);
+}
+
+void USBMidiApeggiator::timer(uint32_t t)
+{
+	if (this->trigger != NULL) this->trigger->timer(t);
+}
+
+void USBMidiApeggiator::reset()
+{
+	//TODO: Order the sequence based on the setting
+	//TODO: Octaves and all that
+	
+	if (this->noteStack.getSize() > 0)
+	{
+		this->noteIndex = (this->noteIndex + 1) % this->noteStack.getSize();
+
+		NoteListEntry note = this->noteStack.getNote(this->noteIndex);
+
+		Serial.println(note.note);
+
+
+		/* Set the pitch and be sure to include any pitchbend */
+		uint32_t pitchValue = millivoltFromMidiNote(note.note);
+		if (this->pitch != NULL) this->pitch->outputCV(pitchValue + this->pitchbendValue);
+	
+		/* Update the velocity output */
+		if (this->velocity != NULL) this->velocity->outputRaw(GET_12BITCV(note.velocity));
+
+		/* Trigger note-on */
+		if (this->trigger != NULL) this->trigger->reset();
+
+		/* Open the gate */
+		if (this->gate != DIGITAL_OUT_NONE) digitalWrite(this->gate, HIGH);
+	}
+	else
+	{
+		/* Open the gate */
+		if (this->gate != DIGITAL_OUT_NONE) digitalWrite(this->gate, LOW);
+	}
+}
 
 
 

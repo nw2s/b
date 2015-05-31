@@ -95,6 +95,7 @@ namespace nw2s
 	
 	enum NoteStackSortOrder
 	{
+		NOTE_SORT_UPDOWN,
 		NOTE_SORT_HIGHTOLOW,
 		NOTE_SORT_LOWTOHIGH,
 		NOTE_SORT_PRESSED,
@@ -339,34 +340,33 @@ class nw2s::USBMidiApeggiator : public nw2s::USBMidiCCController, public nw2s::B
 {
 	public:
 
-		static USBMidiApeggiator* create(PinDigitalOut gatePin, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut, PinAnalogIn density, std::vector<uint32_t> pattern, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch);
+		static USBMidiApeggiator* create(PinDigitalOut gatePin, PinDigitalOut triggerPin, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut, PinAnalogIn density, std::vector<uint32_t> pattern, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch);
 		static USBMidiApeggiator* create(aJsonObject* data);
 
 		void addTriggerPin(uint32_t note, PinDigitalOut output);
-		void timer(uint32_t t);
-		void reset();
+		virtual void timer(uint32_t t);
+		virtual void reset();
 
-	protected:
-		
 		virtual void onNoteOn(uint32_t channel, uint32_t note, uint32_t velocity);
 		virtual void onNoteOff(uint32_t channel, uint32_t note, uint32_t velocity);
-		virtual void onPressure(uint32_t channel, uint32_t note, uint32_t pressure);
-		virtual void onAftertouch(uint32_t channel, uint32_t value);
-		virtual void onPitchbend(uint32_t channel, uint32_t value);
+		// virtual void onPressure(uint32_t channel, uint32_t note, uint32_t pressure);
+		// virtual void onAftertouch(uint32_t channel, uint32_t value);
+		// virtual void onPitchbend(uint32_t channel, uint32_t value);
 
 
 	private:
 
-		uint32_t pitchValue = 0;
 		uint32_t pitchbendValue = 0;
 		uint32_t pitchSteps = 1;
 		uint32_t octaves = 1;
 		uint32_t noteIndex = 0;
+		uint32_t patternIndex = 0;
 
 		std::vector<uint32_t> pattern;
 		NoteStackSortOrder sortOrder;
 		NoteStack noteStack;
 		
+		Gate* trigger;
 		PinAnalogIn octaveInput;
 		PinAnalogIn density;
 		PinDigitalOut gate;
@@ -376,7 +376,7 @@ class nw2s::USBMidiApeggiator : public nw2s::USBMidiCCController, public nw2s::B
 		AnalogOut* pressure;				// Pressure = note pressure
 		AnalogOut* afterTouch;				// Aftertouch = channel pressure
 
-		USBMidiApeggiator(PinDigitalOut gatePin, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut, PinAnalogIn density, std::vector<uint32_t> pattern, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch);
+		USBMidiApeggiator(PinDigitalOut gatePin, PinDigitalOut triggerPin, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut, PinAnalogIn density, std::vector<uint32_t> pattern, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch);
 
 };
 

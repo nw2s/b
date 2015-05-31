@@ -68,18 +68,21 @@ void NoteStack::noteOff(uint32_t note)
 	
 NoteListEntry NoteStack::getNote(uint32_t n) 
 { 
-	if (n >= this->pool.size())
-	{
-		n = this->pool.size() - 1;
-	}
-	
 	NoteList::iterator iterator = this->pool.begin();
-	
-	for (uint32_t i = 0; i < (n - 1); i++)
-	{
-		iterator++;
-	}
 
+	if (n > 0)
+	{
+		if (n >= this->pool.size())
+		{
+			n = this->pool.size() - 1;
+		}
+
+		for (uint32_t i = 0; i < n; i++)
+		{
+			iterator++;
+		}
+	}
+		
 	return *iterator;
 }
 	
