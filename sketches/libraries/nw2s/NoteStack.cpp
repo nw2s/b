@@ -43,6 +43,11 @@ void NoteStack::sort()
 
 void NoteStack::noteOn(uint32_t note, uint32_t velocity)
 {
+	this->noteOn(note, velocity, false);
+}
+
+void NoteStack::noteOn(uint32_t note, uint32_t velocity, bool latched)
+{
 	/* See if this note is already in the list */
 	for (NoteList::iterator i = this->pool.begin(); i != this->pool.end(); ++i)
 	{
@@ -53,7 +58,7 @@ void NoteStack::noteOn(uint32_t note, uint32_t velocity)
 		}
 	}
 	
-	NoteListEntry entry = { note, velocity };
+	NoteListEntry entry = { note, velocity, latched };
 		
 	this->pool.push_back(entry);
 	
@@ -95,6 +100,31 @@ NoteListEntry NoteStack::getNote(uint32_t n)
 		
 	return *iterator;
 }
+
+void NoteStack::noteLatchRelease(uint32_t note)
+{
+	for (NoteList::iterator i = this->pool.begin(); i != this->pool.end(); i++)
+	{
+		if ((*i).note == note)
+		{
+			/* flag this note as released but latched */
+			(*i).latchRelease = true;
+			return;
+		}
+	}
+}
+
+void NoteStack::clearLatched() 
+{
+	for (NoteList::iterator i = this->pool.begin(); i != this->pool.end(); i++)
+	{
+		if ((*i).latchRelease)
+		{
+			this->pool.erase(i);
+		}
+	}
+}
+
 
 void NoteStack::clear()
 {

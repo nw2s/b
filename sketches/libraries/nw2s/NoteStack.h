@@ -61,6 +61,7 @@ namespace nw2s
 	{
 		uint32_t note;
 		uint32_t velocity;
+		bool latchRelease;
 	};
 
 	typedef std::list<NoteListEntry> NoteList;
@@ -76,8 +77,11 @@ class nw2s::NoteStack
 		void init() { clear(); }
 
 		void noteOn(uint32_t note, uint32_t velocity);
+		void noteOn(uint32_t note, uint32_t velocity, bool latched);
 		void noteOff(uint32_t note);
+		void noteLatchRelease(uint32_t note);
 		void clear();
+		void clearLatched();
 		void sort();
 		
 		uint32_t getSize() { return this->pool.size(); }

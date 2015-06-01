@@ -1082,7 +1082,7 @@ USBMidiApeggiator::USBMidiApeggiator(PinDigitalOut gatePin, PinDigitalOut trigge
 void USBMidiApeggiator::onNoteOn(uint32_t channel, uint32_t note, uint32_t velocity)
 {	
 	/* Keep track of it in the note stack */
-	this->noteStack.noteOn(note, velocity);
+	this->noteStack.noteOn(note, velocity, this->latched);
 	
 	/* If needs to be ordered, then sort */
 	if ((this->sortOrder == NOTE_SORT_UPDOWN) || (this->sortOrder == NOTE_SORT_HIGHTOLOW) || (this->sortOrder == NOTE_SORT_LOWTOHIGH))
@@ -1093,8 +1093,16 @@ void USBMidiApeggiator::onNoteOn(uint32_t channel, uint32_t note, uint32_t veloc
 
 void USBMidiApeggiator::onNoteOff(uint32_t channel, uint32_t note, uint32_t velocity)
 {	
-	/* Remove from the note stack */
-	this->noteStack.noteOff(note);
+	if (!this->latched)
+	{
+		/* Remove from the note stack */
+		this->noteStack.noteOff(note);
+	}
+	else
+	{
+		/* If we're latched, just flag it */
+		this->noteStack.noteLatchRelease(note);
+	}
 }
 
 void USBMidiApeggiator::timer(uint32_t t)
@@ -1110,8 +1118,17 @@ void USBMidiApeggiator::timer(uint32_t t)
 
 void USBMidiApeggiator::reset()
 {
-	//TODO: Order the sequence based on the setting
-	//TODO: trigger input
+	if (this->latch != DIGITAL_IN_NONE)
+	{
+		/* If the state changed to unlatched, clear the stack */
+		if (this->latched && !digitalRead(this->latch))
+		{
+			this->noteStack.clearLatched();
+		}
+		
+		this->latched = digitalRead(this->latch);		
+	}
+	
 	
 	if (this->noteStack.getSize() > 0)
 	{
@@ -1168,7 +1185,7 @@ void USBMidiApeggiator::reset()
 		/* Open the gate */
 		if (this->gate != DIGITAL_OUT_NONE) digitalWrite(this->gate, HIGH);
 	}
-	
+		
 	/* Read the octave input */
 	if (this->octaveInput != ANALOG_IN_NONE)
 	{
