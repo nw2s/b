@@ -28,7 +28,7 @@
 #include <iterator>
 #include <vector>
 
-#define CLOCK_DIVISION_COUNT 16
+#define CLOCK_DIVISION_COUNT 15
 
 using namespace std;
 using namespace nw2s;
@@ -52,7 +52,7 @@ namespace nw2s
 	static const int DIV_THIRTYSECOND_DOT = 188;
 	static const int DIV_THIRTYSECOND_TRIPLET = 83;
 	
-	static const int CLOCK_DIVISIONS[CLOCK_DIVISION_COUNT] = { DIV_NEVER, DIV_WHOLE, DIV_HALF_DOT, DIV_HALF, DIV_QUARTER_DOT, DIV_QUARTER, DIV_QUARTER_TRIPLET, DIV_EIGHTH_DOT, DIV_EIGHTH, DIV_EIGHTH_TRIPLET, DIV_SIXTEENTH_DOT, DIV_SIXTEENTH, DIV_SIXTEENTH_TRIPLET, DIV_THIRTYSECOND_DOT, DIV_THIRTYSECOND, DIV_THIRTYSECOND_TRIPLET };
+	static const int CLOCK_DIVISIONS[CLOCK_DIVISION_COUNT] = { DIV_WHOLE, DIV_HALF_DOT, DIV_HALF, DIV_QUARTER_DOT, DIV_QUARTER, DIV_QUARTER_TRIPLET, DIV_EIGHTH_DOT, DIV_EIGHTH, DIV_EIGHTH_TRIPLET, DIV_SIXTEENTH_DOT, DIV_SIXTEENTH, DIV_SIXTEENTH_TRIPLET, DIV_THIRTYSECOND_DOT, DIV_THIRTYSECOND, DIV_THIRTYSECOND_TRIPLET };
 	
 	class BeatDevice;
 	class Clock;
@@ -75,20 +75,20 @@ class nw2s::BeatDevice : public TimeBasedDevice
 		unsigned long getNextTime();
 		
 		void setStopInput(PinDigitalIn input);
+		void setClockDivisionInput(PinAnalogIn input);
 		bool isStopped();
 		
 	protected:
 		
 		int clock_division;
-		
-		void setClockDivisionInput(PinAnalogIn input);
-		
+				
 		BeatDevice();
 		
 		
 	private:
 		unsigned long next_time = 0;
 		PinDigitalIn stopInput = DIGITAL_IN_NONE;
+		PinAnalogIn clockDivisionInput = ANALOG_IN_NONE;
 };
 
 class nw2s::Clock : public nw2s::TimeBasedDevice

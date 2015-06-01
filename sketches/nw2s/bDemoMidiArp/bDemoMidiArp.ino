@@ -35,6 +35,8 @@ void setup()
 	
 	/* Mod Wheel */
 	usbDevice->addControlPin(1, DUE_SPI_4822_10, CC_RANGE_UNIPOLAR);
+	
+	usbDevice->setClockDivisionInput(DUE_IN_A03);
 
 	EventManager::registerUsbDevice(usbDevice);
 	EventManager::registerDevice(vclock);

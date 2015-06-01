@@ -102,7 +102,23 @@ BeatDevice::BeatDevice()
 
 int BeatDevice::getclockdivision()
 {
+	/* If there's an input for the divider, read it to see where we are */
+	if (this->clockDivisionInput != ANALOG_IN_NONE)
+	{
+		int rawVal = (analogRead(this->clockDivisionInput) - 2048);
+	
+		/* Limit it to the positive range */
+		rawVal = (rawVal < 0) ? 0 : (rawVal > 2047) ? 2047 : rawVal;
+		
+		this->clock_division = CLOCK_DIVISIONS[rawVal / ((2048 / CLOCK_DIVISION_COUNT) + 1)];		
+	}
+	
 	return this->clock_division;
+}
+
+void BeatDevice::setClockDivisionInput(PinAnalogIn input)
+{
+	this->clockDivisionInput = input;
 }
 
 void BeatDevice::setNextTime(unsigned long t)
@@ -284,8 +300,6 @@ void Clock::timer(unsigned long t)
 	/* Then update the clock display */
 	if ((t >= this->next_clock_t) && (this->period > 0))
 	{
-		//TODO: Disabling this cause we're having some perf problems.
-		//if (t > this->next_clock_t) Serial.println("Clock missed next clock T by (ms) " + String(t - this->next_clock_t));
 		IOUtils::displayBeat(this->beat, this);				
 		this->beat = (this->beat + 1) % this->beats_per_measure;		
 
@@ -301,10 +315,12 @@ void Clock::timer(unsigned long t)
 
 	/* Then calculate new time on devices and let them do any work they wanted deferred */
 	for (int i = 0; i < this->devices.size(); i++)
-	{
-		if ((this->devices[i]->getclockdivision() != DIV_NEVER) && (this->devices[i]->getNextTime() <= t))
+	{		
+		if (this->devices[i]->getNextTime() <= t)
 		{
-			this->devices[i]->setNextTime((((unsigned long)(this->devices[i]->getclockdivision()) * (unsigned long)(this->period)) / 1000UL) + t);
+			int clockDivision = this->devices[i]->getclockdivision();
+			
+			this->devices[i]->setNextTime((((unsigned long)(clockDivision) * (unsigned long)(this->period)) / 1000UL) + t);
 
 			this->devices[i]->calculate();
 		}

@@ -1114,17 +1114,20 @@ void USBMidiApeggiator::reset()
 	
 	if (this->noteStack.getSize() > 0)
 	{
-		this->currentOctave = (this->currentOctave + 1) % (this->octaves + 1);
 		
 		this->noteIndex = (this->noteIndex + 1) % this->noteStack.getSize();
+
+		if (this->noteIndex == 0)
+		{
+			/* If we're starting the sequence from beginning, move to next octave */
+			this->currentOctave = (this->currentOctave + 1) % (this->octaves + 1);			
+		}
 
 		NoteListEntry note = this->noteStack.getNote(this->noteIndex);
 
 		/* Set the pitch and be sure to include any pitchbend */
 		uint32_t pitchValue = (this->currentOctave * 1000) + millivoltFromMidiNote(note.note);
 		if (this->pitch != NULL) this->pitch->outputCV(pitchValue + this->pitchbendValue);
-
-		Serial.println(this->currentOctave);
 
 		/* Update the velocity output */
 		if (this->velocity != NULL) this->velocity->outputRaw(GET_12BITCV(note.velocity));
