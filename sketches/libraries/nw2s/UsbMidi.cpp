@@ -1050,9 +1050,9 @@ void USBMidiTriggers::onNoteOff(uint32_t channel, uint32_t note, uint32_t veloci
 	}
 }
 
-USBMidiApeggiator* USBMidiApeggiator::create(PinDigitalOut gatePin, PinDigitalOut triggerPin, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut, PinAnalogIn density, std::vector<uint32_t> pattern, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch)
+USBMidiApeggiator* USBMidiApeggiator::create(PinDigitalOut gatePin, PinDigitalOut triggerPin, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchOut, PinAnalogIn density, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch)
 {
-	return new USBMidiApeggiator(gatePin, triggerPin, pitchPin, velocityPin, pressurePin, afterTouchOut, density, pattern, sortOrder, octaves, latch);
+	return new USBMidiApeggiator(gatePin, triggerPin, pitchPin, velocityPin, pressurePin, afterTouchOut, density, sortOrder, octaves, latch);
 }
 
 
@@ -1062,7 +1062,7 @@ USBMidiApeggiator* USBMidiApeggiator::create(aJsonObject* data)
 }
 
 
-USBMidiApeggiator::USBMidiApeggiator(PinDigitalOut gatePin, PinDigitalOut triggerPin, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchPin, PinAnalogIn density, std::vector<uint32_t> pattern, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch)
+USBMidiApeggiator::USBMidiApeggiator(PinDigitalOut gatePin, PinDigitalOut triggerPin, PinAnalogOut pitchPin, PinAnalogOut velocityPin, PinAnalogOut pressurePin, PinAnalogOut afterTouchPin, PinAnalogIn density, NoteStackSortOrder sortOrder, PinAnalogIn octaves, PinDigitalIn latch)
 {
 	this->gate = gatePin;
 	this->trigger = (triggerPin != DIGITAL_OUT_NONE) ? Gate::create(triggerPin, 30) : NULL;

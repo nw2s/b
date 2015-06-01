@@ -29,9 +29,9 @@ void setup()
 	/* Setup a variable clock */
 	Clock* vclock = VariableClock::create(10, 240, DUE_IN_A00, 16);
 
-	std::vector<uint32_t> pattern;
+	//std::vector<uint32_t> pattern;
 
-	usbDevice = USBMidiApeggiator::create(DUE_OUT_D00, DUE_OUT_D01, DUE_SPI_4822_00, DUE_SPI_4822_02, DUE_SPI_4822_03, DUE_SPI_4822_04, DUE_IN_A01, pattern, NOTE_SORT_PRESSED, DUE_IN_A02, DUE_IN_D0);
+	usbDevice = USBMidiApeggiator::create(DUE_OUT_D00, DUE_OUT_D01, DUE_SPI_4822_00, DUE_SPI_4822_02, DUE_SPI_4822_03, DUE_SPI_4822_04, DUE_IN_A01, NOTE_SORT_PRESSED, DUE_IN_A02, DUE_IN_D0);
 	
 	/* Mod Wheel */
 	usbDevice->addControlPin(1, DUE_SPI_4822_10, CC_RANGE_UNIPOLAR);
