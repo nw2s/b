@@ -30,6 +30,7 @@
 #include "JSONUtil.h"
 #include "EventManager.h"
 #include "Key.h"
+#include "Entropy.h"
 
 using namespace nw2s;
 
@@ -1114,13 +1115,26 @@ void USBMidiApeggiator::reset()
 	
 	if (this->noteStack.getSize() > 0)
 	{
-		
 		this->noteIndex = (this->noteIndex + 1) % this->noteStack.getSize();
 
 		if (this->noteIndex == 0)
 		{
 			/* If we're starting the sequence from beginning, move to next octave */
 			this->currentOctave = (this->currentOctave + 1) % (this->octaves + 1);			
+		}
+
+		/* If we have a density input, then randomly drop notes, but still sequence past them */
+		if (this->density != ANALOG_IN_NONE)
+		{
+			int densityVal = analogRead(this->density) - 2048;
+
+			/* Limit it to the positive range */
+			densityVal = (densityVal < 0) ? 0 : (densityVal > 2047) ? 2047 : densityVal;
+		
+			if (densityVal < Entropy::getValue(2047))
+			{
+				return;
+			}
 		}
 
 		NoteListEntry note = this->noteStack.getNote(this->noteIndex);
