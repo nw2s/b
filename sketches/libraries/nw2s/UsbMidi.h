@@ -388,6 +388,7 @@ class nw2s::USBMidiApeggiator : public nw2s::USBMidiCCController, public nw2s::B
 		uint32_t octaves = 0;
 		uint32_t noteIndex = 0;
 		uint32_t patternIndex = 0;
+		int directionStep = 1;  			// 1 = up, -1 = down
 
 		std::vector<uint32_t> pattern;
 		NoteStackSortOrder sortOrder;

@@ -1115,12 +1115,28 @@ void USBMidiApeggiator::reset()
 	
 	if (this->noteStack.getSize() > 0)
 	{
-		this->noteIndex = (this->noteIndex + 1) % this->noteStack.getSize();
+		/* Check the playback order and set the direction */
+		
+		this->noteIndex = (this->noteIndex + this->directionStep) % this->noteStack.getSize();
 
 		if (this->noteIndex == 0)
 		{
 			/* If we're starting the sequence from beginning, move to next octave */
-			this->currentOctave = (this->currentOctave + 1) % (this->octaves + 1);			
+			this->currentOctave = (this->currentOctave + 1) % (this->octaves + 1);	
+			
+			/* If we're up-down and hit an end, change direction */
+			if ((this->sortOrder == NOTE_SORT_UPDOWN) && (this->currentOctave == 0))
+			{
+				this->directionStep = 1;
+			}		
+		}
+		else if (this->noteIndex == this->noteStack.getSize())
+		{
+			/* If we're up-down and hit an end, change direction */
+			if ((this->sortOrder == NOTE_SORT_UPDOWN) && (this->currentOctave == this->octaves))
+			{
+				this->directionStep = -1;
+			}		
 		}
 
 		/* If we have a density input, then randomly drop notes, but still sequence past them */
