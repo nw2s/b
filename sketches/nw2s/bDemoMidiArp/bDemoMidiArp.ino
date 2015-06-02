@@ -31,7 +31,7 @@ void setup()
 
 	//std::vector<uint32_t> pattern;
 
-	usbDevice = USBMidiApeggiator::create(DUE_OUT_D00, DUE_OUT_D01, DUE_SPI_4822_00, DUE_SPI_4822_02, DUE_SPI_4822_03, DUE_SPI_4822_04, DUE_IN_A01, NOTE_SORT_LOWTOHIGH, DUE_IN_A02, DUE_IN_D0);
+	usbDevice = USBMidiApeggiator::create(DUE_OUT_D00, DUE_OUT_D01, DUE_SPI_4822_00, DUE_SPI_4822_02, DUE_SPI_4822_03, DUE_SPI_4822_04, DUE_IN_A01, NOTE_SORT_UPDOWN, DUE_IN_A02, DUE_IN_D0);
 	
 	/* Mod Wheel */
 	usbDevice->addControlPin(1, DUE_SPI_4822_10, CC_RANGE_UNIPOLAR);

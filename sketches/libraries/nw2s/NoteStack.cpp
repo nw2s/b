@@ -49,12 +49,16 @@ void NoteStack::noteOn(uint32_t note, uint32_t velocity)
 void NoteStack::noteOn(uint32_t note, uint32_t velocity, bool latched)
 {
 	/* See if this note is already in the list */
-	for (NoteList::iterator i = this->pool.begin(); i != this->pool.end(); ++i)
+	for (NoteList::iterator i = this->pool.begin(); i != this->pool.end();)
 	{
 		if ((*i).note == note)
 		{
 			/* Remove it so we can re-add at the end */
-			this->pool.erase(i);
+			i = this->pool.erase(i);
+		}
+		else
+		{
+			++i;
 		}
 	}
 	
@@ -116,11 +120,15 @@ void NoteStack::noteLatchRelease(uint32_t note)
 
 void NoteStack::clearLatched() 
 {
-	for (NoteList::iterator i = this->pool.begin(); i != this->pool.end(); i++)
+	for (NoteList::iterator i = this->pool.begin(); i != this->pool.end();)
 	{
 		if ((*i).latchRelease)
 		{
-			this->pool.erase(i);
+			i = this->pool.erase(i);
+		}
+		else
+		{
+			++i;
 		}
 	}
 }
