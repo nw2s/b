@@ -1128,8 +1128,7 @@ void USBMidiApeggiator::reset()
 		
 		this->latched = digitalRead(this->latch);		
 	}
-	
-	
+		
 	if (this->noteStack.getSize() > 0)
 	{
 		/* Check the playback order and set the direction */
@@ -1160,6 +1159,8 @@ void USBMidiApeggiator::reset()
 		if (this->density != ANALOG_IN_NONE)
 		{
 			int densityVal = analogRead(this->density) - 2048;
+
+			Serial.println(densityVal);
 
 			/* Limit it to the positive range */
 			densityVal = (densityVal < 0) ? 0 : (densityVal > 2047) ? 2047 : densityVal;

@@ -320,6 +320,8 @@ void Clock::timer(unsigned long t)
 		{
 			int clockDivision = this->devices[i]->getclockdivision();
 			
+			//TODO: !!!!! Need to make sure the time divisions on on the measure rather than based on last_t !!!!!!
+			
 			this->devices[i]->setNextTime((((unsigned long)(clockDivision) * (unsigned long)(this->period)) / 1000UL) + t);
 
 			this->devices[i]->calculate();
