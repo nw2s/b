@@ -1146,7 +1146,7 @@ void USBMidiApeggiator::reset()
 				this->directionStep = 1;
 			}		
 		}
-		else if (this->noteIndex == this->noteStack.getSize())
+		else if (this->noteIndex == (this->noteStack.getSize() - 1))
 		{
 			/* If we're up-down and hit an end, change direction */
 			if ((this->sortOrder == NOTE_SORT_UPDOWN) && (this->currentOctave == this->octaves))
