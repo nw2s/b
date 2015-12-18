@@ -44,13 +44,13 @@ int nw2s::analogRead(int input)
 	/* Get the Raw value */
 	int32_t val = 4095 - ::analogRead(INDEX_DUE_INPUT[input]);
 	
-	if (!b::inputSoftTune)
-	{
+	// if (!b::inputSoftTune)
+	// {
 		return limitRange(val, 0, 4095);
-	}
+	// }
 	
 	/* Adjust the offset and gain */
-	return  limitRange(((val * b::inputScale[input]) / 1000) + b::inputOffset[input], 0, 4095);
+	//return limitRange(((val * b::inputScale[input]) / 1000) + b::inputOffset[input], 0, 4095);
 }
 
 int nw2s::analogReadmV(int input)
@@ -106,10 +106,18 @@ AnalogOut::AnalogOut(PinAnalogOut pin)
     SPI.setClockDivider(42);
     SPI.begin();
 	
-	this->spidac.setGain1X(this->spidac_index);						
+	//TODO: Add conditional here!
+	//this->spidac.setGain1X(this->spidac_index);						
+	//this->spidac.setGain1X(this->spidac_index);						
+	this->spidac.setGain2X_AB();						
 }
 
 void AnalogOut::outputCV(int cv)
+{
+	this->outputCV(cv, b::outputSoftTune);
+}
+
+void AnalogOut::outputCV(int cv, bool softTune)
 {
 	/* 
 
@@ -122,17 +130,158 @@ void AnalogOut::outputCV(int cv)
 	*/
 
 	int cv_old = cv;
-
+	
 	/* Scale the values if we're using software tuning */
-	if (b::outputSoftTune)
+	if (softTune)
 	{
-		cv = ((cv * b::outputScale[this->pin]) / TUNE_SCALE_FACTOR) + b::outputOffset[this->pin];
+		//TODO: Make this work for any voltage range - high or low
+
+		int8_t rangeIndex = -1;
+		int bottomRange = 0;
+
+		/* Find out what range we're in */
+		if (cv < -10000) cv = -10000;
+		if (cv > 10000) cv = 10000;
+		
+		if ((cv - -10000) * (-9001 - cv) >= 0)
+		{
+			rangeIndex = 0;
+			bottomRange = -10000;
+		}
+		else if ((cv - -9000) * (-8001 - cv) >= 0)
+		{
+			rangeIndex = 1;
+			bottomRange = -9000;
+		}
+		else if ((cv - -8000) * (-7001 - cv) >= 0)
+		{
+			rangeIndex = 2;
+			bottomRange = -8000;
+		}
+		else if ((cv - -7000) * (-6001 - cv) >= 0)
+		{
+			rangeIndex = 3;
+			bottomRange = -7000;
+		}
+		else if ((cv - -6000) * (-5001 - cv) >= 0)
+		{
+			rangeIndex = 4;
+			bottomRange = -6000;
+		}
+		else if ((cv - -5000) * (-4001 - cv) >= 0)
+		{
+			rangeIndex = 5;
+			bottomRange = -5000;
+		}
+		else if ((cv - -4000) * (-3001 - cv) >= 0)
+		{
+			rangeIndex = 6;
+			bottomRange = -4000;
+		}
+		else if ((cv - -3000) * (-2001 - cv) >= 0)
+		{
+			rangeIndex = 7;
+			bottomRange = -3000;
+		}
+		else if ((cv - -2000) * (-1001 - cv) >= 0)
+		{
+			rangeIndex = 8;
+			bottomRange = -2000;
+		}
+		else if ((cv - -1000) * (-1 - cv) >= 0)
+		{
+			rangeIndex = 9;
+			bottomRange = -1000;
+		}
+		else if ((cv - 0) * (999 - cv) >= 0)
+		{
+			rangeIndex = 10;
+			bottomRange = 0;
+		}
+		else if ((cv - 1000) * (1999 - cv) >= 0)
+		{
+			rangeIndex = 11;
+			bottomRange = 1000;
+		}
+		else if ((cv - 2000) * (2999 - cv) >= 0)
+		{
+			rangeIndex = 12;
+			bottomRange = 2000;
+		}
+		else if ((cv - 3000) * (3999 - cv) >= 0)
+		{
+			rangeIndex = 13;
+			bottomRange = 3000;
+		}
+		else if ((cv - 4000) * (4999 - cv) >= 0)
+		{
+			rangeIndex = 14;
+			bottomRange = 4000;
+		}
+		else if ((cv - 5000) * (5999 - cv) >= 0)
+		{
+			rangeIndex = 15;
+			bottomRange = 5000;
+		}
+		else if ((cv - 6000) * (6999 - cv) >= 0)
+		{
+			bottomRange = 6000;
+			rangeIndex = 16;
+		}
+		else if ((cv - 7000) * (7999 - cv) >= 0)
+		{
+			bottomRange = 7000;
+			rangeIndex = 17;
+		}
+		else if ((cv - 8000) * (8999 - cv) >= 0)
+		{
+			rangeIndex = 18;
+			bottomRange = 8000;
+		}
+		else if ((cv - 9000) * (9999 - cv) >= 0)
+		{
+			rangeIndex = 19;
+			bottomRange = 9000;
+		}
+		else if (cv == 10000)
+		{
+			rangeIndex = 20;
+		}
+		
+		/* Perform a linear interpolation of the two tune corners with the output voltage */
+		/* Not really a reasonable way to do this without about 5 FLOPs. Sorry folks! */
+		if (rangeIndex != 20)
+		{	
+			float alpha = (cv - bottomRange) / 1000.0;
+			float offset = ((1.0 - alpha) * b::outputOffset[this->pin][rangeIndex]) + (alpha * b::outputOffset[this->pin][rangeIndex + 1]);
+			cv = cv_old + (int)offset;
+
+			Serial.println(this->pin);
+
+			if (this->pin == 0)
+			{
+				Serial.println("---------------------------------");
+				Serial.println("alpha " + String((int)(alpha * 1000)));
+				Serial.println("bottomRange " + String(bottomRange));
+				Serial.println("start " + String(b::outputOffset[this->pin][rangeIndex]));
+				Serial.println("end " + String(b::outputOffset[this->pin][rangeIndex + 1]));
+			}
+		}
+		else
+		{
+			Serial.println("...");
+			cv = cv_old + b::outputOffset[this->pin][rangeIndex];
+		}
+
+		// cv = ((cv * b::outputScale[this->pin]) / TUNE_SCALE_FACTOR) + b::outputOffset[this->pin];
 	}
 
-	int dacval = b::cvGainMode ? 
-		(4095 - ((cv + 10000) * 4000UL) / 20000) : 
+	int dacval = b::cvGainMode ?
+		(4095 - ((cv + 10000) * 4000UL) / 20000) :
 		(4095 - ((cv +  5000) * 4000UL) / 10000);
 
+
+	// int dacval = 4095 - (((cv + (b::cvGainMode ? 10000 : 5000)) * 4000UL) / 10000);
 
 	// Grr... where is this - could be a single cycle operation!
 	//dacval = __usat(dacval, 12);
@@ -142,7 +291,7 @@ void AnalogOut::outputCV(int cv)
 	
 	this->spidac.setValue(this->spidac_index, dacval);
 
-	if (b::debugMode) Serial.println("outputCV: " + String(dacval) + " " + String(cv) + " " + String((dacval < 2000) ? 4000 - (dacval * 2) : (dacval - 2000) * 2));
+	if (b::debugMode) Serial.println("outputCV: " + String(dacval) + " " + String(cv) + " " + String(cv_old) + " " + (softTune ? "true" : "false"));
 
 	if (IOUtils::enableLED)
 	{

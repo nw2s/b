@@ -4254,6 +4254,7 @@ class nw2s::AnalogOut
 		static PCA9685 ledDriver;
 		static nw2s::AnalogOut* create(PinAnalogOut pin);
 		void outputCV(int v);
+		void outputCV(int v, bool softTune);
 		void outputRaw(int x);
 		
 	private:

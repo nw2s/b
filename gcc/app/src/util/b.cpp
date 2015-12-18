@@ -34,10 +34,29 @@ DeviceModel b::model = NW2S_B_1_0_0;
 bool b::inputSoftTune = false;
 bool b::outputSoftTune = false;
 int32_t b::dimming = 50;
-int16_t b::outputOffset[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-int32_t b::outputScale[16] = { 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000 };
-int16_t b::inputOffset[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-int32_t b::inputScale[12] = { 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000 };
+
+int8_t b::outputOffset[16][21] = { 
+	
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	
+};
+// int16_t b::inputOffset[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+// int32_t b::inputScale[12] = { 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000 };
 
 SdFile b::root;
 Sd2Card b::card;
@@ -181,51 +200,40 @@ void b::configure()
 	if (outputTuneNode->valuebool)
 	{
 		b::outputSoftTune = true;
+						
+		aJsonObject* offsetChannelsNode = aJson.getObjectItem(outputNode, "offset"); 
 		
-		aJsonObject* scaleNode = aJson.getObjectItem(outputNode, "scale"); 
-		
-		if (aJson.getArraySize(scaleNode) == 16)
+		if (aJson.getArraySize(offsetChannelsNode) == 16)
 		{
-			Serial.print("Output Scale: { ");
-			
-			for (int i = 0; i < aJson.getArraySize(scaleNode); i++)
+			for (int j = 0; j < 16; j++)
 			{
-				aJsonObject* valueNode = aJson.getArrayItem(scaleNode, i);
-				
-				b::outputScale[i] = valueNode->valueint;
-				
-				Serial.print(b::outputScale[i]);
-				Serial.print(" ");
-			}
-			
-			Serial.println("}");
-		}
-		else
-		{
-			Serial.println("Configuration requires 16 scale values, skipping.");
-		}
-				
-		aJsonObject* offsetNode = aJson.getObjectItem(outputNode, "offset"); 
+				aJsonObject* offsetNode = aJson.getArrayItem(offsetChannelsNode, j); 
 		
-		if (aJson.getArraySize(offsetNode) == 16)
-		{
-			Serial.print("Output Offset: { ");
+				if (aJson.getArraySize(offsetNode) == 21)
+				{
+					Serial.print("Output Offset: { ");
 			
-			for (int i = 0; i < aJson.getArraySize(offsetNode); i++)
-			{
-				aJsonObject* valueNode = aJson.getArrayItem(offsetNode, i);
+					for (int i = 0; i < aJson.getArraySize(offsetNode); i++)
+					{
+						aJsonObject* valueNode = aJson.getArrayItem(offsetNode, i);
 				
-				b::outputOffset[i] = valueNode->valueint;
+						b::outputOffset[j][i] = valueNode->valueint;
 
-				Serial.print(b::outputOffset[i]);
-				Serial.print(" ");
-			}
+						Serial.print(b::outputOffset[j][i]);
+						Serial.print(" ");
+					}
 			
-			Serial.println("}");
+					Serial.println("}");
+				}
+				else
+				{
+					Serial.println("Configuration requires 16 offset channels, skipping.");
+				}
+			}
 		}
 		else
 		{
-			Serial.println("Configuration requires 16 offset values, skipping.");
+			Serial.println("Configuration requires 16 offset channels, skipping.");
 		}
 	}
 	else
@@ -236,64 +244,64 @@ void b::configure()
 
 	/* Input config */
 
-	aJsonObject* inputNode = aJson.getObjectItem(configNode, "inputs"); 
-	
-	aJsonObject* inputTuneNode = aJson.getObjectItem(inputNode, "software-tune"); 
-	
-	if (inputTuneNode->valuebool)
-	{
-		b::inputSoftTune = true;
-		
-		aJsonObject* scaleNode = aJson.getObjectItem(inputNode, "scale"); 
-		
-		if (aJson.getArraySize(scaleNode) == 12)
-		{
-			Serial.print("Input Scale: { ");
-			
-			for (int i = 0; i < aJson.getArraySize(scaleNode); i++)
-			{
-				aJsonObject* valueNode = aJson.getArrayItem(scaleNode, i);
-				
-				b::inputScale[i] = valueNode->valueint;
-				
-				Serial.print(b::inputScale[i]);
-				Serial.print(" ");
-			}
-			
-			Serial.println("}");
-		}
-		else
-		{
-			Serial.println("Configuration requires 12 scale values, skipping.");
-		}
-				
-		aJsonObject* offsetNode = aJson.getObjectItem(outputNode, "offset"); 
-		
-		if (aJson.getArraySize(offsetNode) == 12)
-		{
-			Serial.print("Input Offset: { ");
-			
-			for (int i = 0; i < aJson.getArraySize(offsetNode); i++)
-			{
-				aJsonObject* valueNode = aJson.getArrayItem(offsetNode, i);
-				
-				b::inputOffset[i] = valueNode->valueint;
-
-				Serial.print(b::inputOffset[i]);
-				Serial.print(" ");
-			}
-			
-			Serial.println("}");
-		}
-		else
-		{
-			Serial.println("Configuration requires 12 offset values, skipping.");
-		}
-	}
-	else
-	{
-		Serial.println("Using default output tuning");
-	}
+	// aJsonObject* inputNode = aJson.getObjectItem(configNode, "inputs");
+	//
+	// aJsonObject* inputTuneNode = aJson.getObjectItem(inputNode, "software-tune");
+	//
+	// if (inputTuneNode->valuebool)
+	// {
+	// 	b::inputSoftTune = true;
+	//
+	// 	aJsonObject* scaleNode = aJson.getObjectItem(inputNode, "scale");
+	//
+	// 	if (aJson.getArraySize(scaleNode) == 12)
+	// 	{
+	// 		Serial.print("Input Scale: { ");
+	//
+	// 		for (int i = 0; i < aJson.getArraySize(scaleNode); i++)
+	// 		{
+	// 			aJsonObject* valueNode = aJson.getArrayItem(scaleNode, i);
+	//
+	// 			b::inputScale[i] = valueNode->valueint;
+	//
+	// 			Serial.print(b::inputScale[i]);
+	// 			Serial.print(" ");
+	// 		}
+	//
+	// 		Serial.println("}");
+	// 	}
+	// 	else
+	// 	{
+	// 		Serial.println("Configuration requires 12 scale values, skipping.");
+	// 	}
+	//
+	// 	aJsonObject* offsetNode = aJson.getObjectItem(outputNode, "offset");
+	//
+	// 	if (aJson.getArraySize(offsetNode) == 12)
+	// 	{
+	// 		Serial.print("Input Offset: { ");
+	//
+	// 		for (int i = 0; i < aJson.getArraySize(offsetNode); i++)
+	// 		{
+	// 			aJsonObject* valueNode = aJson.getArrayItem(offsetNode, i);
+	//
+	// 			b::inputOffset[i] = valueNode->valueint;
+	//
+	// 			Serial.print(b::inputOffset[i]);
+	// 			Serial.print(" ");
+	// 		}
+	//
+	// 		Serial.println("}");
+	// 	}
+	// 	else
+	// 	{
+	// 		Serial.println("Configuration requires 12 offset values, skipping.");
+	// 	}
+	// }
+	// else
+	// {
+	// 	Serial.println("Using default output tuning");
+	// }
 	
 	
 }

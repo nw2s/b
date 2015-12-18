@@ -24,7 +24,8 @@
 # Which serial port to use 
 # Add a file with SUBSYSTEMS=="usb", ATTRS{product}=="Arduino Due Prog. Port", ATTRS{idProduct}=="003d",
 # ATTRS{idVendor}=="2341", SYMLINK+="arduino_due" in /etc/udev/rules.d/ to get this working
-PORT = /dev/arduino_due
+PORT = /dev/tty.usbmodem1411
+SPEED = 19200
 
 # If you want to verify the bossac upload, define this to -v. Leave blank otherwise.
 VERIFY = -v
@@ -208,10 +209,10 @@ $(BINDIR)/$(PROJNAME).bin: $(TMPDIR)/$(PROJNAME).elf
 
 #upload to the arduino by first resetting it (stty) and the running bossac
 upload: $(BINDIR)/$(PROJNAME).bin
-	stty -F $(PORT) cs8 1200 hupcl
+	stty -f $(PORT) cs8 1200 hupcl
 	../tools/bossac -U false -e -w $(VERIFY) -b $(BINDIR)/$(PROJNAME).bin -R
 
 #to view the serial port with screen.
 monitor:
-	screen $(PORT) 115200
+	screen $(PORT) $(SPEED)
 	

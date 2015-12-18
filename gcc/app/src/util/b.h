@@ -54,10 +54,9 @@ class nw2s::b
 		
 		static bool outputSoftTune;
 		static bool inputSoftTune;
-		static int16_t outputOffset[16];
-		static int32_t outputScale[16];
-		static int16_t inputOffset[12];
-		static int32_t inputScale[12];
+		static int8_t outputOffset[16][21];
+		// static int16_t inputOffset[12];
+		// static int32_t inputScale[12];
 		static int32_t dimming;
 		static void configure();
 		

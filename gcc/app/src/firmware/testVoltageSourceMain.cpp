@@ -45,61 +45,14 @@ PinAnalogOut outpins[16] = {
 
 };
 
-// int values[11] = {
-//
-// 	-5000,
-// 	-4000,
-// 	-3000,
-// 	-2000,
-// 	-1000,
-// 	0,
-// 	1000,
-// 	2000,
-// 	3000,
-// 	4000,
-// 	5000
-// };
-
-#define TUNING_POINTS 21
-int values[TUNING_POINTS] = {
-	
-	-10000,
-	-9000,
-	-8000,
-	-7000,
-	-6000,
-	-5000,
-	-4000,
-	-3000,
-	-2000,
-	-1000,
-	0,
-	1000,
-	2000,
-	3000,
-	4000,
-	5000,
-	6000,
-	7000,
-	8000,
-	9000,
-	10000
-};
-
-bool checkToggle = false;
-long nextToggleTime = 0;
 
 AnalogOut* outputs[16];
-int counter = 0;
 
 void setup() 
 {
 	Serial.begin(19200);
 	Serial.println("Starting...");
 
-	b::debugMode = true;
-	b::cvGainMode = CV_GAIN_HIGH;
-	
 	/* Set up a clock to have something to watch :P */
 	EventManager::initialize();
 	//Clock* democlock = VariableClock::create(20, 200, DUE_IN_A01, 16);
@@ -119,33 +72,43 @@ void loop()
 {
 	long t = millis();
 	
-	if (t > nextToggleTime)
+	if (t % 100 == 0)
 	{
+		/* Read two analog inputs. We'll use these for coarse and fine */
+		int cv1 = ::analogRead(DUE_IN_A00);
+		delay(5);
+		int cv2 = ::analogRead(DUE_IN_A01);
 	
-		/* Only change from one to the next if the toggle is on */
-		if (!checkToggle && digitalRead(DUE_IN_D0))
-		{
-			/* Stop the bounce */
-			nextToggleTime = t + 100;
-			checkToggle = true;
-
-			for (int i = 0; i < 16; i++)
-			{
-				outputs[i]->outputCV(values[counter], digitalRead(DUE_IN_D1));
-			}
+		int cv0 = ((cv1 << 1) & 0xFC0) | (cv2 >> 4);
+	
+		// for (int i = 0; i < 16; i++)
+		// {
+		// 	outputs[i]->outputRaw(cv0);
+		// }
 		
-			Serial.println("output val: " + String(values[counter]));
+		// 95 = 10
+		// 495 = 8
+		// 895 = 6
+		// 1295 = 4
+		// 1695 = 2
+		// 2095 = 0
+		// 2495 = -2
+		// 2895 = -4
+		// 3295 = -6
+		// 3695 = -8
+		// 4095 = -10
 
-			counter = (counter + 1) % TUNING_POINTS;		
-		}
-	
-		/* Reset the toggle trigger if it's off */
-		if (checkToggle && !digitalRead(DUE_IN_D0))
-		{
-			/* Stop the bounce */
-			nextToggleTime = t + 100;
-			checkToggle = false;
-		}
+		cv0 += 40;
+
+		if (cv0 < 95) cv0 = 95;
+		if (cv0 > 4095) cv0 = 4095;
+		
+		float volts = 10.0f - (((cv0 - 95) / 4000.0f) * 20.0f);
+		
+		int millivolts = (int)(volts * 1000);
+		
+		Serial.println(String(cv0) + " " + String(cv1) + " " + String(cv2) + " " + String(millivolts));
+		// Serial.println(String(cv0) + " " + String(cv1) + " " + String(cv2));
 	}
 	
 	EventManager::loop();
